@@ -3,3 +3,10 @@ install:
 - python setup.py install
 script:
 - pytest
+deploy:
+  provider: pypi
+  user: alubbock
+  password:
+    secure: LiM8ym80PWM2teYWaTzT6CaqbK9jWEu8UCIUQduhGOsger/nPdMAW9nNuv1T7wk/9YYi8VV8f/vzu/R4v0ypdpReTXCgAC81RYFliipDTYhRO820FcdFdHkm4MlH7V0QozYYhAVpMaOYoyIWb6gT2sm+/mfOK4At2qZpTc0AbCAnFLlEt2NWFx4oJB1YloxzAPBouDVaXP3ekB+dGm/P49h/iAgol09CfmMPsnBs0LNh43T8wfb0Md8DmaPHLoKdpsAO9LTOGABGpvNpQ4JN64AUDLA4h6s7TziNx/Pk+oDlMZvsnqd2fLjQt2XTBvsscmL8MITpqsdxRo4jI6/fDsghgbF82LISjk1XD7+WCsUSy4uhZztm7mumXxkEXeVNFFQi1Zd8tgZG04efQ51I1MUjgZKDY6o513EMnxKIN882hyhdvxnYHqb2yBRZpO9vJa7L0/sxz6+OgFKulDyO1Mp1L88w7IffOZr+or4l+d//TOvbxGvGDfTpnxAOeAcYLqVcsfroKgjKRv8UPmE2OtuvmoncdnfiLvFZkFmznYPVR7VMnavFN7ZA8claozYS0kip15c3p5AvG9A8TgEt3RuQ05piGv02HDV9amvSBTtkqse1kvgH/FZ8m3bCcNBhdh/28pAQjLZxJAvvY9rOJzCFD4XoO/wBJlLkp6d11lE=
+  on:
+    tags: true

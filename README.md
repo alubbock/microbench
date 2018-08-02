@@ -15,6 +15,14 @@ your feedback or feature requests in Github issues.
 Microbench has no dependencies outside of the Python standard library, although 
 [pandas](https://pandas.pydata.org/) is recommended to examine results.
 
+## Installation
+
+To install using `pip`:
+
+```
+pip install microbench
+```
+
 ## Usage
 
 ### 1. Create a benchmark suite
@@ -66,7 +74,7 @@ def myfunction():
 
 That's it! You'll now get start and end time, function call information,
 Python version information, and host info logged to the file specified in
-outfile.
+`outfile`.
 
 ## Examine results
 
