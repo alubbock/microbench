@@ -1,0 +1,2 @@
+include versioneer.py
+include microbench/_version.py
