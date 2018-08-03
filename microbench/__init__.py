@@ -4,6 +4,7 @@ import platform
 import socket
 import sys
 import collections
+import os
 
 
 from ._version import get_versions
@@ -19,6 +20,15 @@ class MicroBench(object):
         self._bm_static = kwargs
 
     def pre_run_triggers(self, bm_data):
+        # Capture environment variables
+        if hasattr(self, 'env_vars'):
+            if not isinstance(self.env_vars, collections.Iterable):
+                raise ValueError('env_vars should be a tuple of environment '
+                                 'variable names')
+
+            for env_var in self.env_vars:
+                bm_data['env_{}'.format(env_var)] = os.environ.get(env_var)
+
         # Capture package versions
         if hasattr(self, 'capture_versions'):
             if not isinstance(self.capture_versions, collections.Iterable):

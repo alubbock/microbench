@@ -10,6 +10,7 @@ def test_function():
     class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
         outfile = output
         capture_versions = (pandas, io)
+        env_vars = ('TEST_NON_EXISTENT', 'HOME')
 
     benchmark = MyBench(some_info='123')
 

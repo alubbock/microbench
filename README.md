@@ -76,6 +76,7 @@ import numpy, pandas
 class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks'
     capture_versions = (numpy, pandas)
+    env_vars = ('SLURM_ARRAY_TASK_ID', )
     
 benchmark = MyBench(some_info=123)
 ```
@@ -90,6 +91,12 @@ MBHostInfo             | `hostname`<br>`operating_system`
 The `capture_versions` option from the example creates fields like
 `<package name>_version`, e.g. `numpy_version`. This is captured from the
 package's `__name__` attribute, or left as `null` where not available.
+
+The `env_vars` option from the example above specifies a list of environment
+variables to capture as `env_<variable name>`. In this example,
+the [slurm](https://slurm.schedmd.com) array task ID will be stored as
+`env_SLURM_ARRAY_TASK_ID`. Where the environment variable is not set, the
+value will be `null`.
 
 ## Examine results
 
