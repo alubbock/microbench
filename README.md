@@ -1,8 +1,9 @@
 # Microbench
 
 Microbench is a small Python package for benchmarking Python functions, and 
-optionally capturing extra runtime/environment information. It can be run in 
-clustered/distributed environments, and is designed to be extensible with new
+optionally capturing extra runtime/environment information. It is most useful in
+clustered/distributed environments, where the same function runs under different
+environments, and is designed to be extensible with new
 functionality. In addition to benchmarking, this can help reproducibility by
 e.g. logging the versions of key Python packages.
 
@@ -79,7 +80,22 @@ class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
 benchmark = MyBench(some_info=123)
 ```
 
+ Mixin                 | Fields captured
+-----------------------|----------------
+*(default)*            | `start_time`<br>`finish_time`<br>`function_name`
+MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
+MBPythonVersion        | `python_version` (e.g. 3.6.0)
+MBHostInfo             | `hostname`<br>`operating_system`
+
+The `capture_versions` option from the example creates fields like
+`<package name>_version`, e.g. `numpy_version`. This is captured from the
+package's `__name__` attribute, or left as `null` where not available.
+
 ## Examine results
+
+Each result is a [JSON](https://en.wikipedia.org/wiki/JSON) object. When using
+the `outfile` option, a JSON object for each `@benchmark` call is stored on a
+separate line in the file.
 
 The simplest way to examine results is to load them into a
 [pandas](https://pandas.pydata.org/) dataframe:
@@ -89,14 +105,30 @@ import pandas
 results = pandas.read_json('/home/user/my-benchmarks', lines=True)
 ```
 
+Pandas has powerful data manipulation capabilities. For example, to calculate
+the average runtime by Python version:
+
+```python
+# Calculate runtime for each run
+results['runtime'] = results['finish_time'] - results['start_time']
+
+# Average runtime by Python version
+results.groupby('python_version')['runtime'].mean()
+```
+
+Many more advanced operations are available. The
+[pandas tutorial](https://pandas.pydata.org/pandas-docs/stable/tutorials.html)
+is recommended.
+
 ## Extending microbench
 
-Microbench includes a few mixins for basic functionality: function call
-information (name and arguments), Python version, host information (host name
-and OS). You can add extra functions to your benchmark suite to capture
+Microbench includes a few mixins for basic functionality as described in the
+extended example, above.
+
+You can add functions to your benchmark suite to capture
 extra information at runtime. These functions must be prefixed with `capture_`
 for them to run automatically after the function has completed. They take
-a single argument, `bm_data`, a dictionary to be extended with extra values.
+a single argument, `bm_data`, a dictionary to be extended with extra data.
 Care should be taken to avoid overwriting existing key names.
 
 Here's an example to capture the machine type (`i386`, `x86_64` etc.):
@@ -118,6 +150,7 @@ benchmark = Bench()
 
 By default, microbench appends output to a file, but output can be directed
 elsewhere, e.g. [redis](https://redis.io) - an in-memory, networked data source.
+This option is useful when a shared filesystem is not available.
 
 Redis support requires [redis-py](https://github.com/andymccurdy/redis-py).
 
@@ -141,11 +174,15 @@ To retrieve results, the `redis` package can be used directly:
 import redis
 import pandas
 
+# Establish the connection to redis
 rconn = redis.StrictRedis(host=..., port=...)
+
 # Read the redis data from 'myrediskey' into a list of byte arrays
 redis_data = redis.lrange('myrediskey', 0, -1)
+
 # Convert the list into a single string
 json_data = '\n'.join(r.decode('utf8') for r in redis_data)
+
 # Read the string into a pandas dataframe
 results = pandas.read_json(json_data, lines=True)
 ```
