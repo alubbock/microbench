@@ -3,6 +3,7 @@ import io
 import pandas
 import datetime
 
+
 def test_function():
     output = io.StringIO()
 
