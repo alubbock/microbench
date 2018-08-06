@@ -59,8 +59,8 @@ def myfunction(arg1, arg2, ...):
 ```
 
 That's it! Benchmark information will be appended to the file specified in
-`outfile`. See the **Examine results** section for information on reading
-the results.
+`outfile`. This example captures the fields `start_time`, `finish_time` and
+`function_name`. See the **Examine results** section for further information.
 
 ### Extended example
 
@@ -102,9 +102,14 @@ value will be `null`.
 
 Each result is a [JSON](https://en.wikipedia.org/wiki/JSON) object. When using
 the `outfile` option, a JSON object for each `@benchmark` call is stored on a
-separate line in the file.
+separate line in the file. The output from the minimal example above for a
+single run will look similar to the following:
 
-The simplest way to examine results is to load them into a
+```json
+{"start_time": "2018-08-06T10:28:24.806493", "finish_time": "2018-08-06T10:28:24.867456", "function_name": "my_function"}
+```
+
+The simplest way to examine results in detail is to load them into a
 [pandas](https://pandas.pydata.org/) dataframe:
 
 ```python
