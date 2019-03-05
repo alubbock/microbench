@@ -147,6 +147,39 @@ Many more advanced operations are available. The
 [pandas tutorial](https://pandas.pydata.org/pandas-docs/stable/tutorials.html)
 is recommended.
 
+## Interactive usage
+
+Microbench can be used in scripts, packages, or interactively from the Python prompt, IPython prompt, or a Jupyter
+Notebook. When using the package interactively, you may not want to write the results to a file. In that case, you can
+use `io.StringIO` to capture the output as a string:
+
+```python
+from microbench import *
+import io
+
+class MyBench(MicroBench):
+    outfile = io.stringIO()
+
+my_bench = MyBench()
+
+# Dummy function for testing
+@my_bench
+def test():
+    pass
+
+# Call the dummy function twice
+# (triggering benchmark capture both times)
+test()
+test()
+
+# Read the benchmark results
+import pandas
+results = pandas.read_json(my_bench.outfile.getvalue(), lines=True)
+
+# results is a Pandas DataFrame containing captured metadata
+
+```
+
 ## Extending microbench
 
 Microbench includes a few mixins for basic functionality as described in the
