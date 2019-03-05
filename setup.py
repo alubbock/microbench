@@ -20,7 +20,7 @@ def main():
         url='https://github.com/alubbock/microbench',
         packages=['microbench'],
         install_requires=[],
-        tests_require=['pytest', 'pandas'],
+        tests_require=['pytest', 'pandas', 'line_profiler'],
         cmdclass=versioneer.get_cmdclass(),
         zip_safe=True,
         classifiers=[

@@ -25,7 +25,7 @@ def test_function():
 
         return acc
 
-    for i in range(3):
+    for _ in range(3):
         assert my_function() == 499999500000
 
     results = pandas.read_json(output.getvalue(), lines=True, )

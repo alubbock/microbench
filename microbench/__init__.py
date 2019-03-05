@@ -7,6 +7,12 @@ import collections
 import os
 import inspect
 import types
+import pickle
+import base64
+try:
+    import line_profiler
+except ImportError:
+    line_profiler = None
 
 
 from ._version import get_versions
@@ -104,9 +110,18 @@ class MicroBench(object):
             bm_data['_args'] = args
             bm_data['_kwargs'] = kwargs
 
+            if isinstance(self, MBLineProfiler):
+                if not line_profiler:
+                    raise ImportError('This functionality requires the '
+                                      '"line_profiler" package')
+                self._line_profiler = line_profiler.LineProfiler(func)
+
             self.pre_run_triggers(bm_data)
 
-            res = func(*args, **kwargs)
+            if isinstance(self, MBLineProfiler):
+                res = self._line_profiler.runcall(func, *args, **kwargs)
+            else:
+                res = func(*args, **kwargs)
 
             self.post_run_triggers(bm_data)
 
@@ -162,6 +177,22 @@ class MBGlobalPackages(object):
                     sys.modules[module_name.split('.')[0]],
                     skip_if_none=True
                 )
+
+
+class MBLineProfiler(object):
+    def capture_line_profile(self, bm_data):
+        bm_data['line_profiler'] = base64.encodebytes(
+            pickle.dumps(self._line_profiler.get_stats())
+        ).decode('utf8')
+
+    @staticmethod
+    def decode_line_profile(line_profile_pickled):
+        return pickle.loads(base64.decodebytes(line_profile_pickled.encode()))
+
+    @classmethod
+    def print_line_profile(self, line_profile_pickled, **kwargs):
+        lp_data = self.decode_line_profile(line_profile_pickled)
+        line_profiler.show_text(lp_data.timings, lp_data.unit, **kwargs)
 
 
 class MicroBenchRedis(MicroBench):
