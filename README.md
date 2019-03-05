@@ -75,15 +75,30 @@ import numpy, pandas
 
 class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks'
-    capture_versions = (numpy, pandas)
+    capture_versions = (numpy, pandas)  # Or use MBGlobalPackages
     env_vars = ('SLURM_ARRAY_TASK_ID', )
     
 benchmark = MyBench(some_info=123)
 ```
 
+To capture package versions, you can either specify them individually (as above), or you can capture the versions of
+every package in the global environment. In the following example, we would capture the versions of `microbench`,
+`numpy`, and `pandas` automatically.
+
+```python
+from microbench import *
+import numpy, pandas
+
+class Bench2(MicroBench, MBGlobalPackages):
+    outfile = '/home/user/bench2'
+
+bench2 = Bench2()
+```
+
  Mixin                 | Fields captured
 -----------------------|----------------
 *(default)*            | `start_time`<br>`finish_time`<br>`function_name`
+MBGlobalPackages       | `<package>_version` for every `<package>` in the global environment
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
 MBPythonVersion        | `python_version` (e.g. 3.6.0)
 MBHostInfo             | `hostname`<br>`operating_system`

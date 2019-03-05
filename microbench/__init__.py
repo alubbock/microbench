@@ -5,6 +5,8 @@ import socket
 import sys
 import collections
 import os
+import inspect
+import types
 
 
 from ._version import get_versions
@@ -57,10 +59,12 @@ class MicroBench(object):
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
 
-    def _capture_package_version(self, bm_data, pkg):
+    def _capture_package_version(self, bm_data, pkg, skip_if_none=False):
         try:
             ver = pkg.__version__
         except AttributeError:
+            if skip_if_none:
+                return
             ver = None
         bm_data['{}_version'.format(pkg.__name__)] = ver
 
@@ -137,6 +141,27 @@ class MBHostInfo(object):
 
     def capture_os(self, bm_data):
         bm_data['operating_system'] = sys.platform
+
+
+class MBGlobalPackages(object):
+    def capture_functions(self, bm_data):
+        # Get globals of caller
+        caller_frame = inspect.currentframe().f_back.f_back.f_back
+        caller_globals = caller_frame.f_globals
+        for g in caller_globals.values():
+            if isinstance(g, types.ModuleType):
+                self._capture_package_version(bm_data, g, skip_if_none=True)
+            else:
+                try:
+                    module_name = g.__module__
+                except AttributeError:
+                    continue
+
+                self._capture_package_version(
+                    bm_data,
+                    sys.modules[module_name.split('.')[0]],
+                    skip_if_none=True
+                )
 
 
 class MicroBenchRedis(MicroBench):

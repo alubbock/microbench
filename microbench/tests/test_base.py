@@ -1,7 +1,9 @@
 from microbench import MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo
+from microbench import __version__ as microbench_version
 import io
 import pandas
 import datetime
+from .globals_capture import globals_bench
 
 
 def test_function():
@@ -31,3 +33,18 @@ def test_function():
     assert (results['pandas_version'] == pandas.__version__).all()
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes > datetime.timedelta(0)).all()
+
+
+def test_capture_global_packages():
+    @globals_bench
+    def noop():
+        pass
+
+    noop()
+
+    results = pandas.read_json(globals_bench.outfile.getvalue(), lines=True)
+
+    # We should've captured microbench and pandas versions from top level
+    # imports in this file
+    assert (results['microbench_version'] == microbench_version).all()
+    assert (results['pandas_version'] == pandas.__version__).all()
