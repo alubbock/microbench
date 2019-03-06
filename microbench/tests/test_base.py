@@ -46,5 +46,5 @@ def test_capture_global_packages():
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
-    assert (results['microbench_version'] == microbench_version).all()
+    assert (results['microbench_version'] == str(microbench_version)).all()
     assert (results['pandas_version'] == pandas.__version__).all()
