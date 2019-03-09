@@ -10,10 +10,18 @@ into the global environment.
 
 ## Requirements
 
-Microbench has no dependencies outside of the Python standard library, although 
-[pandas](https://pandas.pydata.org/) is recommended to examine results. The
-[line_profiler](https://github.com/rkern/line_profiler) package needs to be
-installed for line-by-line code benchmarking (described in a later section).
+Microbench by default has no dependencies outside of the Python standard
+library, although [pandas](https://pandas.pydata.org/) is recommended to
+examine results. However, some mixins (extensions) have specific requirements:
+
+* The [line_profiler](https://github.com/rkern/line_profiler)
+  package needs to be installed for line-by-line code benchmarking.
+* The CPU cores and total RAM extensions require
+  [psutil](https://pypi.org/project/psutil/).
+* The NVIDIA GPU plugin requires the
+  [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface)
+  utility, which usually ships with the NVIDIA graphics card drivers. It needs
+  to be on your `PATH`.
 
 ## Installation
 
@@ -105,8 +113,8 @@ MBGlobalPackages       | `<package>_version` for every `<package>` in the global
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
 MBPythonVersion        | `python_version` (e.g. 3.6.0)
 MBHostInfo             | `hostname`<br>`operating_system`
-MBHostCpuCores         | `cpu_cores_logical` (number of cores)
-MBHostRamTotal         | `ram_total` (total RAM in bytes)
+MBHostCpuCores         | `cpu_cores_logical` (number of cores, requires `psutil`)
+MBHostRamTotal         | `ram_total` (total RAM in bytes, requires `psutil`)
 MBNvidiaSmi            | Various NVIDIA GPU fields, detailed in a later section
 MBLineProfiler         | `line_profiler` containing line-by-line profile (see section below)
 
