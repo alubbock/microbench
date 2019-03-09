@@ -2,7 +2,7 @@ language: python
 python:
   - "3.6"
 before_install:
-- pip install pandas line_profiler
+- pip install pandas line_profiler psutil
 install:
 - python setup.py install
 script:
