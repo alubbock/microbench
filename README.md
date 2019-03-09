@@ -105,6 +105,9 @@ MBGlobalPackages       | `<package>_version` for every `<package>` in the global
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
 MBPythonVersion        | `python_version` (e.g. 3.6.0)
 MBHostInfo             | `hostname`<br>`operating_system`
+MBHostCpuCores         | `cpu_cores_logical` (number of cores)
+MBHostRamTotal         | `ram_total` (total RAM in bytes)
+MBNvidiaSmi            | Various NVIDIA GPU fields, detailed in a later section
 MBLineProfiler         | `line_profiler` containing line-by-line profile (see section below)
 
 The `capture_versions` option from the example creates fields like
@@ -247,14 +250,44 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
     19         1          1.0      1.0      0.0          return acc
 ```
 
+## NVIDIA GPU support
+
+Attributes about NVIDIA GPUs can be captured using the `MBNvidiaSmi` plugin.
+This requires the `nvidia-smi` utility to be available in the current `PATH`.
+
+By default, the `gpu_name` (model number) and `memory.total` attributes are
+captured. Extra attributes can be specified using the class or object-level
+variable `nvidia_attributes`. To see which attributes are available, run
+`nvidia-smi --help-query-gpu`.
+
+By default, all installed GPUs will be polled. To limit to a specific GPU,
+specify the `nvidia_gpus` attribute as a tuple of GPU IDs, which can be
+zero-based GPU indexes (can change between reboots, not recommended),
+GPU UUIDs, or PCI bus IDs. You can find out GPU UUIDs by running
+`nvidia-smi -L`.
+
+Here's an example specifying the optional `nvidia_attributes` and
+`nvidia_gpus` fields:
+
+```python
+from microbench import MicroBench, MBNvidiaSmi
+
+class GpuBench(MicroBench, MBNvidiaSmi):
+    outfile = '/home/user/my-benchmarks'
+    nvidia_attributes = ('gpu_name', 'memory.total', 'pcie.link.width.max')
+    nvidia_gpus = (0, )  # Usually better to specify GPU UUIDs here instead
+
+gpu_bench = GpuBench()
+```
+
 ## Extending microbench
 
 Microbench includes a few mixins for basic functionality as described in the
 extended example, above.
 
-You can add functions to your benchmark suite to capture
+You can also add functions to your benchmark suite to capture
 extra information at runtime. These functions must be prefixed with `capture_`
-for them to run automatically after the function has completed. They take
+for them to run automatically before the function starts. They take
 a single argument, `bm_data`, a dictionary to be extended with extra data.
 Care should be taken to avoid overwriting existing key names.
 

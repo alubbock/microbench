@@ -9,10 +9,16 @@ import inspect
 import types
 import pickle
 import base64
+import re
+import subprocess
 try:
     import line_profiler
 except ImportError:
     line_profiler = None
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 
 from ._version import get_versions
@@ -46,8 +52,12 @@ class MicroBench(object):
             for pkg in self.capture_versions:
                 self._capture_package_version(bm_data, pkg)
 
-        for method in self._capture_before:
-            method(bm_data)
+        # Run capture triggers
+        for method_name in dir(self):
+            if method_name.startswith('capture_'):
+                method = getattr(self, method_name)
+                if callable(method) and method not in self._capture_before:
+                    method(bm_data)
 
         # Special case, as we want this to run immediately before run
         bm_data['start_time'] = datetime.now()
@@ -55,12 +65,6 @@ class MicroBench(object):
     def post_run_triggers(self, bm_data):
         # Special case, as we want this to run immediately after run
         bm_data['finish_time'] = datetime.now()
-
-        for method_name in dir(self):
-            if method_name.startswith('capture_'):
-                method = getattr(self, method_name)
-                if callable(method) and method not in self._capture_before:
-                    method(bm_data)
 
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
@@ -159,6 +163,7 @@ class MBHostInfo(object):
 
 
 class MBGlobalPackages(object):
+    """ Capture Python packages imported in global environment """
     def capture_functions(self, bm_data):
         # Get globals of caller
         caller_frame = inspect.currentframe().f_back.f_back.f_back
@@ -180,6 +185,14 @@ class MBGlobalPackages(object):
 
 
 class MBLineProfiler(object):
+    """
+    Run the line profiler on the selected function
+
+    Requires the line_profiler package. This will generate a benchmark which
+    times the execution of each line of Python code in your function. This will
+    slightly slow down the execution of your function, so it's not recommended
+    in production.
+    """
     def capture_line_profile(self, bm_data):
         bm_data['line_profiler'] = base64.encodebytes(
             pickle.dumps(self._line_profiler.get_stats())
@@ -193,6 +206,91 @@ class MBLineProfiler(object):
     def print_line_profile(self, line_profile_pickled, **kwargs):
         lp_data = self.decode_line_profile(line_profile_pickled)
         line_profiler.show_text(lp_data.timings, lp_data.unit, **kwargs)
+
+
+class _NeedsPsUtil(object):
+    @classmethod
+    def _check_psutil(cls):
+        if not psutil:
+            raise ImportError('psutil library needed')
+
+
+class MBHostCpuCores(_NeedsPsUtil):
+    """ Capture the number of logical CPU cores """
+    def capture_cpu_cores(self, bm_data):
+        self._check_psutil()
+        bm_data['cpu_cores_logical'] = psutil.cpu_count()
+
+
+class MBHostRamTotal(_NeedsPsUtil):
+    """ Capture the total host RAM in bytes """
+    def capture_total_ram(self, bm_data):
+        self._check_psutil()
+        bm_data['ram_total'] = psutil.virtual_memory().total
+
+
+class MBNvidiaSmi(object):
+    """
+    Capture attributes on installed NVIDIA GPUs using nvidia-smi
+
+    Requires the nvidia-smi utility to be available in the current PATH.
+
+    By default, the gpu_name and memory.total attributes are captured. Extra
+    attributes can be specified using the class or object-level variable
+    nvidia_attributes.
+
+    By default, all installed GPUs will be polled. To limit to a specific GPU,
+    specify the nvidia_gpus attribute as a tuple of GPU IDs, which can be
+    zero-based GPU indexes (can change between reboots, not recommended),
+    GPU UUIDs, or PCI bus IDs.
+    """
+
+    _nvidia_attributes_available = ('gpu_name', 'memory.total')
+    _nvidia_gpu_regex = re.compile(r'^[0-9A-Za-z\-:]+$')
+
+    def capture_nvidia(self, bm_data):
+        if hasattr(self, 'nvidia_attributes'):
+            nvidia_attributes = self.nvidia_attributes
+            unknown_attrs = set(self._nvidia_attributes_available).difference(
+                nvidia_attributes
+            )
+            if unknown_attrs:
+                raise ValueError("Unknown nvidia_attributes: {}".format(
+                    ', '.join(unknown_attrs)
+                ))
+        else:
+            nvidia_attributes = self._nvidia_attributes_available
+
+        if hasattr(self, 'nvidia_gpus'):
+            gpus = self.nvidia_gpus
+            if not gpus:
+                raise ValueError('nvidia_gpus cannot be empty. Leave the '
+                                 'attribute out to capture data for all GPUs')
+            for gpu in gpus:
+                if not self._nvidia_gpu_regex.match(gpu):
+                    raise ValueError('nvidia_gpus must be a list of GPU indexes'
+                                     '(zero-based), UUIDs, or PCI bus IDs')
+        else:
+            gpus = None
+
+        # Construct the command
+        cmd = ['nvidia-smi', '--format=csv,noheader',
+               '--query-gpu=uuid,{}'.format(','.join(nvidia_attributes))]
+        if gpus:
+            cmd += ['-i', ','.join(gpus)]
+
+        # Execute the command
+        res = subprocess.check_output(cmd).decode('utf8')
+
+        # Process results
+        for gpu_line in res.split('\n'):
+            if not gpu_line:
+                continue
+            gpu_res = gpu_line.split(', ')
+            for attr_idx, attr in enumerate(nvidia_attributes):
+                gpu_uuid = gpu_res[0]
+                bm_data.setdefault('nvidia_{}'.format(attr), {})[gpu_uuid] = \
+                    gpu_res[attr_idx + 1]
 
 
 class MicroBenchRedis(MicroBench):
