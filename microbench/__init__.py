@@ -11,6 +11,11 @@ import pickle
 import base64
 import re
 import subprocess
+import io
+try:
+    import pkg_resources
+except ImportError:
+    pkg_resources = None
 try:
     import line_profiler
 except ImportError:
@@ -32,6 +37,8 @@ class MicroBench(object):
         if args:
             raise ValueError('Only keyword arguments are allowed')
         self._bm_static = kwargs
+        if not hasattr(self, 'outfile'):
+            self.outfile = io.StringIO()
 
     def pre_run_triggers(self, bm_data):
         # Capture environment variables
@@ -70,13 +77,14 @@ class MicroBench(object):
         bm_data['function_name'] = bm_data['_func'].__name__
 
     def _capture_package_version(self, bm_data, pkg, skip_if_none=False):
+        bm_data.setdefault('package_versions', {})
         try:
             ver = pkg.__version__
         except AttributeError:
             if skip_if_none:
                 return
             ver = None
-        bm_data['{}_version'.format(pkg.__name__)] = ver
+        bm_data['package_versions'][pkg.__name__] = ver
 
     @staticmethod
     def json_serializer(o):
@@ -148,9 +156,12 @@ class MBFunctionCall(object):
 
 
 class MBPythonVersion(object):
-    """ Capture the Python version """
+    """ Capture the Python version and location of the Python executable """
     def capture_python_version(self, bm_data):
         bm_data['python_version'] = platform.python_version()
+
+    def capture_python_executable(self, bm_data):
+        bm_data['python_executable'] = sys.executable
 
 
 class MBHostInfo(object):
@@ -182,6 +193,26 @@ class MBGlobalPackages(object):
                     sys.modules[module_name.split('.')[0]],
                     skip_if_none=True
                 )
+
+
+class MBInstalledPackages(object):
+    """ Capture installed Python packages using pkg_resources """
+    capture_paths = False
+
+    def capture_packages(self, bm_data):
+        if not pkg_resources:
+            raise ImportError(
+                'pkg_resources is required to capture package names, which is '
+                'provided with the "setuptools" package')
+
+        bm_data['package_versions'] = {}
+        if self.capture_paths:
+            bm_data['package_paths'] = {}
+
+        for pkg in pkg_resources.working_set:
+            bm_data['package_versions'][pkg.project_name] = pkg.version
+            if self.capture_paths:
+                bm_data['package_paths'][pkg.project_name] = pkg.location
 
 
 class MBLineProfiler(object):

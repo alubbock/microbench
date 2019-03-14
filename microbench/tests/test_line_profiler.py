@@ -1,11 +1,10 @@
 from microbench import MicroBench, MBLineProfiler
-import io
 import pandas
 
 
 def test_line_profiler():
     class LineProfilerBench(MicroBench, MBLineProfiler):
-        outfile = io.StringIO()
+        pass
 
     lpbench = LineProfilerBench()
 

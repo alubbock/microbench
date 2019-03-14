@@ -16,6 +16,8 @@ examine results. However, some mixins (extensions) have specific requirements:
 
 * The [line_profiler](https://github.com/rkern/line_profiler)
   package needs to be installed for line-by-line code benchmarking.
+* `MBInstalledPackages` requires `setuptools`, which is not a part of the
+  standard library, but is usually available. 
 * The CPU cores and total RAM extensions require
   [psutil](https://pypi.org/project/psutil/).
 * The NVIDIA GPU plugin requires the
@@ -45,19 +47,14 @@ def myfunction(arg1, arg2, ...):
 ### Minimal example
 
 First, create a benchmark suite, which specifies the configuration and
-information to capture. By default, 
-benchmarks are appended to a file in JSON format (one record per line) to a
-filename specified by `outfile`. 
+information to capture.
 
 Here's a minimal, complete example:
 
 ```python
 from microbench import MicroBench
-
-class BasicBench(MicroBench):
-    outfile = '/home/user/my-benchmarks'
     
-basic_bench = BasicBench()
+basic_bench = MicroBench()
 ```
 
 To attach the benchmark to your function, simply use `basic_bench` as a
@@ -73,12 +70,13 @@ That's it! Benchmark information will be appended to the file specified in
 `outfile`. This example captures the fields `start_time`, `finish_time` and
 `function_name`. See the **Examine results** section for further information.
 
-### Extended example
+### Extended examples
 
 Here's a more complete example using mixins (the `MB` prefixed class 
 names) to extend functionality. Note that keyword arguments can be supplied
 to the constructor (in this case `some_info=123`) to specify additional
-information to capture.
+information to capture. This example also specifies the `outfile` option,
+which writes conda
 
 ```python
 from microbench import *
@@ -86,11 +84,17 @@ import numpy, pandas
 
 class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks'
-    capture_versions = (numpy, pandas)  # Or use MBGlobalPackages
+    capture_versions = (numpy, pandas)  # Or use MBGlobalPackages/MBInstalledPackages
     env_vars = ('SLURM_ARRAY_TASK_ID', )
     
 benchmark = MyBench(some_info=123)
 ```
+
+The `env_vars` option from the example above specifies a list of environment
+variables to capture as `env_<variable name>`. In this example,
+the [slurm](https://slurm.schedmd.com) array task ID will be stored as
+`env_SLURM_ARRAY_TASK_ID`. Where the environment variable is not set, the
+value will be `null`.
 
 To capture package versions, you can either specify them individually (as above), or you can capture the versions of
 every package in the global environment. In the following example, we would capture the versions of `microbench`,
@@ -106,27 +110,30 @@ class Bench2(MicroBench, MBGlobalPackages):
 bench2 = Bench2()
 ```
 
+If you want to go even further, and capture the version of every package available for import, there's a
+mixin for that:
+
+```python
+from microbench import *
+
+class Bench3(MicroBench, MBInstalledPackages):
+    pass
+    
+bench3 = Bench3()
+``` 
+
  Mixin                 | Fields captured
 -----------------------|----------------
 *(default)*            | `start_time`<br>`finish_time`<br>`function_name`
-MBGlobalPackages       | `<package>_version` for every `<package>` in the global environment
+MBGlobalPackages       | `package_versions`, with entry for every package in the global environment
+MBInstalledPackages    | `package_versions`, with entry for every package available for import
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
-MBPythonVersion        | `python_version` (e.g. 3.6.0)
+MBPythonVersion        | `python_version` (e.g. 3.6.0) and `python_executable` (e.g. `/usr/bin/python`, which should indicate any active virtual environment)
 MBHostInfo             | `hostname`<br>`operating_system`
 MBHostCpuCores         | `cpu_cores_logical` (number of cores, requires `psutil`)
 MBHostRamTotal         | `ram_total` (total RAM in bytes, requires `psutil`)
 MBNvidiaSmi            | Various NVIDIA GPU fields, detailed in a later section
 MBLineProfiler         | `line_profiler` containing line-by-line profile (see section below)
-
-The `capture_versions` option from the example creates fields like
-`<package name>_version`, e.g. `numpy_version`. This is captured from the
-package's `__name__` attribute, or left as `null` where not available.
-
-The `env_vars` option from the example above specifies a list of environment
-variables to capture as `env_<variable name>`. In this example,
-the [slurm](https://slurm.schedmd.com) array task ID will be stored as
-`env_SLURM_ARRAY_TASK_ID`. Where the environment variable is not set, the
-value will be `null`.
 
 ## Examine results
 
@@ -162,39 +169,6 @@ Many more advanced operations are available. The
 [pandas tutorial](https://pandas.pydata.org/pandas-docs/stable/tutorials.html)
 is recommended.
 
-## Interactive usage
-
-Microbench can be used in scripts, packages, or interactively from the Python prompt, IPython prompt, or a Jupyter
-Notebook. When using the package interactively, you may not want to write the results to a file. In that case, you can
-use `io.StringIO` to capture the output as a string:
-
-```python
-from microbench import *
-import io
-
-class MyBench(MicroBench):
-    outfile = io.stringIO()
-
-my_bench = MyBench()
-
-# Dummy function for testing
-@my_bench
-def test():
-    pass
-
-# Call the dummy function twice
-# (triggering benchmark capture both times)
-test()
-test()
-
-# Read the benchmark results
-import pandas
-results = pandas.read_json(my_bench.outfile.getvalue(), lines=True)
-
-# results is a Pandas DataFrame containing captured metadata
-
-```
-
 ## Line profiler support
 
 Microbench also has support for [line_profiler](https://github.com/rkern/line_profiler), which shows the execution time
@@ -204,12 +178,11 @@ discovering bottlenecks within a function. Requires the `line_profiler` package 
 
 ```python
 from microbench import MicroBench, MBLineProfiler
-import io
 import pandas
 
 # Create our benchmark suite using the MBLineProfiler mixin
 class LineProfilerBench(MicroBench, MBLineProfiler):
-    outfile = io.StringIO()
+    pass
 
 lpbench = LineProfilerBench()
 
@@ -281,7 +254,7 @@ Here's an example specifying the optional `nvidia_attributes` and
 from microbench import MicroBench, MBNvidiaSmi
 
 class GpuBench(MicroBench, MBNvidiaSmi):
-    outfile = '/home/user/my-benchmarks'
+    outfile = '/home/user/gpu-benchmarks'
     nvidia_attributes = ('gpu_name', 'memory.total', 'pcie.link.width.max')
     nvidia_gpus = (0, )  # Usually better to specify GPU UUIDs here instead
 

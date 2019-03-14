@@ -1,13 +1,10 @@
-import io
 from microbench import MicroBench, MBHostCpuCores, MBHostRamTotal
 import pandas
 
 
 def test_psutil():
-    output = io.StringIO()
-
     class MyBench(MicroBench, MBHostCpuCores, MBHostRamTotal):
-        outfile = output
+        pass
 
     mybench = MyBench()
 

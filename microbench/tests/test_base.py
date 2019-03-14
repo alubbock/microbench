@@ -1,4 +1,5 @@
-from microbench import MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo
+from microbench import MicroBench, MBFunctionCall, MBPythonVersion, \
+    MBHostInfo, MBInstalledPackages
 from microbench import __version__ as microbench_version
 import io
 import pandas
@@ -7,10 +8,7 @@ from .globals_capture import globals_bench
 
 
 def test_function():
-    output = io.StringIO()
-
     class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
-        outfile = output
         capture_versions = (pandas, io)
         env_vars = ('TEST_NON_EXISTENT', 'HOME')
 
@@ -28,9 +26,9 @@ def test_function():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = pandas.read_json(output.getvalue(), lines=True, )
+    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True, )
     assert (results['function_name'] == 'my_function').all()
-    assert (results['pandas_version'] == pandas.__version__).all()
+    assert results['package_versions'][0]['pandas'] == pandas.__version__
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes > datetime.timedelta(0)).all()
 
@@ -46,5 +44,23 @@ def test_capture_global_packages():
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
-    assert (results['microbench_version'] == str(microbench_version)).all()
-    assert (results['pandas_version'] == pandas.__version__).all()
+    print(results['package_versions'][0])
+    assert results['package_versions'][0]['microbench'] == \
+           str(microbench_version)
+    assert results['package_versions'][0]['pandas'] == pandas.__version__
+
+
+def test_capture_packages_pkg_resources():
+    class PkgBench(MicroBench, MBInstalledPackages):
+        capture_paths = True
+
+    pkg_bench = PkgBench()
+
+    @pkg_bench
+    def noop():
+        pass
+
+    noop()
+
+    results = pandas.read_json(pkg_bench.outfile.getvalue(), lines=True)
+    assert pandas.__version__ == results['package_versions'][0]['pandas']

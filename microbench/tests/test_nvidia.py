@@ -1,5 +1,4 @@
 from microbench import MicroBench, MBNvidiaSmi
-import io
 import subprocess
 import unittest
 import pandas
@@ -15,7 +14,7 @@ except FileNotFoundError:
 @unittest.skipIf(not nvidia_smi_available, 'nvidia-smi command not found')
 def test_nvidia():
     class Bench(MicroBench, MBNvidiaSmi):
-        outfile = io.StringIO()
+        pass
 
     bench = Bench()
 
