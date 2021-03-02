@@ -127,6 +127,7 @@ bench3 = Bench3()
 *(default)*            | `start_time`<br>`finish_time`<br>`function_name`
 MBGlobalPackages       | `package_versions`, with entry for every package in the global environment
 MBInstalledPackages    | `package_versions`, with entry for every package available for import
+MBCondaPackages        | `conda_versions`, with entry for every conda package in the environment
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
 MBPythonVersion        | `python_version` (e.g. 3.6.0) and `python_executable` (e.g. `/usr/bin/python`, which should indicate any active virtual environment)
 MBHostInfo             | `hostname`<br>`operating_system`

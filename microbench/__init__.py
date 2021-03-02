@@ -24,6 +24,11 @@ try:
     import psutil
 except ImportError:
     psutil = None
+try:
+    import conda
+    import conda.cli.python_api
+except ImportError:
+    conda = None
 
 
 from ._version import get_versions
@@ -32,12 +37,14 @@ del get_versions
 
 
 class MicroBench(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, outfile=None, *args, **kwargs):
         self._capture_before = []
         if args:
             raise ValueError('Only keyword arguments are allowed')
         self._bm_static = kwargs
-        if not hasattr(self, 'outfile'):
+        if outfile is not None:
+            self.outfile = outfile
+        elif not hasattr(self, 'outfile'):
             self.outfile = io.StringIO()
 
     def pre_run_triggers(self, bm_data):
@@ -193,6 +200,39 @@ class MBGlobalPackages(object):
                     sys.modules[module_name.split('.')[0]],
                     skip_if_none=True
                 )
+
+
+class MBCondaPackages(object):
+    """ Capture conda packages; requires 'conda' package (pip install conda) """
+    include_builds = True
+    include_channels = False
+
+    def capture_conda_packages(self, bm_data):
+        if conda is None:
+            # Use subprocess
+            pkg_list = subprocess.check_output(['conda', 'list']).decode('utf8')
+        else:
+            # Use conda Python API
+            pkg_list, stderr, ret_code = conda.cli.python_api.run_command(
+                conda.cli.python_api.Commands.LIST)
+
+            if ret_code != 0 or stderr:
+                raise RuntimeError('Error running conda list: {}'.format(
+                    stderr))
+
+        bm_data['conda_versions'] = {}
+
+        for pkg in pkg_list.splitlines():
+            if pkg.startswith('#') or not pkg.strip():
+                continue
+            pkg_data = pkg.split()
+            pkg_name = pkg_data[0]
+            pkg_version = pkg_data[1]
+            if self.include_builds:
+                pkg_version += pkg_data[2]
+            if self.include_channels and len(pkg_data) == 4:
+                pkg_version += pkg_version + '(' + pkg_data[3] + ')'
+            bm_data['conda_versions'][pkg_name] = pkg_version
 
 
 class MBInstalledPackages(object):
