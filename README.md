@@ -1,6 +1,6 @@
 # Microbench
 
-![Microbench: Benchmarking and reproducibility metadata capture for Python](microbench.png)
+![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
 
 Microbench is a small Python package for benchmarking Python functions, and 
 optionally capturing extra runtime/environment information. It is most useful in
