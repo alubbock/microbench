@@ -3,7 +3,6 @@ import subprocess
 import unittest
 import pandas
 
-
 try:
     subprocess.call(['nvidia-smi'])
     nvidia_smi_available = True
