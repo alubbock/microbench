@@ -12,6 +12,8 @@ import base64
 import re
 import subprocess
 import io
+import threading
+import signal
 try:
     import pkg_resources
 except ImportError:
@@ -73,12 +75,26 @@ class MicroBench(object):
                 if callable(method) and method not in self._capture_before:
                     method(bm_data)
 
+        # Initialise telemetry thread
+        if hasattr(self, 'telemetry'):
+            interval = getattr(self, 'telemetry_interval', 60)
+            bm_data['telemetry'] = []
+            self._telemetry_thread = TelemetryThread(
+                self.telemetry, interval, bm_data['telemetry'])
+            self._telemetry_thread.start()
+
         # Special case, as we want this to run immediately before run
         bm_data['start_time'] = datetime.now()
 
     def post_run_triggers(self, bm_data):
         # Special case, as we want this to run immediately after run
         bm_data['finish_time'] = datetime.now()
+
+        # Terminate telemetry thread and gather results
+        if hasattr(self, '_telemetry_thread'):
+            self._telemetry_thread.terminate()
+            timeout = getattr(self, 'telemetry_timeout', 30)
+            self._telemetry_thread.join(timeout)
 
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
@@ -373,3 +389,30 @@ class MicroBenchRedis(MicroBench):
 
     def output_result(self, bm_data):
         self.rclient.rpush(self.redis_key, self.to_json(bm_data))
+
+
+class TelemetryThread(threading.Thread):
+    def __init__(self, telem_fn, interval, slot, *args, **kwargs):
+        super(TelemetryThread, self).__init__(*args, **kwargs)
+        self._terminate = threading.Event()
+        signal.signal(signal.SIGINT, self.terminate)
+        signal.signal(signal.SIGTERM, self.terminate)
+        self._interval = interval
+        self._telemetry = slot
+        self._telem_fn = telem_fn
+        if not psutil:
+            raise ImportError('Telemetry requires the "psutil" package')
+        self.process = psutil.Process()
+
+    def terminate(self, signum=None, frame=None):
+        self._terminate.set()
+
+    def _get_telemetry(self):
+        telem = {'timestamp': datetime.now()}
+        telem.update(self._telem_fn(self.process))
+        self._telemetry.append(telem)
+
+    def run(self):
+        self._get_telemetry()
+        while not self._terminate.wait(self._interval):
+            self._get_telemetry()

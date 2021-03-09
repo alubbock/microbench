@@ -44,7 +44,6 @@ def test_capture_global_packages():
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
-    print(results['package_versions'][0])
     assert results['package_versions'][0]['microbench'] == \
            str(microbench_version)
     assert results['package_versions'][0]['pandas'] == pandas.__version__
@@ -64,3 +63,25 @@ def test_capture_packages_pkg_resources():
 
     results = pandas.read_json(pkg_bench.outfile.getvalue(), lines=True)
     assert pandas.__version__ == results['package_versions'][0]['pandas']
+
+
+def test_telemetry():
+    class TelemBench(MicroBench):
+        @staticmethod
+        def telemetry(process):
+            return {process.memory_full_info()}
+
+    telem_bench = TelemBench()
+
+    @telem_bench
+    def noop():
+        pass
+
+    noop()
+
+    # Check telemetry thread completed
+    assert not telem_bench._telemetry_thread.isAlive()
+
+    # Check some telemetry was captured
+    results = pandas.read_json(telem_bench.outfile.getvalue(), lines=True)
+    assert len(results['telemetry']) > 0
