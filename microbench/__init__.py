@@ -31,6 +31,10 @@ try:
     import conda.cli.python_api
 except ImportError:
     conda = None
+try:
+    import numpy
+except ImportError:
+    numpy = None
 
 
 from ._version import get_versions
@@ -38,8 +42,24 @@ __version__ = get_versions()['version']
 del get_versions
 
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        if numpy:
+            if isinstance(o, numpy.integer):
+                return int(o)
+            elif isinstance(o, numpy.floating):
+                return float(o)
+            elif isinstance(o, numpy.ndarray):
+                return o.tolist()
+
+        return super().default(o)
+
+
 class MicroBench(object):
-    def __init__(self, outfile=None, *args, **kwargs):
+    def __init__(self, outfile=None, json_encoder=JSONEncoder,
+                 *args, **kwargs):
         self._capture_before = []
         if args:
             raise ValueError('Only keyword arguments are allowed')
@@ -48,6 +68,7 @@ class MicroBench(object):
             self.outfile = outfile
         elif not hasattr(self, 'outfile'):
             self.outfile = io.StringIO()
+        self._json_encoder = json_encoder
 
     def pre_run_triggers(self, bm_data):
         # Capture environment variables
@@ -109,19 +130,9 @@ class MicroBench(object):
             ver = None
         bm_data['package_versions'][pkg.__name__] = ver
 
-    @staticmethod
-    def json_serializer(o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-
-    @classmethod
-    def to_json(cls, bm_data):
+    def to_json(self, bm_data):
         bm_str = '{}'.format(json.dumps(bm_data,
-                                        default=cls.json_serializer))
-
-        # On python 2, decode bm_str as UTF-8
-        if sys.version_info[0] < 3:
-            bm_str = bm_str.decode('utf8')
+                                        cls=self._json_encoder))
 
         return bm_str
 
@@ -160,6 +171,9 @@ class MicroBench(object):
 
             self.post_run_triggers(bm_data)
 
+            if isinstance(self, MBReturnValue):
+                bm_data['return_value'] = res
+
             # Delete any underscore-prefixed keys
             bm_data = {k: v for k, v in bm_data.items()
                        if not k.startswith('_')}
@@ -176,6 +190,11 @@ class MBFunctionCall(object):
     def capture_function_args_and_kwargs(self, bm_data):
         bm_data['args'] = bm_data['_args']
         bm_data['kwargs'] = bm_data['_kwargs']
+
+
+class MBReturnValue(object):
+    """ Capture the decorated function's return value """
+    pass
 
 
 class MBPythonVersion(object):
