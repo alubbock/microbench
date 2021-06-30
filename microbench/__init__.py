@@ -3,7 +3,7 @@ import json
 import platform
 import socket
 import sys
-import collections
+from collections.abc import Iterable
 import os
 import inspect
 import types
@@ -74,7 +74,7 @@ class MicroBench(object):
     def pre_run_triggers(self, bm_data):
         # Capture environment variables
         if hasattr(self, 'env_vars'):
-            if not isinstance(self.env_vars, collections.Iterable):
+            if not isinstance(self.env_vars, Iterable):
                 raise ValueError('env_vars should be a tuple of environment '
                                  'variable names')
 
@@ -83,7 +83,7 @@ class MicroBench(object):
 
         # Capture package versions
         if hasattr(self, 'capture_versions'):
-            if not isinstance(self.capture_versions, collections.Iterable):
+            if not isinstance(self.capture_versions, Iterable):
                 raise ValueError('capture_versions is reserved for a tuple of'
                                  'package names - please rename this method')
 

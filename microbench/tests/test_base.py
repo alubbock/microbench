@@ -80,7 +80,7 @@ def test_telemetry():
     noop()
 
     # Check telemetry thread completed
-    assert not telem_bench._telemetry_thread.isAlive()
+    assert not telem_bench._telemetry_thread.is_alive()
 
     # Check some telemetry was captured
     results = pandas.read_json(telem_bench.outfile.getvalue(), lines=True)
