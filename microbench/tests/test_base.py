@@ -69,7 +69,7 @@ def test_telemetry():
     class TelemBench(MicroBench):
         @staticmethod
         def telemetry(process):
-            return {process.memory_full_info()}
+            return process.memory_full_info()._asdict()
 
     telem_bench = TelemBench()
 
