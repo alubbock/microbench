@@ -20,7 +20,7 @@ examine results. However, some mixins (extensions) have specific requirements:
   package needs to be installed for line-by-line code benchmarking.
 * `MBInstalledPackages` requires `setuptools`, which is not a part of the
   standard library, but is usually available. 
-* The CPU cores and total RAM extensions require
+* The CPU cores, total RAM, and telemetry extensions require
   [psutil](https://pypi.org/project/psutil/).
 * The NVIDIA GPU plugin requires the
   [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface)
