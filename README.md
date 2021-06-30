@@ -131,6 +131,7 @@ MBGlobalPackages       | `package_versions`, with entry for every package in the
 MBInstalledPackages    | `package_versions`, with entry for every package available for import
 MBCondaPackages        | `conda_versions`, with entry for every conda package in the environment
 MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
+MBReturnValue          | Wrapped function's return value
 MBPythonVersion        | `python_version` (e.g. 3.6.0) and `python_executable` (e.g. `/usr/bin/python`, which should indicate any active virtual environment)
 MBHostInfo             | `hostname`<br>`operating_system`
 MBHostCpuCores         | `cpu_cores_logical` (number of cores, requires `psutil`)
