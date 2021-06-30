@@ -35,6 +35,7 @@ try:
     import numpy
 except ImportError:
     numpy = None
+from .diff import envdiff
 
 
 from ._version import get_versions
