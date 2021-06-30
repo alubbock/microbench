@@ -265,6 +265,32 @@ class GpuBench(MicroBench, MBNvidiaSmi):
 gpu_bench = GpuBench()
 ```
 
+## Telemetry support
+
+We use the term "telemetry" to refer to metadata which is captured periodically
+during the execution of a function by a thread which runs in parallel. For
+example, this may be useful to see how memory usage changes over time.
+
+Telemetry support requires the `psutil` library.
+
+Microbench implements the thread automatically; the end user only need define
+what metadata are captured and return the result as a dictionary.
+The default telemetry collection interval is every 60 seconds, which can be
+customized if needed.
+
+A minimal example to capture memory usage every 90 seconds is shown below:
+
+```python
+from microbench import MicroBench
+
+class TelemBench(MicroBench):
+    @staticmethod
+    def telemetry(process):
+        return process.memory_full_info()._asdict()
+
+telem_bench = TelemBench()
+```
+
 ## Extending microbench
 
 Microbench includes a few mixins for basic functionality as described in the
