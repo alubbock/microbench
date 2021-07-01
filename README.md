@@ -273,10 +273,13 @@ example, this may be useful to see how memory usage changes over time.
 
 Telemetry support requires the `psutil` library.
 
-Microbench implements the thread automatically; the end user only need define
-what metadata are captured and return the result as a dictionary.
+Microbench launches and cleans up the monitoring thread automatically.
+The end user only needs to define a `telemetry` static method, which accepts
+a [psutil.Process](https://psutil.readthedocs.io/en/latest/#psutil.Process)
+object and returns the telemetry data as a dictionary.
+
 The default telemetry collection interval is every 60 seconds, which can be
-customized if needed.
+customized if needed using the `telemetry_interval` class variable.
 
 A minimal example to capture memory usage every 90 seconds is shown below:
 
@@ -284,6 +287,8 @@ A minimal example to capture memory usage every 90 seconds is shown below:
 from microbench import MicroBench
 
 class TelemBench(MicroBench):
+    telemetry_interval = 90
+
     @staticmethod
     def telemetry(process):
         return process.memory_full_info()._asdict()
