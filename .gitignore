@@ -2,3 +2,4 @@
 .idea/
 .coverage
 .pytest_cache/
+*.egg-info/
