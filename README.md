@@ -8,7 +8,8 @@ clustered/distributed environments, where the same function runs under different
 environments, and is designed to be extensible with new
 functionality. In addition to benchmarking, this can help reproducibility by
 e.g. logging the versions of key Python packages, or even all packages loaded
-into the global environment.
+into the global environment. Other captured metadata can include CPU and RAM
+usage, environment variables, and hardware specifications.
 
 ## Requirements
 
@@ -68,9 +69,19 @@ def myfunction(arg1, arg2, ...):
     ...
 ```
 
-That's it! Benchmark information will be appended to the file specified in
-`outfile`. This example captures the fields `start_time`, `finish_time` and
-`function_name`. See the **Examine results** section for further information.
+That's it! When `myfunction()` is called, metadata will be captured
+into a `io.StringIO()` buffer, which can be read as follows
+(using the `pandas` library):
+
+```python
+import pandas as pd
+results = pd.read_json(basic_bench.outfile.getvalue(), lines=True)
+```
+
+The above example captures the fields `start_time`, `finish_time` and
+`function_name`. Microbench can capture many other types of metadata
+from the environment, resource usage, and hardware,
+which are covered below.
 
 ### Extended examples
 
@@ -78,7 +89,7 @@ Here's a more complete example using mixins (the `MB` prefixed class
 names) to extend functionality. Note that keyword arguments can be supplied
 to the constructor (in this case `some_info=123`) to specify additional
 information to capture. This example also specifies the `outfile` option,
-which writes conda
+which appends metadata to a file on disk.
 
 ```python
 from microbench import *
@@ -98,9 +109,10 @@ the [slurm](https://slurm.schedmd.com) array task ID will be stored as
 `env_SLURM_ARRAY_TASK_ID`. Where the environment variable is not set, the
 value will be `null`.
 
-To capture package versions, you can either specify them individually (as above), or you can capture the versions of
-every package in the global environment. In the following example, we would capture the versions of `microbench`,
-`numpy`, and `pandas` automatically.
+To capture package versions, you can either specify them individually (as
+above), or you can capture the versions of every package in the global
+environment. In the following example, we would capture the versions of
+`microbench`, `numpy`, and `pandas` automatically.
 
 ```python
 from microbench import *
@@ -112,8 +124,8 @@ class Bench2(MicroBench, MBGlobalPackages):
 bench2 = Bench2()
 ```
 
-If you want to go even further, and capture the version of every package available for import, there's a
-mixin for that:
+If you want to go even further, and capture the version of every package
+available for import, there's a mixin for that:
 
 ```python
 from microbench import *
