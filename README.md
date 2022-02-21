@@ -375,6 +375,16 @@ json_data = '\n'.join(r.decode('utf8') for r in redis_data)
 results = pandas.read_json(json_data, lines=True)
 ```
 
+## Runtime impact considerations
+
+The runtime impact varies depending on what information is captured and by platform.
+Broadly, capturing environment variables, Python package versions, and timing
+information for a function has a negligible impact. Capturing telemetry and
+invoking external programs (like `nvidia-smi` for GPU information) has a larger impact,
+although the latter is a one-off per invocation and typically less than one second.
+Telemetry capture intervals should be kept relatively infrequent (e.g., every minute
+or two, rather than every second) to avoid significant runtime impacts.
+
 ## Feedback
 
 Please note this is a recently created, experimental package. Please let me know
