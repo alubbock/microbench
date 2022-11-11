@@ -1,9 +1,11 @@
 from microbench import MicroBench, MBFunctionCall, MBPythonVersion, \
-    MBHostInfo, MBInstalledPackages
+    MBReturnValue, MBHostInfo, MBInstalledPackages, \
+    JSONEncodeWarning, JSONEncoder, _UNENCODABLE_PLACEHOLDER_VALUE
 from microbench import __version__ as microbench_version
 import io
 import pandas
 import datetime
+import warnings
 from .globals_capture import globals_bench
 
 
@@ -85,3 +87,65 @@ def test_telemetry():
     # Check some telemetry was captured
     results = pandas.read_json(telem_bench.outfile.getvalue(), lines=True)
     assert len(results['telemetry']) > 0
+
+
+def test_unjsonencodable_arg_kwarg_retval():
+    class Bench(MicroBench, MBFunctionCall, MBReturnValue):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def dummy(arg1, arg2):
+        return object()
+
+    with warnings.catch_warnings(record=True) as w:
+        # Run a function with unencodable arg, kwarg, return value
+        dummy(object(), arg2=object())
+
+        # Check that we get three warnings - one each for args,
+        # kwargs, return value
+        assert len(w) == 3
+        assert all(issubclass(w_.category, JSONEncodeWarning) for w_ in w)
+
+
+    results = pandas.read_json(bench.outfile.getvalue(), lines=True)
+    assert results['args'][0] == [_UNENCODABLE_PLACEHOLDER_VALUE]
+    assert results['kwargs'][0] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
+    assert results['return_value'][0] == _UNENCODABLE_PLACEHOLDER_VALUE
+
+
+def test_custom_jsonencoder():
+    # A custom class which can't be encoded to JSON by default
+    class MyCustomClass(object):
+        def __init__(self, message):
+            self.message = message
+
+        def __str__(self):
+            return f'<MyCustomClass "{self.message}">'
+
+    # Implement JSON encoding for objects of the above class
+    class CustomJSONEncoder(JSONEncoder):
+        def default(self, o):
+            if isinstance(o, MyCustomClass):
+                return str(o)
+
+            return super().default(o)
+
+    class Bench(MicroBench, MBReturnValue):
+        pass
+
+    # Create a benchmark suite with custom JSON encoder
+    bench = Bench(json_encoder=CustomJSONEncoder)
+
+    # Custom object which requires special handling for JSONEncoder
+    obj = MyCustomClass('test message')
+
+    @bench
+    def dummy():
+        return obj
+
+    dummy()
+
+    results = pandas.read_json(bench.outfile.getvalue(), lines=True)
+    assert results['return_value'][0] == str(obj)

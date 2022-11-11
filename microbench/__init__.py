@@ -14,6 +14,7 @@ import subprocess
 import io
 import threading
 import signal
+import warnings
 try:
     import pkg_resources
 except ImportError:
@@ -57,6 +58,13 @@ class JSONEncoder(json.JSONEncoder):
 
         return super().default(o)
 
+
+class JSONEncodeWarning(Warning):
+    """ Warning used when JSON encoding fails """
+    pass
+
+
+_UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 
 class MicroBench(object):
     def __init__(self, outfile=None, json_encoder=JSONEncoder,
@@ -173,7 +181,12 @@ class MicroBench(object):
             self.post_run_triggers(bm_data)
 
             if isinstance(self, MBReturnValue):
-                bm_data['return_value'] = res
+                try:
+                    self.to_json(res)
+                    bm_data['return_value'] = res
+                except TypeError:
+                    warnings.warn(f"Return value is not JSON encodable (type: {type(res)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                    bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
 
             # Delete any underscore-prefixed keys
             bm_data = {k: v for k, v in bm_data.items()
@@ -189,8 +202,24 @@ class MicroBench(object):
 class MBFunctionCall(object):
     """ Capture function arguments and keyword arguments """
     def capture_function_args_and_kwargs(self, bm_data):
-        bm_data['args'] = bm_data['_args']
-        bm_data['kwargs'] = bm_data['_kwargs']
+        # Check all args are encodeable as JSON
+        bm_data['args'] = []
+        for i, v in enumerate(bm_data['_args']):
+            try:
+                bm_data['args'].append(self.to_json(v))
+            except TypeError:
+                warnings.warn(f"Function argument {i} is not JSON encodable (type: {type(v)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                bm_data['args'].append(_UNENCODABLE_PLACEHOLDER_VALUE)
+
+        # Check all kwargs are encodeable as JSON
+        bm_data['kwargs'] = {}
+        for k, v in bm_data['_kwargs'].items():
+            try:
+                bm_data['kwargs'][k] = self.to_json(v)
+            except TypeError:
+                warnings.warn(f"Function keyword argument \"{k}\" is not JSON encodable (type: {type(v)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                bm_data['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
+
 
 
 class MBReturnValue(object):

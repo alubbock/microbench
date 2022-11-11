@@ -334,6 +334,64 @@ class Bench(MicroBench):
 benchmark = Bench()
 ```
 
+## Extending JSONEncoder
+
+Microbench encodes data in JSON, but sometimes Microbench will
+encounter data types (like custom objects or classes)
+that are not encodable as JSON by default (usually meaning they
+don't have a way to be represented as a string, list, or
+dictionary). For example, when using the `MBFunctionCall` and
+`MBReturnValue`, a warning will be shown if any argument or
+return value (respectively) is not encodable as JSON, and the
+value will be replaced with a placeholder to allow the metadata
+capture to continue, and a warning will be shown.
+
+If you wish to actually capture those values, you will need to
+specify a way to convert the object to JSON. This is done using
+by extending `microbench.JSONEncoder` with a test for the object
+type and implementing a conversion to a string, list, or dict.
+
+For example, to capture a `Graph` object from the `igraph`
+package using `str(graph)` as the representation, we could
+do the following (note that we could use any representation
+we want, e.g. if we wanted to capture the object in a more
+or less detailed way):
+
+```
+import microbench as mb
+from igraph import Graph
+
+# Extend the JSONEncoder to encode Graph objects
+class CustomJSONEncoder(mb.JSONEncoder):
+    def default(self, o):
+        # Encode igraph.Graph objects as strings
+        if isinstance(o, Graph):
+            return str(o)
+
+        # Add further isinstance(o, ...) cases here
+        # if needed
+
+        # Make sure to call super() to handle
+        # default cases
+        return super().default(o)
+
+# Define your benchmark class as normal
+class Bench(mb.MicroBench, mb.MBReturnValue):
+    pass
+
+# Create a benchmark suite with the custom JSON
+# encoder from above
+bench = Bench(json_encoder=CustomJSONEncoder)
+
+# Attach the benchmark suite to our function
+@bench
+def return_a_graph():
+    return Graph(2, ((0, 1), (0, 2)))
+
+# This should now work without warnings or errors
+return_a_graph()
+```
+
 ## Redis support
 
 By default, microbench appends output to a file, but output can be directed
