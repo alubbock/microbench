@@ -307,9 +307,14 @@ class MBInstalledPackages(object):
             bm_data['package_paths'] = {}
 
         for pkg in importlib.metadata.distributions():
-            bm_data['package_versions'][pkg.name] = pkg.version
+            try:
+                pkg_name = pkg.name
+            except AttributeError:
+                # Python <3.9
+                pkg_name = pkg.metadata['Name']
+            bm_data['package_versions'][pkg_name] = pkg.version
             if self.capture_paths:
-                bm_data['package_paths'][pkg.name] = os.path.dirname(
+                bm_data['package_paths'][pkg_name] = os.path.dirname(
                     pkg.locate_file(pkg.files[0]))
 
 
