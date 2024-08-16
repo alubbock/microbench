@@ -5,6 +5,7 @@ import socket
 import sys
 from collections.abc import Iterable
 import os
+import importlib
 import inspect
 import types
 import pickle
@@ -15,10 +16,6 @@ import io
 import threading
 import signal
 import warnings
-try:
-    import pkg_resources
-except ImportError:
-    pkg_resources = None
 try:
     import line_profiler
 except ImportError:
@@ -301,23 +298,24 @@ class MBCondaPackages(object):
 
 
 class MBInstalledPackages(object):
-    """ Capture installed Python packages using pkg_resources """
+    """ Capture installed Python packages using importlib """
     capture_paths = False
 
     def capture_packages(self, bm_data):
-        if not pkg_resources:
-            raise ImportError(
-                'pkg_resources is required to capture package names, which is '
-                'provided with the "setuptools" package')
-
         bm_data['package_versions'] = {}
         if self.capture_paths:
             bm_data['package_paths'] = {}
 
-        for pkg in pkg_resources.working_set:
-            bm_data['package_versions'][pkg.project_name] = pkg.version
+        for pkg in importlib.metadata.distributions():
+            try:
+                pkg_name = pkg.name
+            except AttributeError:
+                # Python <3.9
+                pkg_name = pkg.metadata['Name']
+            bm_data['package_versions'][pkg_name] = pkg.version
             if self.capture_paths:
-                bm_data['package_paths'][pkg.project_name] = pkg.location
+                bm_data['package_paths'][pkg_name] = os.path.dirname(
+                    pkg.locate_file(pkg.files[0]))
 
 
 class MBLineProfiler(object):
