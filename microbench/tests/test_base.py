@@ -51,7 +51,7 @@ def test_capture_global_packages():
     assert results['package_versions'][0]['pandas'] == pandas.__version__
 
 
-def test_capture_packages_pkg_resources():
+def test_capture_packages_importlib():
     class PkgBench(MicroBench, MBInstalledPackages):
         capture_paths = True
 
