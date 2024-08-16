@@ -29,7 +29,7 @@ except ImportError:
     psutil = None
 try:
     import conda
-    import conda.cli.python_api
+    import conda.testing.conda_cli
 except ImportError:
     conda = None
 try:
@@ -277,9 +277,9 @@ class MBCondaPackages(object):
             # Use subprocess
             pkg_list = subprocess.check_output(['conda', 'list']).decode('utf8')
         else:
-            # Use conda Python API
-            pkg_list, stderr, ret_code = conda.cli.python_api.run_command(
-                conda.cli.python_api.Commands.LIST)
+            # Use conda API
+            pkg_list, stderr, ret_code = conda.testing.conda_cli.run_command(
+                conda.testing.conda_cli.Commands.LIST)
 
             if ret_code != 0 or stderr:
                 raise RuntimeError('Error running conda list: {}'.format(
