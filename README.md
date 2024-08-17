@@ -2,7 +2,7 @@
 
 ![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
 
-Microbench is a small Python package for benchmarking Python functions, and 
+Microbench is a small Python package for benchmarking Python functions, and
 optionally capturing extra runtime/environment information. It is most useful in
 clustered/distributed environments, where the same function runs under different
 environments, and is designed to be extensible with new
@@ -20,7 +20,7 @@ examine results. However, some mixins (extensions) have specific requirements:
 * The [line_profiler](https://github.com/rkern/line_profiler)
   package needs to be installed for line-by-line code benchmarking.
 * `MBInstalledPackages` requires `setuptools`, which is not a part of the
-  standard library, but is usually available. 
+  standard library, but is usually available.
 * The CPU cores, total RAM, and telemetry extensions require
   [psutil](https://pypi.org/project/psutil/).
 * The NVIDIA GPU plugin requires the
@@ -56,7 +56,7 @@ Here's a minimal, complete example:
 
 ```python
 from microbench import MicroBench
-    
+
 basic_bench = MicroBench()
 ```
 
@@ -78,17 +78,20 @@ import pandas as pd
 results = pd.read_json(basic_bench.outfile.getvalue(), lines=True)
 ```
 
-The above example captures the fields `start_time`, `finish_time` and
-`function_name`. Microbench can capture many other types of metadata
-from the environment, resource usage, and hardware,
-which are covered below.
+The above example captures the fields `start_time`, `finish_time`,
+`run_durations` and `function_name`. Microbench can capture many
+other types of metadata from the environment, resource usage, and
+hardware, which are covered below.
 
 ### Extended examples
 
-Here's a more complete example using mixins (the `MB` prefixed class 
+Here's a more complete example using mixins (the `MB` prefixed class
 names) to extend functionality. Note that keyword arguments can be supplied
 to the constructor (in this case `some_info=123`) to specify additional
-information to capture. This example also specifies the `outfile` option,
+information to capture. We also specify `iterations=3`, which means that the
+called function with be executed 3 times (the returned result will always
+be from the final run) with timings captured for each run.
+This example also specifies the `outfile` option,
 which appends metadata to a file on disk.
 
 ```python
@@ -99,8 +102,8 @@ class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks'
     capture_versions = (numpy, pandas)  # Or use MBGlobalPackages/MBInstalledPackages
     env_vars = ('SLURM_ARRAY_TASK_ID', )
-    
-benchmark = MyBench(some_info=123)
+
+benchmark = MyBench(some_info=123, iterations=3)
 ```
 
 The `env_vars` option from the example above specifies a list of environment
@@ -132,9 +135,9 @@ from microbench import *
 
 class Bench3(MicroBench, MBInstalledPackages):
     pass
-    
+
 bench3 = Bench3()
-``` 
+```
 
  Mixin                 | Fields captured
 -----------------------|----------------
@@ -159,7 +162,7 @@ separate line in the file. The output from the minimal example above for a
 single run will look similar to the following:
 
 ```json
-{"start_time": "2018-08-06T10:28:24.806493", "finish_time": "2018-08-06T10:28:24.867456", "function_name": "my_function"}
+{"start_time": "2018-08-06T10:28:24.806493+00:00", "finish_time": "2018-08-06T10:28:24.867456+00:00", "run_durations": [0.60857599999999999], "function_name": "my_function"}
 ```
 
 The simplest way to examine results in detail is to load them into a
@@ -174,10 +177,10 @@ Pandas has powerful data manipulation capabilities. For example, to calculate
 the average runtime by Python version:
 
 ```python
-# Calculate runtime for each run
+# Calculate overall runtime
 results['runtime'] = results['finish_time'] - results['start_time']
 
-# Average runtime by Python version
+# Average overall runtime by Python version
 results.groupby('python_version')['runtime'].mean()
 ```
 
@@ -330,7 +333,7 @@ class Bench(MicroBench):
 
     def capture_machine_platform(self, bm_data):
         bm_data['platform'] = platform.machine()
-        
+
 benchmark = Bench()
 ```
 
@@ -442,6 +445,12 @@ invoking external programs (like `nvidia-smi` for GPU information) has a larger 
 although the latter is a one-off per invocation and typically less than one second.
 Telemetry capture intervals should be kept relatively infrequent (e.g., every minute
 or two, rather than every second) to avoid significant runtime impacts.
+
+### Timezones
+
+Microbench captures `start_time` and `finish_time` in the UTC timezone by default.
+This can be overriden by passing a `timezone=tz` argument when creating a benchmark
+class, where `tz` is a timezone object (e.g. created using the `pytz` library).
 
 ## Feedback
 

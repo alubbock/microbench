@@ -28,11 +28,37 @@ def test_function():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True, )
+    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True)
     assert (results['function_name'] == 'my_function').all()
     assert results['package_versions'][0]['pandas'] == pandas.__version__
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes > datetime.timedelta(0)).all()
+
+
+def test_multi_iterations():
+    class MyBench(MicroBench):
+        pass
+
+    timezone = datetime.timezone(datetime.timedelta(hours=10))
+    iterations = 3
+    benchmark = MyBench(iterations=iterations, timezone=timezone)
+
+    @benchmark
+    def my_function():
+        pass
+
+    # call the function
+    my_function()
+
+    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True)
+    assert (results['function_name'] == 'my_function').all()
+    runtimes = results['finish_time'] - results['start_time']
+    assert (runtimes >= datetime.timedelta(0)).all()
+    assert results['timezone'][0] == str(timezone)
+
+    assert len(results['run_durations'][0]) == iterations
+    assert all(dur >= 0 for dur in results['run_durations'][0])
+    assert sum(results['run_durations'][0]) <= runtimes[0].total_seconds()
 
 
 def test_capture_global_packages():
