@@ -24,3 +24,4 @@ def test_line_profiler():
     lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
     assert lp.__class__.__name__ == 'LineStats'
     MBLineProfiler.print_line_profile(results['line_profiler'][0])
+    assert not all(len(v) == 0 for v in lp.timings.values()), "No timings present"

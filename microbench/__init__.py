@@ -67,11 +67,11 @@ class JSONEncodeWarning(Warning):
 
 _UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 
+
 class MicroBench(object):
     def __init__(self, outfile=None, json_encoder=JSONEncoder,
                  tz=timezone.utc, iterations=1,
                  *args, **kwargs):
-        self._capture_before = []
         if args:
             raise ValueError('Only keyword arguments are allowed')
         self._bm_static = kwargs
@@ -109,7 +109,7 @@ class MicroBench(object):
         for method_name in dir(self):
             if method_name.startswith('capture_'):
                 method = getattr(self, method_name)
-                if callable(method) and method not in self._capture_before:
+                if callable(method):
                     method(bm_data)
 
         # Initialise telemetry thread
@@ -131,6 +131,13 @@ class MicroBench(object):
             self._telemetry_thread.terminate()
             timeout = getattr(self, 'telemetry_timeout', 30)
             self._telemetry_thread.join(timeout)
+
+        # Run capturepost triggers
+        for method_name in dir(self):
+            if method_name.startswith('capturepost_'):
+                method = getattr(self, method_name)
+                if callable(method):
+                    method(bm_data)
 
     def pre_run_triggers(self, bm_data):
         bm_data['_run_start'] = datetime.now(self.tz)
@@ -345,7 +352,7 @@ class MBLineProfiler(object):
     slightly slow down the execution of your function, so it's not recommended
     in production.
     """
-    def capture_line_profile(self, bm_data):
+    def capturepost_line_profile(self, bm_data):
         bm_data['line_profiler'] = base64.encodebytes(
             pickle.dumps(self._line_profiler.get_stats())
         ).decode('utf8')
