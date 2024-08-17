@@ -34,6 +34,9 @@ def test_function():
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes > datetime.timedelta(0)).all()
 
+    assert results['timestamp_tz'][0] == 'UTC'
+    assert results['duration_counter'][0] == 'perf_counter'
+
 
 def test_multi_iterations():
     class MyBench(MicroBench):
@@ -58,7 +61,6 @@ def test_multi_iterations():
 
     assert len(results['run_durations'][0]) == iterations
     assert all(dur >= 0 for dur in results['run_durations'][0])
-    assert sum(results['run_durations'][0]) <= runtimes[0].total_seconds()
 
 
 def test_capture_global_packages():

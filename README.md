@@ -79,7 +79,12 @@ results = pd.read_json(basic_bench.outfile, lines=True)
 ```
 
 The above example captures the fields `start_time`, `finish_time`,
-`run_durations` and `function_name`. Microbench can capture many
+`run_durations` (of each function call, in seconds by default), `function_name`,
+`timestamp_tz` (timezone name, see Timezones section of this README), and
+`duration_counter` (the name of the function used to calculate
+durations, see Duration timings section of this README).
+
+Microbench can capture many
 other types of metadata from the environment, resource usage, and
 hardware, which are covered below.
 
@@ -90,20 +95,22 @@ names) to extend functionality. Note that keyword arguments can be supplied
 to the constructor (in this case `some_info=123`) to specify additional
 information to capture. We also specify `iterations=3`, which means that the
 called function with be executed 3 times (the returned result will always
-be from the final run) with timings captured for each run.
+be from the final run) with timings captured for each run. We specify a custom
+duration counter, `time.monotonic` instead of the default `time.perf_counter`
+(see Duration timings section later in this README for explanation).
 This example also specifies the `outfile` option,
 which appends metadata to a file on disk.
 
 ```python
 from microbench import *
-import numpy, pandas
+import numpy, pandas, time
 
 class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks'
     capture_versions = (numpy, pandas)  # Or use MBGlobalPackages/MBInstalledPackages
     env_vars = ('SLURM_ARRAY_TASK_ID', )
 
-benchmark = MyBench(some_info=123, iterations=3)
+benchmark = MyBench(some_info=123, iterations=3, duration_counter=time.monotonic)
 ```
 
 The `env_vars` option from the example above specifies a list of environment
@@ -162,8 +169,15 @@ separate line in the file. The output from the minimal example above for a
 single run will look similar to the following:
 
 ```json
-{"start_time": "2018-08-06T10:28:24.806493+00:00", "finish_time": "2018-08-06T10:28:24.867456+00:00", "run_durations": [0.60857599999999999], "function_name": "my_function"}
+{"start_time": "2018-08-06T10:28:24.806493+00:00", "finish_time": "2018-08-06T10:28:24.867456+00:00", "run_durations": [0.60857599999999999], "function_name": "my_function", "timestamp_tz": "UTC", "duration_counter": "perf_counter"}
 ```
+
+Start and finish times are given as timestamps in ISO-8601 format, in the UTC
+timezone by default (see Timezones section of this README).
+
+Run_durations are given in seconds, captured using the `time.perf_counter`
+function by default, but this can be overridden (see Duration timings section
+of this README).
 
 The simplest way to examine results in detail is to load them into a
 [pandas](https://pandas.pydata.org/) dataframe:
@@ -451,11 +465,21 @@ although the latter is a one-off per invocation and typically less than one seco
 Telemetry capture intervals should be kept relatively infrequent (e.g., every minute
 or two, rather than every second) to avoid significant runtime impacts.
 
+### Duration timings
+
+By default, `run_durations` are given in seconds using the `time.perf_counter` function,
+which should be sufficient for most use cases. You can use any function that
+returns a float or integer number for time. Some examples would be `time.perf_counter_ns`
+if you want time in nanoseconds, or `time.monotonic` for a monotonic clock impervious
+to clock adjustments (ideal for very long-running code). Use the `duration_counter=...`
+argument when creating a benchmark suite object, as seen in the Extended examples
+section of this README, above.
+
 ### Timezones
 
 Microbench captures `start_time` and `finish_time` in the UTC timezone by default.
-This can be overriden by passing a `timezone=tz` argument when creating a benchmark
-class, where `tz` is a timezone object (e.g. created using the `pytz` library).
+This can be overriden by passing a `tz=...` argument when creating a benchmark
+class, where the value is a timezone object (e.g. created using the `pytz` library).
 
 ## Feedback
 
