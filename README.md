@@ -318,7 +318,8 @@ extended example, above.
 
 You can also add functions to your benchmark suite to capture
 extra information at runtime. These functions must be prefixed with `capture_`
-for them to run automatically before the function starts. They take
+for them to run automatically before the function starts, or `capturepost_`
+for them to run automatically when the function completes. They take
 a single argument, `bm_data`, a dictionary to be extended with extra data.
 Care should be taken to avoid overwriting existing key names.
 
