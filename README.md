@@ -75,7 +75,7 @@ into a `io.StringIO()` buffer, which can be read as follows
 
 ```python
 import pandas as pd
-results = pd.read_json(basic_bench.outfile.getvalue(), lines=True)
+results = pd.read_json(basic_bench.outfile, lines=True)
 ```
 
 The above example captures the fields `start_time`, `finish_time`,
@@ -169,6 +169,10 @@ The simplest way to examine results in detail is to load them into a
 [pandas](https://pandas.pydata.org/) dataframe:
 
 ```python
+# Read results directly from active benchmark suite
+benchmark.get_results()
+
+# Or, equivalently when using a file, read it using pandas directly
 import pandas
 results = pandas.read_json('/home/user/my-benchmarks', lines=True)
 ```
@@ -219,7 +223,7 @@ def my_function():
 my_function()
 
 # Read the results into a Pandas DataFrame
-results = pandas.read_json(lpbench.outfile.getvalue(), lines=True)
+results = lpbench.get_results()
 
 # Get the line profiler report as an object
 lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])

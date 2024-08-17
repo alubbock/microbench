@@ -1,5 +1,6 @@
 from microbench import MicroBench, MBLineProfiler
 import pandas
+import io
 
 
 def test_line_profiler():
@@ -20,7 +21,7 @@ def test_line_profiler():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = pandas.read_json(lpbench.outfile.getvalue(), lines=True)
+    results = lpbench.get_results()
     lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
     assert lp.__class__.__name__ == 'LineStats'
     MBLineProfiler.print_line_profile(results['line_profiler'][0])

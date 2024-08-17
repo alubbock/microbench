@@ -23,6 +23,6 @@ def test_nvidia():
 
     test()
 
-    results = pandas.read_json(bench.outfile.getvalue(), lines=True)
+    results = bench.get_results()
     assert 'nvidia_gpu_name' in results.columns
     assert 'nvidia_memory.total' in results.columns
