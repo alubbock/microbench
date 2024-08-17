@@ -33,6 +33,10 @@ try:
     import numpy
 except ImportError:
     numpy = None
+try:
+    import pandas
+except ImportError:
+    pandas = None
 from .diff import envdiff
 
 
@@ -175,6 +179,15 @@ class MicroBench(object):
         else:
             # Assume file-like object
             self.outfile.write(bm_str)
+
+    def get_results(self):
+        if not pandas:
+            raise ImportError('This fuctionality requires the "pandas" package')
+
+        if hasattr(self.outfile, 'seek'):
+            self.outfile.seek(0)
+
+        return pandas.read_json(self.outfile, lines=True)
 
     def __call__(self, func):
         def inner(*args, **kwargs):
@@ -353,13 +366,13 @@ class MBLineProfiler(object):
     in production.
     """
     def capturepost_line_profile(self, bm_data):
-        bm_data['line_profiler'] = base64.encodebytes(
+        bm_data['line_profiler'] = base64.b64encode(
             pickle.dumps(self._line_profiler.get_stats())
         ).decode('utf8')
 
     @staticmethod
     def decode_line_profile(line_profile_pickled):
-        return pickle.loads(base64.decodebytes(line_profile_pickled.encode()))
+        return pickle.loads(base64.b64decode(line_profile_pickled))
 
     @classmethod
     def print_line_profile(self, line_profile_pickled, **kwargs):

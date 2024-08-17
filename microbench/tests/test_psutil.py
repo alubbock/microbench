@@ -14,6 +14,6 @@ def test_psutil():
 
     test_func()
 
-    results = pandas.read_json(mybench.outfile.getvalue(), lines=True)
+    results = mybench.get_results()
     assert results['cpu_cores_logical'][0] >= 1
     assert results['ram_total'][0] > 0

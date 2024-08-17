@@ -28,7 +28,7 @@ def test_function():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True)
+    results = benchmark.get_results()
     assert (results['function_name'] == 'my_function').all()
     assert results['package_versions'][0]['pandas'] == pandas.__version__
     runtimes = results['finish_time'] - results['start_time']
@@ -50,7 +50,7 @@ def test_multi_iterations():
     # call the function
     my_function()
 
-    results = pandas.read_json(benchmark.outfile.getvalue(), lines=True)
+    results = benchmark.get_results()
     assert (results['function_name'] == 'my_function').all()
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes >= datetime.timedelta(0)).all()
@@ -68,7 +68,7 @@ def test_capture_global_packages():
 
     noop()
 
-    results = pandas.read_json(globals_bench.outfile.getvalue(), lines=True)
+    results = globals_bench.get_results()
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
@@ -89,7 +89,7 @@ def test_capture_packages_importlib():
 
     noop()
 
-    results = pandas.read_json(pkg_bench.outfile.getvalue(), lines=True)
+    results = pkg_bench.get_results()
     assert pandas.__version__ == results['package_versions'][0]['pandas']
 
 
@@ -111,7 +111,7 @@ def test_telemetry():
     assert not telem_bench._telemetry_thread.is_alive()
 
     # Check some telemetry was captured
-    results = pandas.read_json(telem_bench.outfile.getvalue(), lines=True)
+    results = telem_bench.get_results()
     assert len(results['telemetry']) > 0
 
 
@@ -135,7 +135,7 @@ def test_unjsonencodable_arg_kwarg_retval():
         assert all(issubclass(w_.category, JSONEncodeWarning) for w_ in w)
 
 
-    results = pandas.read_json(bench.outfile.getvalue(), lines=True)
+    results =bench.get_results()
     assert results['args'][0] == [_UNENCODABLE_PLACEHOLDER_VALUE]
     assert results['kwargs'][0] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
     assert results['return_value'][0] == _UNENCODABLE_PLACEHOLDER_VALUE
@@ -173,5 +173,5 @@ def test_custom_jsonencoder():
 
     dummy()
 
-    results = pandas.read_json(bench.outfile.getvalue(), lines=True)
+    results = bench.get_results()
     assert results['return_value'][0] == str(obj)
