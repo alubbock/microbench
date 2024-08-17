@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 import platform
 import socket
@@ -45,6 +45,10 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):
             return o.isoformat()
+        if isinstance(o, timedelta):
+            return o.total_seconds()
+        if isinstance(o, timezone):
+            return str(o)
         if numpy:
             if isinstance(o, numpy.integer):
                 return int(o)
@@ -65,6 +69,7 @@ _UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 
 class MicroBench(object):
     def __init__(self, outfile=None, json_encoder=JSONEncoder,
+                 tz=timezone.utc, iterations=1,
                  *args, **kwargs):
         self._capture_before = []
         if args:
@@ -75,8 +80,13 @@ class MicroBench(object):
         elif not hasattr(self, 'outfile'):
             self.outfile = io.StringIO()
         self._json_encoder = json_encoder
+        self.tz = tz
+        self.iterations = iterations
 
-    def pre_run_triggers(self, bm_data):
+    def pre_start_triggers(self, bm_data):
+        # Store timezone
+        bm_data['timestamp_tz'] = str(self.tz)
+
         # Capture environment variables
         if hasattr(self, 'env_vars'):
             if not isinstance(self.env_vars, Iterable):
@@ -107,21 +117,26 @@ class MicroBench(object):
             interval = getattr(self, 'telemetry_interval', 60)
             bm_data['telemetry'] = []
             self._telemetry_thread = TelemetryThread(
-                self.telemetry, interval, bm_data['telemetry'])
+                self.telemetry, interval, bm_data['telemetry'], self.tz)
             self._telemetry_thread.start()
 
-        # Special case, as we want this to run immediately before run
-        bm_data['start_time'] = datetime.now()
+        bm_data['run_durations'] = []
+        bm_data['start_time'] = datetime.now(self.tz)
 
-    def post_run_triggers(self, bm_data):
-        # Special case, as we want this to run immediately after run
-        bm_data['finish_time'] = datetime.now()
+    def post_finish_triggers(self, bm_data):
+        bm_data['finish_time'] = datetime.now(self.tz)
 
         # Terminate telemetry thread and gather results
         if hasattr(self, '_telemetry_thread'):
             self._telemetry_thread.terminate()
             timeout = getattr(self, 'telemetry_timeout', 30)
             self._telemetry_thread.join(timeout)
+
+    def pre_run_triggers(self, bm_data):
+        bm_data['_run_start'] = datetime.now(self.tz)
+
+    def post_run_triggers(self, bm_data):
+        bm_data['run_durations'].append(datetime.now(self.tz) - bm_data['_run_start'])
 
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
@@ -168,14 +183,18 @@ class MicroBench(object):
                                       '"line_profiler" package')
                 self._line_profiler = line_profiler.LineProfiler(func)
 
-            self.pre_run_triggers(bm_data)
+            self.pre_start_triggers(bm_data)
 
-            if isinstance(self, MBLineProfiler):
-                res = self._line_profiler.runcall(func, *args, **kwargs)
-            else:
-                res = func(*args, **kwargs)
+            for _ in range(self.iterations):
+                self.pre_run_triggers(bm_data)
 
-            self.post_run_triggers(bm_data)
+                if isinstance(self, MBLineProfiler):
+                    res = self._line_profiler.runcall(func, *args, **kwargs)
+                else:
+                    res = func(*args, **kwargs)
+                self.post_run_triggers(bm_data)
+
+            self.post_finish_triggers(bm_data)
 
             if isinstance(self, MBReturnValue):
                 try:
@@ -216,7 +235,6 @@ class MBFunctionCall(object):
             except TypeError:
                 warnings.warn(f"Function keyword argument \"{k}\" is not JSON encodable (type: {type(v)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
                 bm_data['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
-
 
 
 class MBReturnValue(object):
@@ -439,7 +457,7 @@ class MicroBenchRedis(MicroBench):
 
 
 class TelemetryThread(threading.Thread):
-    def __init__(self, telem_fn, interval, slot, *args, **kwargs):
+    def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
         super(TelemetryThread, self).__init__(*args, **kwargs)
         self._terminate = threading.Event()
         signal.signal(signal.SIGINT, self.terminate)
@@ -447,6 +465,7 @@ class TelemetryThread(threading.Thread):
         self._interval = interval
         self._telemetry = slot
         self._telem_fn = telem_fn
+        self._tz = timezone
         if not psutil:
             raise ImportError('Telemetry requires the "psutil" package')
         self.process = psutil.Process()
@@ -455,7 +474,7 @@ class TelemetryThread(threading.Thread):
         self._terminate.set()
 
     def _get_telemetry(self):
-        telem = {'timestamp': datetime.now()}
+        telem = {'timestamp': datetime.now(self._tz)}
         telem.update(self._telem_fn(self.process))
         self._telemetry.append(telem)
 
