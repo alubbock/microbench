@@ -14,6 +14,7 @@ import re
 import subprocess
 import io
 import threading
+import time
 import signal
 import warnings
 try:
@@ -37,7 +38,6 @@ try:
     import pandas
 except ImportError:
     pandas = None
-from .diff import envdiff
 
 
 from ._version import get_versions
@@ -75,7 +75,26 @@ _UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 class MicroBench(object):
     def __init__(self, outfile=None, json_encoder=JSONEncoder,
                  tz=timezone.utc, iterations=1,
+                 duration_counter=time.perf_counter,
                  *args, **kwargs):
+        """Benchmark and metadata capture suite.
+
+        Args:
+            outfile (file or buf, optional): Output file or buffer.
+                Defaults to None, which captures data using a StringIO
+                buffer.
+            json_encoder (json.JSONEncoder, optional): JSONEncoder for
+                benchmark results. Defaults to JSONEncoder.
+            tz (timezone, optional): Timezone for start_time and finish_time.
+                Defaults to timezone.utc.
+            iterations (int, optional): Number of iterations to run function.
+                Defaults to 1.
+            duration_counter (_type_, optional): Timer function to use for
+                run_durations. Defaults to time.perf_counter.
+
+        Raises:
+            ValueError: If unknown position arguments are used.
+        """
         if args:
             raise ValueError('Only keyword arguments are allowed')
         self._bm_static = kwargs
@@ -84,12 +103,15 @@ class MicroBench(object):
         elif not hasattr(self, 'outfile'):
             self.outfile = io.StringIO()
         self._json_encoder = json_encoder
+        self._duration_counter = duration_counter
         self.tz = tz
         self.iterations = iterations
 
     def pre_start_triggers(self, bm_data):
         # Store timezone
         bm_data['timestamp_tz'] = str(self.tz)
+        # Store duration counter function name
+        bm_data['duration_counter'] = self._duration_counter.__name__
 
         # Capture environment variables
         if hasattr(self, 'env_vars'):
@@ -144,10 +166,10 @@ class MicroBench(object):
                     method(bm_data)
 
     def pre_run_triggers(self, bm_data):
-        bm_data['_run_start'] = datetime.now(self.tz)
+        bm_data['_run_start'] = self._duration_counter()
 
     def post_run_triggers(self, bm_data):
-        bm_data['run_durations'].append(datetime.now(self.tz) - bm_data['_run_start'])
+        bm_data['run_durations'].append(self._duration_counter() - bm_data['_run_start'])
 
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
