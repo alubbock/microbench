@@ -434,6 +434,13 @@ class MBLineProfiler:
 
     @staticmethod
     def decode_line_profile(line_profile_pickled):
+        """Decode a base64-encoded pickled line profiler result.
+
+        Security note: This uses pickle.loads, which can execute arbitrary
+        code. Only call this on data from a trusted source (e.g. your own
+        benchmark output files). Do not decode line profile data received
+        over a network or from an untrusted file.
+        """
         return pickle.loads(base64.b64decode(line_profile_pickled))
 
     @classmethod
