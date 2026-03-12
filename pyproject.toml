@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "microbench"
+dynamic = ["version"]
+description = "Micro-benchmarking framework. Extensible, with distributed/cluster support."
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "MIT" }
+authors = [{ name = "Alex Lubbock", email = "code@alexlubbock.com" }]
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+]
+
+[project.urls]
+Homepage = "https://github.com/alubbock/microbench"
+
+[project.optional-dependencies]
+test = ["pytest", "pandas", "line_profiler", "psutil"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["microbench*"]
+
+[tool.setuptools_scm]
+# Writes the version to a file so it is available without a git checkout
+# (e.g. in sdist/wheel installs). The file is regenerated on every
+# `pip install -e .` or build.
+version_file = "microbench/_version_scm.py"
+
+[tool.pytest.ini_options]
+testpaths = ["microbench/tests"]

@@ -3,3 +3,5 @@
 .coverage
 .pytest_cache/
 *.egg-info/
+dist/
+microbench/_version_scm.py
