@@ -396,8 +396,8 @@ class MBLineProfiler(object):
         return pickle.loads(base64.b64decode(line_profile_pickled))
 
     @classmethod
-    def print_line_profile(self, line_profile_pickled, **kwargs):
-        lp_data = self.decode_line_profile(line_profile_pickled)
+    def print_line_profile(cls, line_profile_pickled, **kwargs):
+        lp_data = cls.decode_line_profile(line_profile_pickled)
         line_profiler.show_text(lp_data.timings, lp_data.unit, **kwargs)
 
 
