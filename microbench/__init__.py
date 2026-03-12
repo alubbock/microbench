@@ -71,7 +71,7 @@ class JSONEncodeWarning(Warning):
 _UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 
 
-class MicroBench(object):
+class MicroBench:
     def __init__(self, outfile=None, json_encoder=JSONEncoder,
                  tz=timezone.utc, iterations=1,
                  duration_counter=time.perf_counter,
@@ -256,7 +256,7 @@ class MicroBench(object):
         return inner
 
 
-class MBFunctionCall(object):
+class MBFunctionCall:
     """ Capture function arguments and keyword arguments """
     def capture_function_args_and_kwargs(self, bm_data):
         # Check all args are encodeable as JSON
@@ -278,12 +278,12 @@ class MBFunctionCall(object):
                 bm_data['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
 
 
-class MBReturnValue(object):
+class MBReturnValue:
     """ Capture the decorated function's return value """
     pass
 
 
-class MBPythonVersion(object):
+class MBPythonVersion:
     """ Capture the Python version and location of the Python executable """
     def capture_python_version(self, bm_data):
         bm_data['python_version'] = platform.python_version()
@@ -292,7 +292,7 @@ class MBPythonVersion(object):
         bm_data['python_executable'] = sys.executable
 
 
-class MBHostInfo(object):
+class MBHostInfo:
     """ Capture the hostname and operating system """
     def capture_hostname(self, bm_data):
         bm_data['hostname'] = socket.gethostname()
@@ -301,7 +301,7 @@ class MBHostInfo(object):
         bm_data['operating_system'] = sys.platform
 
 
-class MBGlobalPackages(object):
+class MBGlobalPackages:
     """ Capture Python packages imported in global environment """
     def capture_functions(self, bm_data):
         # Get globals of caller
@@ -323,7 +323,7 @@ class MBGlobalPackages(object):
                 )
 
 
-class MBCondaPackages(object):
+class MBCondaPackages:
     """ Capture conda packages; requires 'conda' package (pip install conda) """
     include_builds = True
     include_channels = False
@@ -356,7 +356,7 @@ class MBCondaPackages(object):
             bm_data['conda_versions'][pkg_name] = pkg_version
 
 
-class MBInstalledPackages(object):
+class MBInstalledPackages:
     """ Capture installed Python packages using importlib """
     capture_paths = False
 
@@ -377,7 +377,7 @@ class MBInstalledPackages(object):
                     pkg.locate_file(pkg.files[0]))
 
 
-class MBLineProfiler(object):
+class MBLineProfiler:
     """
     Run the line profiler on the selected function
 
@@ -401,7 +401,7 @@ class MBLineProfiler(object):
         line_profiler.show_text(lp_data.timings, lp_data.unit, **kwargs)
 
 
-class _NeedsPsUtil(object):
+class _NeedsPsUtil:
     @classmethod
     def _check_psutil(cls):
         if not psutil:
@@ -422,7 +422,7 @@ class MBHostRamTotal(_NeedsPsUtil):
         bm_data['ram_total'] = psutil.virtual_memory().total
 
 
-class MBNvidiaSmi(object):
+class MBNvidiaSmi:
     """
     Capture attributes on installed NVIDIA GPUs using nvidia-smi
 
@@ -488,7 +488,7 @@ class MBNvidiaSmi(object):
 
 class MicroBenchRedis(MicroBench):
     def __init__(self, *args, **kwargs):
-        super(MicroBenchRedis, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         import redis
         self.rclient = redis.StrictRedis(**self.redis_connection)
@@ -499,7 +499,7 @@ class MicroBenchRedis(MicroBench):
 
 class TelemetryThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
-        super(TelemetryThread, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._terminate = threading.Event()
         signal.signal(signal.SIGINT, self.terminate)
         signal.signal(signal.SIGTERM, self.terminate)
