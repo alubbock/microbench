@@ -203,7 +203,7 @@ class MicroBench(object):
 
     def get_results(self):
         if not pandas:
-            raise ImportError('This fuctionality requires the "pandas" package')
+            raise ImportError('This functionality requires the "pandas" package')
 
         if hasattr(self.outfile, 'seek'):
             self.outfile.seek(0)
