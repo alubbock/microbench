@@ -67,7 +67,14 @@ def test_multi_iterations():
 
 
 def test_local_timezone():
-    """tz=datetime.datetime.now().astimezone().tzinfo (README example) must work."""
+    """Verify README example syntax: tz=datetime.datetime.now().astimezone().tzinfo.
+
+    This is a smoke test that the expression produces a valid timezone accepted
+    by MicroBench, and that the stored offset matches whatever was passed in.
+    On UTC machines the offset is timedelta(0) — identical to the default — so
+    this test does not discriminate between 'tz= applied' and 'tz= ignored'.
+    test_multi_iterations covers the non-UTC case with a hardcoded UTC+10 offset.
+    """
     class MyBench(MicroBench):
         pass
 
@@ -84,6 +91,7 @@ def test_local_timezone():
     expected_offset = datetime.datetime.now().astimezone().utcoffset()
     assert results['start_time'][0].utcoffset() == expected_offset
     assert results['finish_time'][0].utcoffset() == expected_offset
+    assert results['timestamp_tz'][0] == str(local_tz)
 
 
 def test_capture_global_packages():
