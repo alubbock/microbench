@@ -1,6 +1,4 @@
-from microbench import MicroBench, MBLineProfiler
-import pandas
-import io
+from microbench import MBLineProfiler, MicroBench
 
 
 def test_line_profiler():
@@ -11,7 +9,7 @@ def test_line_profiler():
 
     @lpbench
     def my_function():
-        """ Inefficient function for line profiler """
+        """Inefficient function for line profiler"""
         acc = 0
         for i in range(1000000):
             acc += i
@@ -25,4 +23,4 @@ def test_line_profiler():
     lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
     assert lp.__class__.__name__ == 'LineStats'
     MBLineProfiler.print_line_profile(results['line_profiler'][0])
-    assert not all(len(v) == 0 for v in lp.timings.values()), "No timings present"
+    assert not all(len(v) == 0 for v in lp.timings.values()), 'No timings present'

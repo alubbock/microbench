@@ -1,22 +1,23 @@
-from datetime import datetime, timezone, timedelta
-import json
-import platform
-import socket
-import sys
-from collections.abc import Iterable
-import os
+import base64
 import importlib
 import inspect
-import types
-import pickle
-import base64
-import re
-import subprocess
 import io
+import json
+import os
+import pickle
+import platform
+import re
+import signal
+import socket
+import subprocess
+import sys
 import threading
 import time
-import signal
+import types
 import warnings
+from collections.abc import Iterable
+from datetime import datetime, timedelta, timezone
+
 try:
     import line_profiler
 except ImportError:
@@ -46,6 +47,7 @@ try:
 except ImportError:
     try:
         from importlib.metadata import version as _version
+
         __version__ = _version('microbench')
     except Exception:
         __version__ = 'unknown'
@@ -71,7 +73,8 @@ class JSONEncoder(json.JSONEncoder):
 
 
 class JSONEncodeWarning(Warning):
-    """ Warning used when JSON encoding fails """
+    """Warning used when JSON encoding fails"""
+
     pass
 
 
@@ -79,10 +82,16 @@ _UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
 
 
 class MicroBench:
-    def __init__(self, outfile=None, json_encoder=JSONEncoder,
-                 tz=timezone.utc, iterations=1,
-                 duration_counter=time.perf_counter,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        outfile=None,
+        json_encoder=JSONEncoder,
+        tz=timezone.utc,
+        iterations=1,
+        duration_counter=time.perf_counter,
+        *args,
+        **kwargs,
+    ):
         """Benchmark and metadata capture suite.
 
         Args:
@@ -122,17 +131,20 @@ class MicroBench:
         # Capture environment variables
         if hasattr(self, 'env_vars'):
             if not isinstance(self.env_vars, Iterable):
-                raise ValueError('env_vars should be a tuple of environment '
-                                 'variable names')
+                raise ValueError(
+                    'env_vars should be a tuple of environment variable names'
+                )
 
             for env_var in self.env_vars:
-                bm_data['env_{}'.format(env_var)] = os.environ.get(env_var)
+                bm_data[f'env_{env_var}'] = os.environ.get(env_var)
 
         # Capture package versions
         if hasattr(self, 'capture_versions'):
             if not isinstance(self.capture_versions, Iterable):
-                raise ValueError('capture_versions is reserved for a tuple of'
-                                 'package names - please rename this method')
+                raise ValueError(
+                    'capture_versions is reserved for a tuple of package names'
+                    ' - please rename this method'
+                )
 
             for pkg in self.capture_versions:
                 self._capture_package_version(bm_data, pkg)
@@ -149,7 +161,8 @@ class MicroBench:
             interval = getattr(self, 'telemetry_interval', 60)
             bm_data['telemetry'] = []
             self._telemetry_thread = TelemetryThread(
-                self.telemetry, interval, bm_data['telemetry'], self.tz)
+                self.telemetry, interval, bm_data['telemetry'], self.tz
+            )
             self._telemetry_thread.start()
 
         bm_data['run_durations'] = []
@@ -175,7 +188,9 @@ class MicroBench:
         bm_data['_run_start'] = self._duration_counter()
 
     def post_run_triggers(self, bm_data):
-        bm_data['run_durations'].append(self._duration_counter() - bm_data['_run_start'])
+        bm_data['run_durations'].append(
+            self._duration_counter() - bm_data['_run_start']
+        )
 
     def capture_function_name(self, bm_data):
         bm_data['function_name'] = bm_data['_func'].__name__
@@ -191,13 +206,12 @@ class MicroBench:
         bm_data['package_versions'][pkg.__name__] = ver
 
     def to_json(self, bm_data):
-        bm_str = '{}'.format(json.dumps(bm_data,
-                                        cls=self._json_encoder))
+        bm_str = f'{json.dumps(bm_data, cls=self._json_encoder)}'
 
         return bm_str
 
     def output_result(self, bm_data):
-        """ Output result to self.outfile as a line in JSON format """
+        """Output result to self.outfile as a line in JSON format"""
         bm_str = self.to_json(bm_data) + '\n'
 
         # This should guarantee atomic writes on POSIX by setting O_APPEND
@@ -227,8 +241,9 @@ class MicroBench:
 
             if isinstance(self, MBLineProfiler):
                 if not line_profiler:
-                    raise ImportError('This functionality requires the '
-                                      '"line_profiler" package')
+                    raise ImportError(
+                        'This functionality requires the "line_profiler" package'
+                    )
                 self._line_profiler = line_profiler.LineProfiler(func)
 
             self.pre_start_triggers(bm_data)
@@ -249,12 +264,15 @@ class MicroBench:
                     self.to_json(res)
                     bm_data['return_value'] = res
                 except TypeError:
-                    warnings.warn(f"Return value is not JSON encodable (type: {type(res)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                    warnings.warn(
+                        f'Return value is not JSON encodable (type: {type(res)}). '
+                        'Extend JSONEncoder class to fix (see README).',
+                        JSONEncodeWarning,
+                    )
                     bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
 
             # Delete any underscore-prefixed keys
-            bm_data = {k: v for k, v in bm_data.items()
-                       if not k.startswith('_')}
+            bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
 
             self.output_result(bm_data)
 
@@ -264,7 +282,8 @@ class MicroBench:
 
 
 class MBFunctionCall:
-    """ Capture function arguments and keyword arguments """
+    """Capture function arguments and keyword arguments"""
+
     def capture_function_args_and_kwargs(self, bm_data):
         # Check all args are encodeable as JSON
         bm_data['args'] = []
@@ -272,7 +291,11 @@ class MBFunctionCall:
             try:
                 bm_data['args'].append(self.to_json(v))
             except TypeError:
-                warnings.warn(f"Function argument {i} is not JSON encodable (type: {type(v)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                warnings.warn(
+                    f'Function argument {i} is not JSON encodable (type: {type(v)}). '
+                    'Extend JSONEncoder class to fix (see README).',
+                    JSONEncodeWarning,
+                )
                 bm_data['args'].append(_UNENCODABLE_PLACEHOLDER_VALUE)
 
         # Check all kwargs are encodeable as JSON
@@ -281,17 +304,24 @@ class MBFunctionCall:
             try:
                 bm_data['kwargs'][k] = self.to_json(v)
             except TypeError:
-                warnings.warn(f"Function keyword argument \"{k}\" is not JSON encodable (type: {type(v)}). Extend JSONEncoder class to fix (see README).", JSONEncodeWarning)
+                warnings.warn(
+                    f'Function keyword argument "{k}" is not JSON encodable'
+                    f' (type: {type(v)}). Extend JSONEncoder class to fix'
+                    ' (see README).',
+                    JSONEncodeWarning,
+                )
                 bm_data['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
 
 
 class MBReturnValue:
-    """ Capture the decorated function's return value """
+    """Capture the decorated function's return value"""
+
     pass
 
 
 class MBPythonVersion:
-    """ Capture the Python version and location of the Python executable """
+    """Capture the Python version and location of the Python executable"""
+
     def capture_python_version(self, bm_data):
         bm_data['python_version'] = platform.python_version()
 
@@ -300,7 +330,8 @@ class MBPythonVersion:
 
 
 class MBHostInfo:
-    """ Capture the hostname and operating system """
+    """Capture the hostname and operating system"""
+
     def capture_hostname(self, bm_data):
         bm_data['hostname'] = socket.gethostname()
 
@@ -309,7 +340,8 @@ class MBHostInfo:
 
 
 class MBGlobalPackages:
-    """ Capture Python packages imported in global environment """
+    """Capture Python packages imported in global environment"""
+
     def capture_functions(self, bm_data):
         # Get globals of caller
         caller_frame = inspect.currentframe().f_back.f_back.f_back
@@ -324,14 +356,13 @@ class MBGlobalPackages:
                     continue
 
                 self._capture_package_version(
-                    bm_data,
-                    sys.modules[module_name.split('.')[0]],
-                    skip_if_none=True
+                    bm_data, sys.modules[module_name.split('.')[0]], skip_if_none=True
                 )
 
 
 class MBCondaPackages:
-    """ Capture conda packages; requires 'conda' package (pip install conda) """
+    """Capture conda packages; requires 'conda' package (pip install conda)"""
+
     include_builds = True
     include_channels = False
 
@@ -342,11 +373,11 @@ class MBCondaPackages:
         else:
             # Use conda API
             pkg_list, stderr, ret_code = conda.testing.conda_cli.run_command(
-                conda.testing.conda_cli.Commands.LIST)
+                conda.testing.conda_cli.Commands.LIST
+            )
 
             if ret_code != 0 or stderr:
-                raise RuntimeError('Error running conda list: {}'.format(
-                    stderr))
+                raise RuntimeError(f'Error running conda list: {stderr}')
 
         bm_data['conda_versions'] = {}
 
@@ -364,7 +395,8 @@ class MBCondaPackages:
 
 
 class MBInstalledPackages:
-    """ Capture installed Python packages using importlib """
+    """Capture installed Python packages using importlib"""
+
     capture_paths = False
 
     def capture_packages(self, bm_data):
@@ -381,7 +413,8 @@ class MBInstalledPackages:
             bm_data['package_versions'][pkg_name] = pkg.version
             if self.capture_paths:
                 bm_data['package_paths'][pkg_name] = os.path.dirname(
-                    pkg.locate_file(pkg.files[0]))
+                    pkg.locate_file(pkg.files[0])
+                )
 
 
 class MBLineProfiler:
@@ -393,6 +426,7 @@ class MBLineProfiler:
     slightly slow down the execution of your function, so it's not recommended
     in production.
     """
+
     def capturepost_line_profile(self, bm_data):
         bm_data['line_profiler'] = base64.b64encode(
             pickle.dumps(self._line_profiler.get_stats())
@@ -416,14 +450,16 @@ class _NeedsPsUtil:
 
 
 class MBHostCpuCores(_NeedsPsUtil):
-    """ Capture the number of logical CPU cores """
+    """Capture the number of logical CPU cores"""
+
     def capture_cpu_cores(self, bm_data):
         self._check_psutil()
         bm_data['cpu_cores_logical'] = psutil.cpu_count()
 
 
 class MBHostRamTotal(_NeedsPsUtil):
-    """ Capture the total host RAM in bytes """
+    """Capture the total host RAM in bytes"""
+
     def capture_total_ram(self, bm_data):
         self._check_psutil()
         bm_data['ram_total'] = psutil.virtual_memory().total
@@ -455,27 +491,34 @@ class MBNvidiaSmi:
                 nvidia_attributes
             )
             if unknown_attrs:
-                raise ValueError("Unknown nvidia_attributes: {}".format(
-                    ', '.join(unknown_attrs)
-                ))
+                raise ValueError(
+                    'Unknown nvidia_attributes: {}'.format(', '.join(unknown_attrs))
+                )
         else:
             nvidia_attributes = self._nvidia_attributes_available
 
         if hasattr(self, 'nvidia_gpus'):
             gpus = self.nvidia_gpus
             if not gpus:
-                raise ValueError('nvidia_gpus cannot be empty. Leave the '
-                                 'attribute out to capture data for all GPUs')
+                raise ValueError(
+                    'nvidia_gpus cannot be empty. Leave the attribute out'
+                    ' to capture data for all GPUs'
+                )
             for gpu in gpus:
                 if not self._nvidia_gpu_regex.match(gpu):
-                    raise ValueError('nvidia_gpus must be a list of GPU indexes'
-                                     '(zero-based), UUIDs, or PCI bus IDs')
+                    raise ValueError(
+                        'nvidia_gpus must be a list of GPU indexes (zero-based),'
+                        ' UUIDs, or PCI bus IDs'
+                    )
         else:
             gpus = None
 
         # Construct the command
-        cmd = ['nvidia-smi', '--format=csv,noheader',
-               '--query-gpu=uuid,{}'.format(','.join(nvidia_attributes))]
+        cmd = [
+            'nvidia-smi',
+            '--format=csv,noheader',
+            '--query-gpu=uuid,{}'.format(','.join(nvidia_attributes)),
+        ]
         if gpus:
             cmd += ['-i', ','.join(gpus)]
 
@@ -489,8 +532,9 @@ class MBNvidiaSmi:
             gpu_res = gpu_line.split(', ')
             for attr_idx, attr in enumerate(nvidia_attributes):
                 gpu_uuid = gpu_res[0]
-                bm_data.setdefault('nvidia_{}'.format(attr), {})[gpu_uuid] = \
-                    gpu_res[attr_idx + 1]
+                bm_data.setdefault(f'nvidia_{attr}', {})[gpu_uuid] = gpu_res[
+                    attr_idx + 1
+                ]
 
 
 class MicroBenchRedis(MicroBench):
@@ -498,6 +542,7 @@ class MicroBenchRedis(MicroBench):
         super().__init__(*args, **kwargs)
 
         import redis
+
         self.rclient = redis.StrictRedis(**self.redis_connection)
 
     def output_result(self, bm_data):

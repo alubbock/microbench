@@ -1,7 +1,7 @@
 import difflib
 import json
-import re
 from itertools import zip_longest
+
 try:
     import html
 except ImportError:
@@ -9,18 +9,14 @@ except ImportError:
 
 
 def _mark_text(text):
-    return '<span style="color: red;">{}</span>'.format(text)
+    return f'<span style="color: red;">{text}</span>'
 
 
 def _mark_span(text):
     return [_mark_text(token) for token in text]
 
 
-def _markup_diff(a,
-                 b,
-                 mark=_mark_span,
-                 default_mark=lambda x: x,
-                 isjunk=None):
+def _markup_diff(a, b, mark=_mark_span, default_mark=lambda x: x, isjunk=None):
     """Returns a and b with any differences processed by mark
 
     Junk is ignored by the differ
@@ -54,8 +50,8 @@ def _html_sidebyside(a, b):
     # This is a workaround
     out += '<p></p><p></p>'
     for left, right in zip_longest(a, b, fillvalue=''):
-        out += '<pre style="margin-top:0;padding:0">{}</pre>'.format(left)
-        out += '<pre style="margin-top:0;padding:0">{}</pre>'.format(right)
+        out += f'<pre style="margin-top:0;padding:0">{left}</pre>'
+        out += f'<pre style="margin-top:0;padding:0">{right}</pre>'
     out += '</div>'
     return out
 
@@ -77,11 +73,12 @@ def _html_diffs(a, b):
 
 def _show_diffs(a, b):
     from IPython.display import HTML, display
+
     display(HTML(_html_diffs(a, b)))
 
 
 def envdiff(a, b):
-    """ Compare 2 JSON environments using visual diff
+    """Compare 2 JSON environments using visual diff
 
     a and b should be either pandas Series or strings of JSON objects
     """
@@ -94,5 +91,6 @@ def envdiff(a, b):
             a = a.to_json()
         if isinstance(b, pandas.Series):
             b = b.to_json()
-    return _show_diffs(json.dumps(json.loads(a), indent=2),
-                       json.dumps(json.loads(b), indent=2))
+    return _show_diffs(
+        json.dumps(json.loads(a), indent=2), json.dumps(json.loads(b), indent=2)
+    )

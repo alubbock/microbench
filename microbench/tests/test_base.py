@@ -1,11 +1,22 @@
-from microbench import MicroBench, MBFunctionCall, MBPythonVersion, \
-    MBReturnValue, MBHostInfo, MBInstalledPackages, \
-    JSONEncodeWarning, JSONEncoder, _UNENCODABLE_PLACEHOLDER_VALUE
-from microbench import __version__ as microbench_version
-import io
-import pandas
 import datetime
+import io
 import warnings
+
+import pandas
+
+from microbench import (
+    _UNENCODABLE_PLACEHOLDER_VALUE,
+    JSONEncoder,
+    JSONEncodeWarning,
+    MBFunctionCall,
+    MBHostInfo,
+    MBInstalledPackages,
+    MBPythonVersion,
+    MBReturnValue,
+    MicroBench,
+)
+from microbench import __version__ as microbench_version
+
 from .globals_capture import globals_bench
 
 
@@ -18,7 +29,7 @@ def test_function():
 
     @benchmark
     def my_function():
-        """ Inefficient function for testing """
+        """Inefficient function for testing"""
         acc = 0
         for i in range(1000000):
             acc += i
@@ -75,6 +86,7 @@ def test_local_timezone():
     this test does not discriminate between 'tz= applied' and 'tz= ignored'.
     test_multi_iterations covers the non-UTC case with a hardcoded UTC+10 offset.
     """
+
     class MyBench(MicroBench):
         pass
 
@@ -105,8 +117,7 @@ def test_capture_global_packages():
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
-    assert results['package_versions'][0]['microbench'] == \
-           str(microbench_version)
+    assert results['package_versions'][0]['microbench'] == str(microbench_version)
     assert results['package_versions'][0]['pandas'] == pandas.__version__
 
 
@@ -167,8 +178,7 @@ def test_unjsonencodable_arg_kwarg_retval():
         assert len(w) == 3
         assert all(issubclass(w_.category, JSONEncodeWarning) for w_ in w)
 
-
-    results =bench.get_results()
+    results = bench.get_results()
     assert results['args'][0] == [_UNENCODABLE_PLACEHOLDER_VALUE]
     assert results['kwargs'][0] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
     assert results['return_value'][0] == _UNENCODABLE_PLACEHOLDER_VALUE
@@ -176,7 +186,7 @@ def test_unjsonencodable_arg_kwarg_retval():
 
 def test_custom_jsonencoder():
     # A custom class which can't be encoded to JSON by default
-    class MyCustomClass(object):
+    class MyCustomClass:
         def __init__(self, message):
             self.message = message
 
