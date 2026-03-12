@@ -40,8 +40,15 @@ except ImportError:
     pandas = None
 
 
-from . import _version
-__version__ = _version.get_versions()['version']
+try:
+    # Written by setuptools-scm at build/install time
+    from ._version_scm import __version__
+except ImportError:
+    try:
+        from importlib.metadata import version as _version
+        __version__ = _version('microbench')
+    except Exception:
+        __version__ = 'unknown'
 
 
 class JSONEncoder(json.JSONEncoder):
