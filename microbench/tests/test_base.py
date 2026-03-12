@@ -53,9 +53,9 @@ def test_multi_iterations():
     class MyBench(MicroBench):
         pass
 
-    timezone = datetime.timezone(datetime.timedelta(hours=10))
+    tz = datetime.timezone(datetime.timedelta(hours=10))
     iterations = 3
-    benchmark = MyBench(iterations=iterations, timezone=timezone)
+    benchmark = MyBench(iterations=iterations, tz=tz)
 
     @benchmark
     def my_function():
@@ -68,10 +68,42 @@ def test_multi_iterations():
     assert (results['function_name'] == 'my_function').all()
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes >= datetime.timedelta(0)).all()
-    assert results['timezone'][0] == str(timezone)
+    assert results['timestamp_tz'][0] == str(tz)
+    # Verify the timezone is actually applied to the timestamps, not just recorded
+    assert results['start_time'][0].utcoffset() == datetime.timedelta(hours=10)
+    assert results['finish_time'][0].utcoffset() == datetime.timedelta(hours=10)
 
     assert len(results['run_durations'][0]) == iterations
     assert all(dur >= 0 for dur in results['run_durations'][0])
+
+
+def test_local_timezone():
+    """Verify README example syntax: tz=datetime.datetime.now().astimezone().tzinfo.
+
+    This is a smoke test that the expression produces a valid timezone accepted
+    by MicroBench, and that the stored offset matches whatever was passed in.
+    On UTC machines the offset is timedelta(0) — identical to the default — so
+    this test does not discriminate between 'tz= applied' and 'tz= ignored'.
+    test_multi_iterations covers the non-UTC case with a hardcoded UTC+10 offset.
+    """
+
+    class MyBench(MicroBench):
+        pass
+
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    benchmark = MyBench(tz=local_tz)
+
+    @benchmark
+    def noop():
+        pass
+
+    noop()
+
+    results = benchmark.get_results()
+    expected_offset = datetime.datetime.now().astimezone().utcoffset()
+    assert results['start_time'][0].utcoffset() == expected_offset
+    assert results['finish_time'][0].utcoffset() == expected_offset
+    assert results['timestamp_tz'][0] == str(local_tz)
 
 
 def test_capture_global_packages():
