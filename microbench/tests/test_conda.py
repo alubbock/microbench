@@ -1,6 +1,7 @@
 from unittest.mock import patch
+
 import microbench
-from microbench import MicroBench, MBCondaPackages
+from microbench import MBCondaPackages, MicroBench
 
 SAMPLE_CONDA_LIST = """\
 # packages in environment at /path/to/env:
@@ -21,9 +22,10 @@ def _run_conda_bench(**cls_attrs):
     def noop():
         pass
 
-    with patch('subprocess.check_output',
-               return_value=SAMPLE_CONDA_LIST.encode('utf8')), \
-         patch.object(microbench, 'conda', None):
+    with (
+        patch('subprocess.check_output', return_value=SAMPLE_CONDA_LIST.encode('utf8')),
+        patch.object(microbench, 'conda', None),
+    ):
         noop()
 
     return bench.get_results()
@@ -34,11 +36,11 @@ def test_conda_no_channel_doubling():
     results = _run_conda_bench(include_builds=True, include_channels=True)
     versions = results['conda_versions'][0]
     # numpy has a channel: expect "version+build(channel)", not doubled version
-    assert versions['numpy'] == '1.24.3py311ha0bc626_0(conda-forge)', \
-        f"Got: {versions['numpy']!r}"
+    assert versions['numpy'] == '1.24.3py311ha0bc626_0(conda-forge)', (
+        f'Got: {versions["numpy"]!r}'
+    )
     # pandas has no channel: expect "version+build"
-    assert versions['pandas'] == '2.0.3py311h9a0d8c7_0', \
-        f"Got: {versions['pandas']!r}"
+    assert versions['pandas'] == '2.0.3py311h9a0d8c7_0', f'Got: {versions["pandas"]!r}'
 
 
 def test_conda_include_builds_false():
