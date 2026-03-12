@@ -11,8 +11,12 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: read-all
+
 jobs:
   build:
+    permissions:
+      contents: read
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -42,6 +46,8 @@ jobs:
   release:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs: build
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
