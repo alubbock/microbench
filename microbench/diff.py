@@ -55,7 +55,7 @@ def _html_sidebyside(a, b):
     out += '<p></p><p></p>'
     for left, right in zip_longest(a, b, fillvalue=''):
         out += '<pre style="margin-top:0;padding:0">{}</pre>'.format(left)
-        out += '<pre style="margin-top:0";padding:0>{}</pre>'.format(right)
+        out += '<pre style="margin-top:0;padding:0">{}</pre>'.format(right)
     out += '</div>'
     return out
 
