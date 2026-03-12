@@ -42,9 +42,9 @@ def test_multi_iterations():
     class MyBench(MicroBench):
         pass
 
-    timezone = datetime.timezone(datetime.timedelta(hours=10))
+    tz = datetime.timezone(datetime.timedelta(hours=10))
     iterations = 3
-    benchmark = MyBench(iterations=iterations, timezone=timezone)
+    benchmark = MyBench(iterations=iterations, tz=tz)
 
     @benchmark
     def my_function():
@@ -57,7 +57,7 @@ def test_multi_iterations():
     assert (results['function_name'] == 'my_function').all()
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes >= datetime.timedelta(0)).all()
-    assert results['timezone'][0] == str(timezone)
+    assert results['timestamp_tz'][0] == str(tz)
 
     assert len(results['run_durations'][0]) == iterations
     assert all(dur >= 0 for dur in results['run_durations'][0])

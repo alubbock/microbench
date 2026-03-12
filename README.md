@@ -477,9 +477,22 @@ section of this README, above.
 
 ### Timezones
 
-Microbench captures `start_time` and `finish_time` in the UTC timezone by default.
-This can be overriden by passing a `tz=...` argument when creating a benchmark
-class, where the value is a timezone object (e.g. created using the `pytz` library).
+Microbench captures `start_time` and `finish_time` as ISO-8601 timestamps in the
+UTC timezone by default. UTC is recommended so that results are comparable across
+machines in different geographic locations.
+
+The timezone used is recorded in the `timestamp_tz` field for reference (e.g.
+`"UTC"` by default). This can be overridden by passing a `tz=...` argument when
+creating a benchmark suite object, where the value is a `datetime.timezone`
+object. For example, to use the local machine's timezone:
+
+```python
+import datetime
+from microbench import MicroBench
+
+# Use the local machine's timezone
+bench = MicroBench(tz=datetime.timezone(datetime.datetime.now().astimezone().utcoffset()))
+```
 
 ## Feedback
 
