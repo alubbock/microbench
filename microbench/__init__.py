@@ -52,6 +52,27 @@ except ImportError:
     except Exception:
         __version__ = 'unknown'
 
+__all__ = [
+    # Core
+    'MicroBench',
+    'MicroBenchRedis',
+    # Mixins
+    'MBFunctionCall',
+    'MBReturnValue',
+    'MBPythonVersion',
+    'MBHostInfo',
+    'MBHostCpuCores',
+    'MBHostRamTotal',
+    'MBGlobalPackages',
+    'MBInstalledPackages',
+    'MBCondaPackages',
+    'MBLineProfiler',
+    'MBNvidiaSmi',
+    # JSON encoding
+    'JSONEncoder',
+    'JSONEncodeWarning',
+]
+
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
