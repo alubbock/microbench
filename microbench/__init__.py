@@ -390,7 +390,7 @@ class MBCondaPackages:
             if self.include_builds:
                 pkg_version += pkg_data[2]
             if self.include_channels and len(pkg_data) == 4:
-                pkg_version += pkg_version + '(' + pkg_data[3] + ')'
+                pkg_version += '(' + pkg_data[3] + ')'
             bm_data['conda_versions'][pkg_name] = pkg_version
 
 
