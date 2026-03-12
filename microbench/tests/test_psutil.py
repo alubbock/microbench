@@ -1,5 +1,4 @@
-from microbench import MicroBench, MBHostCpuCores, MBHostRamTotal
-import pandas
+from microbench import MBHostCpuCores, MBHostRamTotal, MicroBench
 
 
 def test_psutil():

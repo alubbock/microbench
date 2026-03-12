@@ -1,7 +1,7 @@
-from microbench import MicroBench, MBNvidiaSmi
 import subprocess
 import unittest
-import pandas
+
+from microbench import MBNvidiaSmi, MicroBench
 
 try:
     subprocess.call(['nvidia-smi'])
