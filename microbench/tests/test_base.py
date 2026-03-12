@@ -58,9 +58,32 @@ def test_multi_iterations():
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes >= datetime.timedelta(0)).all()
     assert results['timestamp_tz'][0] == str(tz)
+    # Verify the timezone is actually applied to the timestamps, not just recorded
+    assert results['start_time'][0].utcoffset() == datetime.timedelta(hours=10)
+    assert results['finish_time'][0].utcoffset() == datetime.timedelta(hours=10)
 
     assert len(results['run_durations'][0]) == iterations
     assert all(dur >= 0 for dur in results['run_durations'][0])
+
+
+def test_local_timezone():
+    """tz=datetime.datetime.now().astimezone().tzinfo (README example) must work."""
+    class MyBench(MicroBench):
+        pass
+
+    local_tz = datetime.datetime.now().astimezone().tzinfo
+    benchmark = MyBench(tz=local_tz)
+
+    @benchmark
+    def noop():
+        pass
+
+    noop()
+
+    results = benchmark.get_results()
+    expected_offset = datetime.datetime.now().astimezone().utcoffset()
+    assert results['start_time'][0].utcoffset() == expected_offset
+    assert results['finish_time'][0].utcoffset() == expected_offset
 
 
 def test_capture_global_packages():
