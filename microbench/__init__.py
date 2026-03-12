@@ -553,8 +553,17 @@ class TelemetryThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._terminate = threading.Event()
-        signal.signal(signal.SIGINT, self.terminate)
-        signal.signal(signal.SIGTERM, self.terminate)
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(signal.SIGINT, self.terminate)
+            signal.signal(signal.SIGTERM, self.terminate)
+        else:
+            warnings.warn(
+                'TelemetryThread: signal handlers not registered because '
+                'benchmark was started from a non-main thread. Telemetry '
+                'will still be collected but may not stop cleanly on '
+                'SIGINT/SIGTERM.',
+                RuntimeWarning
+            )
         self._interval = interval
         self._telemetry = slot
         self._telem_fn = telem_fn

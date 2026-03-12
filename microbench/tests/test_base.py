@@ -1,5 +1,6 @@
 import datetime
 import io
+import threading
 import warnings
 
 import pandas
@@ -157,6 +158,46 @@ def test_telemetry():
     # Check some telemetry was captured
     results = telem_bench.get_results()
     assert len(results['telemetry']) > 0
+
+
+def test_telemetry_from_non_main_thread():
+    """Telemetry must not crash when started from a non-main thread (B6 fix).
+
+    signal.signal() can only be called from the main thread; TelemetryThread
+    should skip signal registration and emit a RuntimeWarning instead.
+    """
+
+    class TelemBench(MicroBench):
+        @staticmethod
+        def telemetry(process):
+            return {'rss': process.memory_info().rss}
+
+    telem_bench = TelemBench()
+
+    @telem_bench
+    def noop():
+        pass
+
+    errors = []
+    caught_warnings = []
+
+    def run_from_thread():
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            try:
+                noop()
+            except Exception as exc:
+                errors.append(exc)
+            caught_warnings.extend(w)
+
+    t = threading.Thread(target=run_from_thread)
+    t.start()
+    t.join()
+
+    assert not errors, f'Unexpected exception from non-main thread: {errors[0]}'
+    assert any(issubclass(w.category, RuntimeWarning) for w in caught_warnings), (
+        'Expected a RuntimeWarning about signal registration being skipped'
+    )
 
 
 def test_unjsonencodable_arg_kwarg_retval():
