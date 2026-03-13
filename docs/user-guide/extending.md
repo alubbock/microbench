@@ -23,56 +23,6 @@ class MyBench(MicroBench):
 Avoid key names that clash with built-in fields (e.g. `start_time`,
 `function_name`). The `mb_` prefix is reserved for microbench internals.
 
-## Custom JSON encoding
-
-Microbench serialises records as JSON. If a captured value is not
-JSON-serialisable (e.g. a custom object), microbench replaces it with a
-placeholder and emits a `JSONEncodeWarning`.
-
-To handle custom types, subclass `JSONEncoder`:
-
-```python
-import microbench as mb
-from igraph import Graph
-
-class MyEncoder(mb.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, Graph):
-            return str(o)
-        return super().default(o)
-
-class MyBench(mb.MicroBench, mb.MBReturnValue):
-    pass
-
-bench = MyBench(json_encoder=MyEncoder)
-
-@bench
-def make_graph():
-    return Graph(2, ((0, 1), (0, 2)))
-
-make_graph()  # no warning
-```
-
-`JSONEncoder` already handles `datetime`, `timedelta`, `timezone`, and
-numpy scalar/array types by default.
-
-## Writing a mixin
-
-A mixin is simply a class with one or more `capture_` or `capturepost_`
-methods. Define it as a standalone class, then include it in benchmark suite
-definitions via multiple inheritance:
-
-```python
-class MBMachineType:
-    """Capture the machine architecture (e.g. x86_64, arm64)."""
-
-    def capture_machine_type(self, bm_data):
-        import platform
-        bm_data['machine_type'] = platform.machine()
-
-
-class MyBench(MicroBench, MBMachineType, MBPythonVersion):
-    pass
-```
-
-Mixins have no required base class — they rely entirely on Python's MRO.
+For more advanced extension patterns — custom JSON encoding, writing
+reusable mixins, and tools for consuming benchmark output — see
+[Advanced usage](advanced.md).

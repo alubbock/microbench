@@ -64,11 +64,11 @@ nav:
   - Home: index.md
   - Getting started: getting-started.md
   - User guide:
+    - Configuration: user-guide/configuration.md
     - Mixins: user-guide/mixins.md
     - Output: user-guide/output.md
     - Periodic monitoring: user-guide/monitoring.md
     - Extending microbench: user-guide/extending.md
-    - Configuration: user-guide/configuration.md
     - Advanced usage: user-guide/advanced.md
   - API reference: api-reference.md
   - Changelog: changelog.md
