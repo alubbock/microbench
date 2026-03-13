@@ -5,3 +5,4 @@
 *.egg-info/
 dist/
 microbench/_version_scm.py
+site/

@@ -408,7 +408,17 @@ class MBGlobalPackages:
 
 
 class MBCondaPackages:
-    """Capture conda packages using the conda CLI"""
+    """Capture conda packages using the conda CLI.
+
+    Requires ``conda`` to be available on ``PATH``. Captures all packages
+    in the active conda environment (determined by ``sys.prefix``).
+
+    Attributes:
+        include_builds (bool): Include the build string in the version.
+            Defaults to ``True``.
+        include_channels (bool): Include the channel name in the version.
+            Defaults to ``False``.
+    """
 
     include_builds = True
     include_channels = False
@@ -434,7 +444,15 @@ class MBCondaPackages:
 
 
 class MBInstalledPackages:
-    """Capture installed Python packages using importlib"""
+    """Capture installed Python packages using importlib.
+
+    Records the name and version of every distribution available in the
+    current Python environment via ``importlib.metadata``.
+
+    Attributes:
+        capture_paths (bool): Also record the installation path of each
+            package under ``package_paths``. Defaults to ``False``.
+    """
 
     capture_paths = False
 
@@ -508,21 +526,21 @@ class MBHostRamTotal(_NeedsPsUtil):
 
 
 class MBNvidiaSmi:
-    """
-    Capture attributes on installed NVIDIA GPUs using nvidia-smi
+    """Capture attributes on installed NVIDIA GPUs using nvidia-smi.
 
-    Requires the nvidia-smi utility to be available in the current PATH.
+    Requires the ``nvidia-smi`` utility to be available on ``PATH``
+    (bundled with NVIDIA drivers).
 
-    By default, the gpu_name and memory.total attributes are captured.
-    Any attribute supported by ``nvidia-smi --query-gpu`` can be
-    specified using the class or object-level variable
-    nvidia_attributes (run ``nvidia-smi --help-query-gpu`` for the
-    full list).
+    Results are stored as ``nvidia_<attr>`` fields, each a dict keyed by
+    GPU UUID. Run ``nvidia-smi --help-query-gpu`` for all available
+    attribute names. Run ``nvidia-smi -L`` to list GPU UUIDs.
 
-    By default, all installed GPUs will be polled. To limit to a specific GPU,
-    specify the nvidia_gpus attribute as a tuple of GPU IDs, which can be
-    zero-based GPU indexes (can change between reboots, not recommended),
-    GPU UUIDs, or PCI bus IDs.
+    Attributes:
+        nvidia_attributes (tuple[str]): Attributes to query. Defaults to
+            ``('gpu_name', 'memory.total')``.
+        nvidia_gpus (tuple): GPU IDs to poll — zero-based indexes, UUIDs,
+            or PCI bus IDs. GPU UUIDs are recommended (indexes can change
+            after a reboot). Omit to poll all installed GPUs.
     """
 
     _nvidia_default_attributes = ('gpu_name', 'memory.total')

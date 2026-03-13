@@ -1,0 +1,79 @@
+# microbench
+
+![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
+
+Microbench is a small Python package for benchmarking Python functions and
+capturing reproducibility metadata. It is most useful in clustered and
+distributed environments where the same function runs across different
+machines, and is designed to be extended with new functionality through
+mixins.
+
+## Key features
+
+- **Zero-config timing** — decorate a function and get start/finish timestamps and run durations immediately, with no setup
+- **Extensible via mixins** — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more
+- **Cluster and HPC ready** — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes
+- **JSONL output** — one JSON object per call; load directly into pandas with `read_json(..., lines=True)`; no schema lock-in
+- **Automatic run correlation** — `mb_run_id` is a UUID generated once per process; all bench suites in the same run share it, enabling `groupby('mb_run_id')` across independent suites
+- **Flexible output** — write to a local file, an in-memory buffer, or Redis; concurrent writers safe via `O_APPEND`
+
+## Installation
+
+```
+pip install microbench
+```
+
+## Requirements
+
+Microbench has no required dependencies outside the Python standard library.
+[pandas](https://pandas.pydata.org/) is recommended for analysing results.
+Some mixins have optional requirements:
+
+| Mixin / feature | Requires |
+|---|---|
+| `MBHostCpuCores`, `MBHostRamTotal`, telemetry | [psutil](https://pypi.org/project/psutil/) |
+| `MBLineProfiler` | [line_profiler](https://github.com/rkern/line_profiler) |
+| `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
+| `MBCondaPackages` | `conda` on `PATH` |
+| `MicroBenchRedis` | [redis-py](https://github.com/andymccurdy/redis-py) |
+
+## Quick example
+
+```python
+from microbench import MicroBench
+
+bench = MicroBench(outfile='/home/user/results.jsonl', experiment='baseline')
+
+@bench
+def my_function(n):
+    return sum(range(n))
+
+my_function(1_000_000)
+
+results = bench.get_results()
+```
+
+Each call produces one record. `results` is a pandas DataFrame:
+
+```
+   mb_run_id                             mb_version  function_name  run_durations  experiment
+0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  1.1.0      my_function    [0.049823]     baseline
+```
+
+The underlying JSON for a single record looks like:
+
+```json
+{
+  "mb_run_id": "3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9",
+  "mb_version": "1.1.0",
+  "start_time": "2024-01-15T10:30:00.123456+00:00",
+  "finish_time": "2024-01-15T10:30:00.172279+00:00",
+  "run_durations": [0.049823],
+  "function_name": "my_function",
+  "timestamp_tz": "UTC",
+  "duration_counter": "perf_counter",
+  "experiment": "baseline"
+}
+```
+
+See [Getting started](getting-started.md) for a full walkthrough.

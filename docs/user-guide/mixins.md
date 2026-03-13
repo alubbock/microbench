@@ -1,0 +1,190 @@
+# Mixins
+
+Mixins are classes that add metadata capture to a benchmark suite via
+multiple inheritance. Combine any number of mixins with `MicroBench`:
+
+```python
+from microbench import MicroBench, MBPythonVersion, MBHostInfo, MBHostCpuCores
+
+class MyBench(MicroBench, MBPythonVersion, MBHostInfo, MBHostCpuCores):
+    pass
+```
+
+Python resolves method calls across multiple base classes using the **Method
+Resolution Order (MRO)** — a deterministic left-to-right search that ensures
+each class in the hierarchy is visited exactly once. This means you can
+combine any number of microbench mixins without conflicts, and their
+`capture_*` methods will all be called.
+
+## Reference
+
+| Mixin | Fields captured | Extra requirements |
+|---|---|---|
+| *(none)* | `mb_run_id`, `mb_version`, `start_time`, `finish_time`, `run_durations`, `function_name`, `timestamp_tz`, `duration_counter` | — |
+| `MBFunctionCall` | `args`, `kwargs` | — |
+| `MBReturnValue` | `return_value` | — |
+| `MBPythonVersion` | `python_version`, `python_executable` | — |
+| `MBHostInfo` | `hostname`, `operating_system` | — |
+| `MBHostCpuCores` | `cpu_cores_logical`, `cpu_cores_physical` | psutil |
+| `MBHostRamTotal` | `ram_total` (bytes) | psutil |
+| `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
+| `MBInstalledPackages` | `package_versions` for every installed package | — |
+| `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
+| `MBNvidiaSmi` | `nvidia_<attr>` per GPU (see below) | `nvidia-smi` on PATH |
+| `MBLineProfiler` | `line_profiler` (base64-encoded profile, see below) | line_profiler |
+
+## Function calls and return values
+
+### `MBFunctionCall`
+
+Captures the positional and keyword arguments passed to the decorated
+function as `args` (list) and `kwargs` (dict):
+
+```python
+from microbench import MicroBench, MBFunctionCall
+
+class Bench(MicroBench, MBFunctionCall):
+    pass
+
+bench = Bench()
+
+@bench
+def add(a, b):
+    return a + b
+
+add(1, b=2)
+# record contains: {"args": [1], "kwargs": {"b": 2}, ...}
+```
+
+### `MBReturnValue`
+
+Captures the return value of the decorated function as `return_value`:
+
+```python
+from microbench import MicroBench, MBReturnValue
+
+class Bench(MicroBench, MBReturnValue):
+    pass
+
+bench = Bench()
+
+@bench
+def compute(n):
+    return sum(range(n))
+
+compute(100)
+# record contains: {"return_value": 4950, ...}
+```
+
+The return value must be JSON-serialisable. If it is not, a
+`JSONEncodeWarning` is issued and a placeholder is stored. See
+[Custom JSON encoding](extending.md#custom-json-encoding) to handle
+custom types.
+
+## Package versions
+
+### `MBGlobalPackages`
+
+Captures the version of every module imported in the caller's global
+namespace:
+
+```python
+from microbench import MicroBench, MBGlobalPackages
+import numpy, pandas
+
+class Bench(MicroBench, MBGlobalPackages):
+    pass
+```
+
+The `package_versions` field will contain `{"numpy": "1.26.0", "pandas": "2.1.0", ...}`.
+
+### `MBInstalledPackages`
+
+Captures every package available for import (from `importlib.metadata`).
+Useful for full reproducibility audits. Can be slow on environments with
+many packages.
+
+Set `capture_paths = True` to also record installation paths:
+
+```python
+class Bench(MicroBench, MBInstalledPackages):
+    capture_paths = True
+```
+
+### `MBCondaPackages`
+
+Captures all packages in the active conda environment using the `conda` CLI.
+
+```python
+class Bench(MicroBench, MBCondaPackages):
+    include_builds = True    # include build string (default: True)
+    include_channels = False  # include channel name (default: False)
+```
+
+### `capture_versions`
+
+To capture specific package versions without a mixin, list them on the
+class:
+
+```python
+import numpy, pandas
+
+class Bench(MicroBench):
+    capture_versions = (numpy, pandas)
+```
+
+## NVIDIA GPU — `MBNvidiaSmi`
+
+Captures attributes for each installed GPU via `nvidia-smi`.
+
+By default captures `gpu_name` and `memory.total`. Customise with
+`nvidia_attributes`:
+
+```python
+from microbench import MicroBench, MBNvidiaSmi
+
+class GpuBench(MicroBench, MBNvidiaSmi):
+    nvidia_attributes = ('gpu_name', 'memory.total', 'pcie.link.width.max')
+    nvidia_gpus = ('GPU-abc123',)  # UUIDs preferred; omit to capture all
+```
+
+Results are stored as `nvidia_<attr>` dicts keyed by GPU UUID, e.g.
+`nvidia_gpu_name: {"GPU-abc123": "NVIDIA A100"}`.
+
+Run `nvidia-smi --help-query-gpu` for the full list of available attributes.
+Run `nvidia-smi -L` to list GPU UUIDs.
+
+## Line profiler — `MBLineProfiler`
+
+Captures a line-by-line timing profile of the decorated function using
+[line_profiler](https://github.com/rkern/line_profiler).
+
+```python
+from microbench import MicroBench, MBLineProfiler
+
+class Bench(MicroBench, MBLineProfiler):
+    pass
+
+bench = Bench()
+
+@bench
+def my_function():
+    acc = 0
+    for i in range(1000000):
+        acc += i
+    return acc
+
+my_function()
+
+results = bench.get_results()
+MBLineProfiler.print_line_profile(results['line_profiler'][0])
+```
+
+The profile is stored as a base64-encoded pickle in the `line_profiler` field.
+Use `MBLineProfiler.decode_line_profile()` to deserialise it, or
+`MBLineProfiler.print_line_profile()` to print it directly.
+
+!!! warning "Security"
+    `decode_line_profile()` uses `pickle.loads`. Only decode profiles from
+    trusted sources (your own benchmark output). Never decode data received
+    over a network or from an untrusted file.
