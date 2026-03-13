@@ -34,24 +34,8 @@ def test_nvidia():
     assert 'nvidia_memory.total' in results.columns
 
 
-def test_nvidia_unknown_attribute_raises():
-    """Specifying an unknown nvidia_attribute must raise ValueError."""
-
-    class Bench(MicroBench, MBNvidiaSmi):
-        nvidia_attributes = ('gpu_name', 'nonexistent_attr')
-
-    bench = Bench()
-
-    @bench
-    def noop():
-        pass
-
-    with pytest.raises(ValueError, match='nonexistent_attr'):
-        noop()
-
-
-def test_nvidia_known_attribute_does_not_raise():
-    """Specifying only known attributes must not raise a ValueError."""
+def test_nvidia_custom_attributes():
+    """Custom nvidia_attributes are passed through to nvidia-smi."""
 
     class Bench(MicroBench, MBNvidiaSmi):
         nvidia_attributes = ('gpu_name',)
@@ -67,28 +51,6 @@ def test_nvidia_known_attribute_does_not_raise():
 
     results = bench.get_results()
     assert 'nvidia_gpu_name' in results.columns
-
-
-def test_nvidia_default_attribute_not_flagged_as_unknown():
-    """Omitting a default attribute (memory.total) must not raise (B2 regression check).
-
-    With the original bug, set(available).difference(user_attrs) would flag
-    'memory.total' as 'unknown' simply because the user didn't include it.
-    """
-
-    class Bench(MicroBench, MBNvidiaSmi):
-        # Only request gpu_name, intentionally omitting memory.total
-        nvidia_attributes = ('gpu_name',)
-
-    bench = Bench()
-
-    @bench
-    def noop():
-        pass
-
-    # Should NOT raise; memory.total being absent from user's list is fine
-    with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_SMI_OUTPUT):
-        noop()
 
 
 def test_nvidia_gpus_empty_raises():

@@ -503,9 +503,11 @@ class MBNvidiaSmi:
 
     Requires the nvidia-smi utility to be available in the current PATH.
 
-    By default, the gpu_name and memory.total attributes are captured. Extra
-    attributes can be specified using the class or object-level variable
-    nvidia_attributes.
+    By default, the gpu_name and memory.total attributes are captured.
+    Any attribute supported by ``nvidia-smi --query-gpu`` can be
+    specified using the class or object-level variable
+    nvidia_attributes (run ``nvidia-smi --help-query-gpu`` for the
+    full list).
 
     By default, all installed GPUs will be polled. To limit to a specific GPU,
     specify the nvidia_gpus attribute as a tuple of GPU IDs, which can be
@@ -513,21 +515,13 @@ class MBNvidiaSmi:
     GPU UUIDs, or PCI bus IDs.
     """
 
-    _nvidia_attributes_available = ('gpu_name', 'memory.total')
+    _nvidia_default_attributes = ('gpu_name', 'memory.total')
     _nvidia_gpu_regex = re.compile(r'^[0-9A-Za-z\-:]+$')
 
     def capture_nvidia(self, bm_data):
-        if hasattr(self, 'nvidia_attributes'):
-            nvidia_attributes = self.nvidia_attributes
-            unknown_attrs = set(nvidia_attributes).difference(
-                self._nvidia_attributes_available
-            )
-            if unknown_attrs:
-                raise ValueError(
-                    'Unknown nvidia_attributes: {}'.format(', '.join(unknown_attrs))
-                )
-        else:
-            nvidia_attributes = self._nvidia_attributes_available
+        nvidia_attributes = getattr(
+            self, 'nvidia_attributes', self._nvidia_default_attributes
+        )
 
         if hasattr(self, 'nvidia_gpus'):
             gpus = self.nvidia_gpus
