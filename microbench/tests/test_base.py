@@ -1,9 +1,15 @@
 import datetime
 import io
+import os
+import tempfile
 import threading
+import time
 import warnings
+from unittest.mock import patch
 
+import numpy
 import pandas
+import pytest
 
 from microbench import (
     _UNENCODABLE_PLACEHOLDER_VALUE,
@@ -259,3 +265,117 @@ def test_custom_jsonencoder():
 
     results = bench.get_results()
     assert results['return_value'][0] == str(obj)
+
+
+def test_jsonencoder_numpy_types():
+    """JSONEncoder handles numpy integer, float, and ndarray natively."""
+    encoder = JSONEncoder()
+    assert encoder.default(numpy.int64(7)) == 7
+    assert encoder.default(numpy.float32(3.14)) == pytest.approx(3.14, abs=1e-5)
+    assert encoder.default(numpy.array([1, 2, 3])) == [1, 2, 3]
+
+
+def test_jsonencoder_timedelta_and_timezone():
+    """JSONEncoder serialises timedelta as total seconds and timezone as string."""
+    encoder = JSONEncoder()
+    assert encoder.default(datetime.timedelta(seconds=90)) == 90.0
+    tz = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+    tz_str = encoder.default(tz)
+    assert '05:30' in tz_str
+
+
+def test_positional_args_raises():
+    """MicroBench constructor rejects extra positional arguments.
+
+    The *args guard is primarily designed for subclasses that forward *args
+    via super().__init__(*args, **kwargs). Triggering it directly requires
+    saturating the five named positional parameters first.
+    """
+    with pytest.raises(ValueError, match='keyword'):
+        MicroBench(None, JSONEncoder, datetime.timezone.utc, 1, None, 'extra')
+
+
+def test_outfile_string_path():
+    """Results are written to and read from a file-system path."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        tmppath = f.name
+
+    try:
+        bench = MicroBench(outfile=tmppath)
+
+        @bench
+        def noop():
+            pass
+
+        noop()
+
+        assert os.path.getsize(tmppath) > 0
+        results = pandas.read_json(tmppath, lines=True)
+        assert results['function_name'][0] == 'noop'
+    finally:
+        os.unlink(tmppath)
+
+
+def test_env_vars_not_iterable():
+    """env_vars must be iterable; a non-iterable raises ValueError."""
+
+    class BadBench(MicroBench):
+        env_vars = 42  # not iterable
+
+    bench = BadBench()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(ValueError, match='env_vars'):
+        noop()
+
+
+def test_capture_versions_not_iterable():
+    """capture_versions must be iterable; a non-iterable raises ValueError."""
+
+    class BadBench(MicroBench):
+        capture_versions = 42  # not iterable
+
+    bench = BadBench()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(ValueError, match='capture_versions'):
+        noop()
+
+
+def test_get_results_without_pandas():
+    """get_results raises ImportError when pandas is unavailable."""
+    import microbench
+
+    bench = MicroBench()
+
+    with patch.object(microbench, 'pandas', None):
+        with pytest.raises(ImportError, match='pandas'):
+            bench.get_results()
+
+
+def test_telemetry_multiple_samples():
+    """TelemetryThread collects more than one sample for a long-running function."""
+
+    class TelemBench(MicroBench):
+        telemetry_interval = 0.05
+
+        @staticmethod
+        def telemetry(process):
+            return {'rss': process.memory_info().rss}
+
+    telem_bench = TelemBench()
+
+    @telem_bench
+    def slow_function():
+        time.sleep(0.25)
+
+    slow_function()
+
+    results = telem_bench.get_results()
+    assert len(results['telemetry'][0]) >= 2, 'Expected at least 2 telemetry samples'

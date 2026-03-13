@@ -22,7 +22,7 @@ classifiers = [
 Homepage = "https://github.com/alubbock/microbench"
 
 [project.optional-dependencies]
-test = ["pytest", "pandas", "line_profiler", "psutil"]
+test = ["pytest", "pytest-cov", "pandas", "numpy", "line_profiler", "psutil"]
 
 [tool.setuptools.packages.find]
 where = ["."]
