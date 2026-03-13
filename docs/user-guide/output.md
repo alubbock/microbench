@@ -52,23 +52,35 @@ my_function()
 results = bench.get_results()
 ```
 
+## Multiple output sinks
+
+Pass an `outputs` list to write to several destinations simultaneously.
+Each element must be an `Output` subclass instance. `outfile` and `outputs`
+are mutually exclusive.
+
+```python
+from microbench import MicroBench, FileOutput, RedisOutput
+
+bench = MicroBench(outputs=[
+    FileOutput('/home/user/results.jsonl'),
+    RedisOutput('microbench:mykey', host='redis-host', port=6379),
+])
+```
+
+`get_results()` reads from the first sink that supports it.
+
 ## Redis output
 
 [Redis](https://redis.io) is useful when a shared filesystem is not
 available, such as on cloud or HPC clusters. Requires
 [redis-py](https://github.com/andymccurdy/redis-py).
 
-Inherit from `MicroBenchRedis` and set `redis_connection` and `redis_key`
-as class attributes:
-
 ```python
-from microbench import MicroBenchRedis
+from microbench import MicroBench, RedisOutput
 
-class RedisBench(MicroBenchRedis):
-    redis_connection = {'host': 'redis-host', 'port': 6379}
-    redis_key = 'microbench:mykey'
-
-bench = RedisBench()
+bench = MicroBench(outputs=[
+    RedisOutput('microbench:mykey', host='redis-host', port=6379)
+])
 
 @bench
 def my_function():
@@ -81,3 +93,17 @@ results = bench.get_results()
 
 Results are appended to a Redis list using `RPUSH` and read back with
 `LRANGE`.
+
+## Custom output sinks
+
+Subclass `Output` and implement `write` to send results anywhere:
+
+```python
+from microbench import MicroBench, Output
+
+class MyOutput(Output):
+    def write(self, bm_json_str):
+        send_to_my_system(bm_json_str)
+
+bench = MicroBench(outputs=[MyOutput()])
+```

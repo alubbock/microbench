@@ -31,11 +31,11 @@ Some mixins have optional requirements:
 
 | Mixin / feature | Requires |
 |---|---|
-| `MBHostCpuCores`, `MBHostRamTotal`, telemetry | [psutil](https://pypi.org/project/psutil/) |
+| `MBHostCpuCores`, `MBHostRamTotal`, periodic monitoring | [psutil](https://pypi.org/project/psutil/) |
 | `MBLineProfiler` | [line_profiler](https://github.com/rkern/line_profiler) |
 | `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
 | `MBCondaPackages` | `conda` on `PATH` |
-| `MicroBenchRedis` | [redis-py](https://github.com/andymccurdy/redis-py) |
+| `RedisOutput` | [redis-py](https://github.com/andymccurdy/redis-py) |
 
 ## Quick example
 

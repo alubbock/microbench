@@ -66,7 +66,7 @@ nav:
   - User guide:
     - Mixins: user-guide/mixins.md
     - Output: user-guide/output.md
-    - Periodic telemetry: user-guide/monitoring.md
+    - Periodic monitoring: user-guide/monitoring.md
     - Extending microbench: user-guide/extending.md
     - Configuration: user-guide/configuration.md
   - API reference: api-reference.md

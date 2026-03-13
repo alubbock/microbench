@@ -4,7 +4,13 @@
 
 ::: microbench.MicroBench
 
-::: microbench.MicroBenchRedis
+## Output sinks
+
+::: microbench.Output
+
+::: microbench.FileOutput
+
+::: microbench.RedisOutput
 
 ## Mixins
 

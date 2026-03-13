@@ -103,7 +103,7 @@ overhead. Things with measurable cost:
 - **`MBInstalledPackages` / `MBCondaPackages`** — enumerates all installed
   packages; can take several seconds on large environments. Consider running
   once and storing the output separately rather than capturing on every call.
-- **Periodic telemetry** — background thread with configurable interval.
-  Keep `telemetry_interval` at 60 s or more to avoid meaningful overhead.
+- **Periodic monitoring** — background thread with configurable interval.
+  Keep `monitor_interval` at 60 s or more to avoid meaningful overhead.
 - **`MBLineProfiler`** — instruments every line; expect 2–5× slowdown on
   typical Python code. Only use for profiling runs, not production timing.
