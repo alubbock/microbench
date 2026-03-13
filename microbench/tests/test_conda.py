@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-import microbench
 from microbench import MBCondaPackages, MicroBench
 
 SAMPLE_CONDA_LIST = """\
@@ -22,9 +21,9 @@ def _run_conda_bench(**cls_attrs):
     def noop():
         pass
 
-    with (
-        patch('subprocess.check_output', return_value=SAMPLE_CONDA_LIST.encode('utf8')),
-        patch.object(microbench, 'conda', None),
+    with patch(
+        'subprocess.check_output',
+        return_value=SAMPLE_CONDA_LIST.encode('utf8'),
     ):
         noop()
 
