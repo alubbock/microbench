@@ -502,5 +502,5 @@ bench = MicroBench(tz=datetime.datetime.now().astimezone().tzinfo)
 
 ## Feedback
 
-Please note this is a recently created, experimental package. Please let me know
-your feedback or feature requests in Github issues.
+Bug reports and feature requests are welcome in
+[GitHub issues](https://github.com/alubbock/microbench/issues).
