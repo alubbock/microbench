@@ -895,6 +895,11 @@
   be present on every node.</p>
 </li>
 <li>
+<p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
+  benchmarked function as <code>peak_memory_bytes</code> (bytes), using
+  <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
+</li>
+<li>
 <p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
   a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
   when running outside a SLURM job. Supersedes the manual
