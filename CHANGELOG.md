@@ -47,6 +47,10 @@ All notable changes to microbench are documented here.
   jobs on heterogeneous cluster nodes where optional dependencies may not
   be present on every node.
 
+- **`MBPeakMemory` mixin**: captures peak Python memory allocation during the
+  benchmarked function as `peak_memory_bytes` (bytes), using
+  `tracemalloc` from the standard library. No extra dependencies required.
+
 - **`MBSlurmInfo` mixin**: captures all `SLURM_*` environment variables into
   a `slurm` dict (keys lowercased, `SLURM_` prefix stripped). Empty dict
   when running outside a SLURM job. Supersedes the manual

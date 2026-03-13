@@ -19,6 +19,7 @@ from microbench import (
     MBFunctionCall,
     MBHostInfo,
     MBInstalledPackages,
+    MBPeakMemory,
     MBPythonVersion,
     MBReturnValue,
     MBSlurmInfo,
@@ -672,6 +673,67 @@ def test_redis_output_get_results_without_pandas():
         with patch.object(microbench, 'pandas', None):
             with pytest.raises(ImportError, match='pandas'):
                 bench.get_results()
+
+
+def test_mb_peak_memory():
+    class Bench(MicroBench, MBPeakMemory):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def allocate():
+        return [0] * 100_000
+
+    allocate()
+
+    results = bench.get_results()
+    assert results['peak_memory_bytes'][0] > 0
+
+
+def test_mb_peak_memory_stops_tracemalloc():
+    """MBPeakMemory stops tracemalloc after the call if it was not already running."""
+    import tracemalloc
+
+    assert not tracemalloc.is_tracing()
+
+    class Bench(MicroBench, MBPeakMemory):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    assert not tracemalloc.is_tracing()
+
+
+def test_mb_peak_memory_preserves_existing_trace():
+    """MBPeakMemory leaves tracemalloc running if it was already active."""
+    import tracemalloc
+
+    tracemalloc.start()
+    try:
+
+        class Bench(MicroBench, MBPeakMemory):
+            pass
+
+        bench = Bench()
+
+        @bench
+        def noop():
+            pass
+
+        noop()
+
+        assert tracemalloc.is_tracing()
+        results = bench.get_results()
+        assert 'peak_memory_bytes' in results.columns
+    finally:
+        tracemalloc.stop()
 
 
 def test_redis_output_multiple_results():
