@@ -8,6 +8,7 @@
 | `json_encoder` | `JSONEncoder` | Custom JSON encoder class. |
 | `tz` | `timezone.utc` | Timezone for `start_time` / `finish_time`. |
 | `iterations` | `1` | Number of times to run the decorated function. |
+| `warmup` | `0` | Number of unrecorded calls before timing begins. Useful for priming caches or JIT compilation. |
 | `duration_counter` | `time.perf_counter` | Callable used for `run_durations`. |
 
 Any additional keyword arguments are stored as extra fields in every record:

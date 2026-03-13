@@ -87,6 +87,27 @@ def test_multi_iterations():
     assert all(dur >= 0 for dur in results['run_durations'][0])
 
 
+def test_warmup():
+    call_count = 0
+
+    bench = MicroBench(warmup=3, iterations=2)
+
+    @bench
+    def my_function():
+        nonlocal call_count
+        call_count += 1
+
+    my_function()
+
+    # 3 warmup + 2 recorded iterations = 5 total calls
+    assert call_count == 5
+
+    results = bench.get_results()
+    # Only one record (one decorated call), with 2 run_durations
+    assert len(results) == 1
+    assert len(results['run_durations'][0]) == 2
+
+
 def test_local_timezone():
     """Verify README example syntax: tz=datetime.datetime.now().astimezone().tzinfo.
 
@@ -320,10 +341,10 @@ def test_positional_args_raises():
 
     The *args guard is primarily designed for subclasses that forward *args
     via super().__init__(*args, **kwargs). Triggering it directly requires
-    saturating the six named positional parameters first.
+    saturating the seven named positional parameters first.
     """
     with pytest.raises(ValueError, match='keyword'):
-        MicroBench(None, JSONEncoder, datetime.timezone.utc, 1, None, None, 'extra')
+        MicroBench(None, JSONEncoder, datetime.timezone.utc, 1, 0, None, None, 'extra')
 
 
 def test_outfile_and_outputs_raises():

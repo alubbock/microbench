@@ -39,6 +39,11 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`warmup` parameter**: pass `warmup=N` to run the function `N` times
+  before timing begins, priming caches or JIT compilation without affecting
+  results. Warmup calls are unrecorded and do not interact with the monitor
+  thread or capture triggers.
+
 - **Multi-sink output architecture** (#52): Results can now be written to
   multiple destinations simultaneously by passing an `outputs` list to
   `MicroBench`. Three classes make up the new output API:
