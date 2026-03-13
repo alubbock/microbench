@@ -89,3 +89,35 @@ def test_nvidia_default_attribute_not_flagged_as_unknown():
     # Should NOT raise; memory.total being absent from user's list is fine
     with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_SMI_OUTPUT):
         noop()
+
+
+def test_nvidia_gpus_empty_raises():
+    """An empty nvidia_gpus tuple must raise ValueError."""
+
+    class Bench(MicroBench, MBNvidiaSmi):
+        nvidia_gpus = ()
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(ValueError, match='nvidia_gpus cannot be empty'):
+        noop()
+
+
+def test_nvidia_gpus_invalid_format_raises():
+    """A GPU identifier containing whitespace must raise ValueError."""
+
+    class Bench(MicroBench, MBNvidiaSmi):
+        nvidia_gpus = ('invalid gpu id',)
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(ValueError, match='nvidia_gpus must be'):
+        noop()

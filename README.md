@@ -213,6 +213,11 @@ of each line of Python code. Note that this will slow down your code, so only us
 discovering bottlenecks within a function. Requires the `line_profiler` package to be installed
 (e.g. `pip install line_profiler`).
 
+> **Security note:** Line profiler results are stored using Python's `pickle`
+> format (base64-encoded). `MBLineProfiler.decode_line_profile()` uses
+> `pickle.loads`, which can execute arbitrary code. Only decode line profiler
+> results from trusted sources (e.g. your own benchmark output files).
+
 ```python
 from microbench import MicroBench, MBLineProfiler
 import pandas

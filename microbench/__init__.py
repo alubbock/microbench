@@ -339,12 +339,32 @@ class MBHostInfo:
         bm_data['operating_system'] = sys.platform
 
 
+_microbench_dir = os.path.dirname(os.path.abspath(__file__))
+_microbench_tests_dir = os.path.join(_microbench_dir, 'tests')
+
+
+def _is_microbench_internal(filename):
+    """True for source files inside the microbench package, excluding tests/."""
+    abs_file = os.path.abspath(filename)
+    if abs_file.startswith(_microbench_tests_dir + os.sep):
+        return False
+    return abs_file == _microbench_dir or abs_file.startswith(_microbench_dir + os.sep)
+
+
 class MBGlobalPackages:
     """Capture Python packages imported in global environment"""
 
     def capture_functions(self, bm_data):
-        # Get globals of caller
-        caller_frame = inspect.currentframe().f_back.f_back.f_back
+        # Walk up the call stack to the first frame outside the microbench
+        # package (excluding tests/) — that is the user's module whose globals
+        # we want to inspect.
+        caller_frame = inspect.currentframe()
+        while caller_frame is not None:
+            if not _is_microbench_internal(caller_frame.f_code.co_filename):
+                break
+            caller_frame = caller_frame.f_back
+        if caller_frame is None:
+            return
         caller_globals = caller_frame.f_globals
         for g in caller_globals.values():
             if isinstance(g, types.ModuleType):
@@ -434,6 +454,13 @@ class MBLineProfiler:
 
     @staticmethod
     def decode_line_profile(line_profile_pickled):
+        """Decode a base64-encoded pickled line profiler result.
+
+        Security note: This uses pickle.loads, which can execute arbitrary
+        code. Only call this on data from a trusted source (e.g. your own
+        benchmark output files). Do not decode line profile data received
+        over a network or from an untrusted file.
+        """
         return pickle.loads(base64.b64decode(line_profile_pickled))
 
     @classmethod
