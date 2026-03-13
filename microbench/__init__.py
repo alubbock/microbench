@@ -306,7 +306,18 @@ class MicroBench:
             if method_name.startswith('capture_'):
                 method = getattr(self, method_name)
                 if callable(method):
-                    method(bm_data)
+                    if getattr(self, 'capture_optional', False):
+                        try:
+                            method(bm_data)
+                        except Exception as e:
+                            bm_data.setdefault('mb_capture_errors', []).append(
+                                {
+                                    'method': method_name,
+                                    'error': f'{type(e).__name__}: {e}',
+                                }
+                            )
+                    else:
+                        method(bm_data)
 
         # Initialise monitor thread
         if hasattr(self, 'monitor'):
@@ -334,7 +345,18 @@ class MicroBench:
             if method_name.startswith('capturepost_'):
                 method = getattr(self, method_name)
                 if callable(method):
-                    method(bm_data)
+                    if getattr(self, 'capture_optional', False):
+                        try:
+                            method(bm_data)
+                        except Exception as e:
+                            bm_data.setdefault('mb_capture_errors', []).append(
+                                {
+                                    'method': method_name,
+                                    'error': f'{type(e).__name__}: {e}',
+                                }
+                            )
+                    else:
+                        method(bm_data)
 
     def pre_run_triggers(self, bm_data):
         bm_data['_run_start'] = self._duration_counter()

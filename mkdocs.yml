@@ -69,5 +69,6 @@ nav:
     - Periodic monitoring: user-guide/monitoring.md
     - Extending microbench: user-guide/extending.md
     - Configuration: user-guide/configuration.md
+    - Advanced usage: user-guide/advanced.md
   - API reference: api-reference.md
   - Changelog: changelog.md
