@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 import types
+import uuid
 import warnings
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
@@ -34,6 +35,12 @@ try:
     import pandas
 except ImportError:
     pandas = None
+
+
+# Generated once at import time; shared by all MicroBench instances in this
+# process, allowing records from independent bench suites to be correlated.
+# A new value is produced for each separate process invocation.
+_run_id = str(uuid.uuid4())
 
 
 try:
@@ -139,6 +146,8 @@ class MicroBench:
         self.iterations = iterations
 
     def pre_start_triggers(self, bm_data):
+        bm_data['mb_run_id'] = _run_id
+        bm_data['mb_version'] = __version__
         # Store timezone
         bm_data['timestamp_tz'] = str(self.tz)
         # Store duration counter function name
@@ -577,14 +586,10 @@ class MicroBenchRedis(MicroBench):
 
     def get_results(self):
         if not pandas:
-            raise ImportError(
-                'This functionality requires the "pandas" package'
-            )
+            raise ImportError('This functionality requires the "pandas" package')
         redis_data = self.rclient.lrange(self.redis_key, 0, -1)
         json_data = '\n'.join(r.decode('utf8') for r in redis_data)
-        return pandas.read_json(
-            io.StringIO(json_data), lines=True
-        )
+        return pandas.read_json(io.StringIO(json_data), lines=True)
 
 
 class TelemetryThread(threading.Thread):
@@ -600,7 +605,7 @@ class TelemetryThread(threading.Thread):
                 'benchmark was started from a non-main thread. Telemetry '
                 'will still be collected but may not stop cleanly on '
                 'SIGINT/SIGTERM.',
-                RuntimeWarning
+                RuntimeWarning,
             )
         self._interval = interval
         self._telemetry = slot

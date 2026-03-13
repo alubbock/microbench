@@ -76,11 +76,18 @@ import pandas as pd
 results = pd.read_json(basic_bench.outfile, lines=True)
 ```
 
-The above example captures the fields `start_time`, `finish_time`,
-`run_durations` (of each function call, in seconds by default), `function_name`,
-`timestamp_tz` (timezone name, see Timezones section of this README), and
-`duration_counter` (the name of the function used to calculate
-durations, see Duration timings section of this README).
+The above example captures the following fields in every record:
+
+| Field | Description |
+|-------|-------------|
+| `mb_run_id` | UUID generated once when `microbench` is imported. The same value appears in every record produced by the same process, so results from independent bench suites can be correlated with `groupby('mb_run_id')`. A new UUID is produced for each fresh process invocation. |
+| `mb_version` | Version of the `microbench` package that produced the record; useful when benchmark results are stored long-term and the code evolves. |
+| `start_time` | Timestamp when the function was first called (ISO-8601, UTC by default). |
+| `finish_time` | Timestamp when the function returned (ISO-8601, UTC by default). |
+| `run_durations` | List of per-iteration durations in seconds (one entry per iteration). |
+| `function_name` | Name of the decorated function. |
+| `timestamp_tz` | Timezone used for `start_time`/`finish_time` (see Timezones section). |
+| `duration_counter` | Name of the timer function used for `run_durations` (see Duration timings section). |
 
 Microbench can capture many
 other types of metadata from the environment, resource usage, and
