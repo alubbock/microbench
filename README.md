@@ -301,35 +301,36 @@ class GpuBench(MicroBench, MBNvidiaSmi):
 gpu_bench = GpuBench()
 ```
 
-## Telemetry support
+## Periodic monitoring support
 
-We use the term "telemetry" to refer to metadata which is captured periodically
-during the execution of a function by a thread which runs in parallel. For
-example, this may be useful to see how memory usage changes over time.
+Microbench can periodically sample resource usage during the execution of a
+function using a background thread. For example, this is useful to track how
+memory usage changes over time during a long-running computation.
 
-Telemetry support requires the `psutil` library.
+Periodic monitoring requires the `psutil` library.
 
 Microbench launches and cleans up the monitoring thread automatically.
-The end user only needs to define a `telemetry` static method, which accepts
+Define a `monitor` static method on your benchmark class, which accepts
 a [psutil.Process](https://psutil.readthedocs.io/en/latest/#psutil.Process)
-object and returns the telemetry data as a dictionary.
+object and returns the sample data as a dictionary. Samples are stored as a
+list in the `monitor` field of each result record.
 
-The default telemetry collection interval is every 60 seconds, which can be
-customized if needed using the `telemetry_interval` class variable.
+The default sampling interval is every 60 seconds, which can be customized
+using the `monitor_interval` class variable.
 
 A minimal example to capture memory usage every 90 seconds is shown below:
 
 ```python
 from microbench import MicroBench
 
-class TelemBench(MicroBench):
-    telemetry_interval = 90
+class MonitorBench(MicroBench):
+    monitor_interval = 90
 
     @staticmethod
-    def telemetry(process):
+    def monitor(process):
         return process.memory_full_info()._asdict()
 
-telem_bench = TelemBench()
+monitor_bench = MonitorBench()
 ```
 
 ## Extending microbench

@@ -172,14 +172,14 @@ class MicroBench:
                 if callable(method):
                     method(bm_data)
 
-        # Initialise telemetry thread
-        if hasattr(self, 'telemetry'):
-            interval = getattr(self, 'telemetry_interval', 60)
-            bm_data['telemetry'] = []
-            self._telemetry_thread = TelemetryThread(
-                self.telemetry, interval, bm_data['telemetry'], self.tz
+        # Initialise monitor thread
+        if hasattr(self, 'monitor'):
+            interval = getattr(self, 'monitor_interval', 60)
+            bm_data['monitor'] = []
+            self._monitor_thread = MonitorThread(
+                self.monitor, interval, bm_data['monitor'], self.tz
             )
-            self._telemetry_thread.start()
+            self._monitor_thread.start()
 
         bm_data['run_durations'] = []
         bm_data['start_time'] = datetime.now(self.tz)
@@ -187,11 +187,11 @@ class MicroBench:
     def post_finish_triggers(self, bm_data):
         bm_data['finish_time'] = datetime.now(self.tz)
 
-        # Terminate telemetry thread and gather results
-        if hasattr(self, '_telemetry_thread'):
-            self._telemetry_thread.terminate()
-            timeout = getattr(self, 'telemetry_timeout', 30)
-            self._telemetry_thread.join(timeout)
+        # Terminate monitor thread and gather results
+        if hasattr(self, '_monitor_thread'):
+            self._monitor_thread.terminate()
+            timeout = getattr(self, 'monitor_timeout', 30)
+            self._monitor_thread.join(timeout)
 
         # Run capturepost triggers
         for method_name in dir(self):
@@ -587,7 +587,7 @@ class MicroBenchRedis(MicroBench):
         )
 
 
-class TelemetryThread(threading.Thread):
+class MonitorThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._terminate = threading.Event()
@@ -596,29 +596,29 @@ class TelemetryThread(threading.Thread):
             signal.signal(signal.SIGTERM, self.terminate)
         else:
             warnings.warn(
-                'TelemetryThread: signal handlers not registered because '
-                'benchmark was started from a non-main thread. Telemetry '
+                'MonitorThread: signal handlers not registered because '
+                'benchmark was started from a non-main thread. Monitoring '
                 'will still be collected but may not stop cleanly on '
                 'SIGINT/SIGTERM.',
                 RuntimeWarning
             )
         self._interval = interval
-        self._telemetry = slot
-        self._telem_fn = telem_fn
+        self._monitor_data = slot
+        self._monitor_fn = telem_fn
         self._tz = timezone
         if not psutil:
-            raise ImportError('Telemetry requires the "psutil" package')
+            raise ImportError('Monitoring requires the "psutil" package')
         self.process = psutil.Process()
 
     def terminate(self, signum=None, frame=None):
         self._terminate.set()
 
-    def _get_telemetry(self):
-        telem = {'timestamp': datetime.now(self._tz)}
-        telem.update(self._telem_fn(self.process))
-        self._telemetry.append(telem)
+    def _get_sample(self):
+        sample = {'timestamp': datetime.now(self._tz)}
+        sample.update(self._monitor_fn(self.process))
+        self._monitor_data.append(sample)
 
     def run(self):
-        self._get_telemetry()
+        self._get_sample()
         while not self._terminate.wait(self._interval):
-            self._get_telemetry()
+            self._get_sample()

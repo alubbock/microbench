@@ -145,43 +145,43 @@ def test_capture_packages_importlib():
     assert pandas.__version__ == results['package_versions'][0]['pandas']
 
 
-def test_telemetry():
-    class TelemBench(MicroBench):
+def test_monitor():
+    class MonitorBench(MicroBench):
         @staticmethod
-        def telemetry(process):
+        def monitor(process):
             return process.memory_full_info()._asdict()
 
-    telem_bench = TelemBench()
+    monitor_bench = MonitorBench()
 
-    @telem_bench
+    @monitor_bench
     def noop():
         pass
 
     noop()
 
-    # Check telemetry thread completed
-    assert not telem_bench._telemetry_thread.is_alive()
+    # Check monitor thread completed
+    assert not monitor_bench._monitor_thread.is_alive()
 
-    # Check some telemetry was captured
-    results = telem_bench.get_results()
-    assert len(results['telemetry']) > 0
+    # Check some monitor data was captured
+    results = monitor_bench.get_results()
+    assert len(results['monitor']) > 0
 
 
-def test_telemetry_from_non_main_thread():
-    """Telemetry must not crash when started from a non-main thread (B6 fix).
+def test_monitor_from_non_main_thread():
+    """Monitor must not crash when started from a non-main thread (B6 fix).
 
-    signal.signal() can only be called from the main thread; TelemetryThread
+    signal.signal() can only be called from the main thread; MonitorThread
     should skip signal registration and emit a RuntimeWarning instead.
     """
 
-    class TelemBench(MicroBench):
+    class MonitorBench(MicroBench):
         @staticmethod
-        def telemetry(process):
+        def monitor(process):
             return {'rss': process.memory_info().rss}
 
-    telem_bench = TelemBench()
+    monitor_bench = MonitorBench()
 
-    @telem_bench
+    @monitor_bench
     def noop():
         pass
 
@@ -388,26 +388,26 @@ def test_get_results_without_pandas():
             bench.get_results()
 
 
-def test_telemetry_multiple_samples():
-    """TelemetryThread collects more than one sample for a long-running function."""
+def test_monitor_multiple_samples():
+    """MonitorThread collects more than one sample for a long-running function."""
 
-    class TelemBench(MicroBench):
-        telemetry_interval = 0.05
+    class MonitorBench(MicroBench):
+        monitor_interval = 0.05
 
         @staticmethod
-        def telemetry(process):
+        def monitor(process):
             return {'rss': process.memory_info().rss}
 
-    telem_bench = TelemBench()
+    monitor_bench = MonitorBench()
 
-    @telem_bench
+    @monitor_bench
     def slow_function():
         time.sleep(0.25)
 
     slow_function()
 
-    results = telem_bench.get_results()
-    assert len(results['telemetry'][0]) >= 2, 'Expected at least 2 telemetry samples'
+    results = monitor_bench.get_results()
+    assert len(results['monitor'][0]) >= 2, 'Expected at least 2 monitor samples'
 
 
 def test_redis_get_results():
