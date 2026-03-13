@@ -537,8 +537,8 @@ class MBNvidiaSmi:
     def capture_nvidia(self, bm_data):
         if hasattr(self, 'nvidia_attributes'):
             nvidia_attributes = self.nvidia_attributes
-            unknown_attrs = set(self._nvidia_attributes_available).difference(
-                nvidia_attributes
+            unknown_attrs = set(nvidia_attributes).difference(
+                self._nvidia_attributes_available
             )
             if unknown_attrs:
                 raise ValueError(
