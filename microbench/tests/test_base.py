@@ -88,6 +88,88 @@ def test_multi_iterations():
     assert all(dur >= 0 for dur in results['run_durations'][0])
 
 
+def test_capture_optional_records_errors():
+    """capture_optional=True catches failing captures, records in mb_capture_errors."""
+
+    class BrokenCapture(MicroBench):
+        capture_optional = True
+
+        def capture_will_fail(self, bm_data):
+            raise RuntimeError('simulated failure')
+
+    bench = BrokenCapture()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    errors = results['mb_capture_errors'][0]
+    assert len(errors) == 1
+    assert errors[0]['method'] == 'capture_will_fail'
+    assert 'RuntimeError' in errors[0]['error']
+    assert 'simulated failure' in errors[0]['error']
+
+
+def test_capture_optional_no_errors_no_field():
+    """When no captures fail, mb_capture_errors is absent from the record."""
+
+    class Bench(MicroBench):
+        capture_optional = True
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    assert 'mb_capture_errors' not in results.columns
+
+
+def test_capture_optional_false_raises():
+    """Without capture_optional, a failing capture propagates the exception."""
+
+    class BrokenCapture(MicroBench):
+        def capture_will_fail(self, bm_data):
+            raise RuntimeError('simulated failure')
+
+    bench = BrokenCapture()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(RuntimeError, match='simulated failure'):
+        noop()
+
+
+def test_capture_optional_capturepost():
+    """capture_optional also protects capturepost_ methods."""
+
+    class BrokenPost(MicroBench):
+        capture_optional = True
+
+        def capturepost_will_fail(self, bm_data):
+            raise ValueError('post failure')
+
+    bench = BrokenPost()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    errors = results['mb_capture_errors'][0]
+    assert any(e['method'] == 'capturepost_will_fail' for e in errors)
+
+
 def test_mb_slurm_info():
     class Bench(MicroBench, MBSlurmInfo):
         pass

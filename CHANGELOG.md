@@ -39,6 +39,14 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`capture_optional` class attribute**: set `capture_optional = True` on
+  a benchmark class to catch exceptions from `capture_` and `capturepost_`
+  methods instead of aborting the benchmark call. Failures are recorded in
+  `mb_capture_errors` (a list of `{"method": ..., "error": ...}` dicts);
+  the field is absent when all captures succeed. Designed for production
+  jobs on heterogeneous cluster nodes where optional dependencies may not
+  be present on every node.
+
 - **`MBSlurmInfo` mixin**: captures all `SLURM_*` environment variables into
   a `slurm` dict (keys lowercased, `SLURM_` prefix stripped). Empty dict
   when running outside a SLURM job. Supersedes the manual
