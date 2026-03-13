@@ -24,7 +24,6 @@ from microbench import (
     MicroBench,
     MicroBenchRedis,
     Output,
-    RedisOutput,
 )
 from microbench import __version__ as microbench_version
 
@@ -481,9 +480,7 @@ def test_redis_get_results():
     mock_redis_client.rpush.side_effect = lambda key, val: redis_store.append(
         val.encode('utf8') if isinstance(val, str) else val
     )
-    mock_redis_client.lrange.side_effect = (
-        lambda key, start, end: redis_store
-    )
+    mock_redis_client.lrange.side_effect = lambda key, start, end: redis_store
 
     mock_redis = MagicMock()
     mock_redis.StrictRedis.return_value = mock_redis_client
@@ -540,9 +537,7 @@ def test_redis_multiple_results():
     mock_redis_client.rpush.side_effect = lambda key, val: redis_store.append(
         val.encode('utf8') if isinstance(val, str) else val
     )
-    mock_redis_client.lrange.side_effect = (
-        lambda key, start, end: redis_store
-    )
+    mock_redis_client.lrange.side_effect = lambda key, start, end: redis_store
 
     mock_redis = MagicMock()
     mock_redis.StrictRedis.return_value = mock_redis_client
