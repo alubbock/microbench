@@ -477,20 +477,14 @@ benchmark = MicroBench(outputs=[MyOutput()])
 not available. Redis support requires
 [redis-py](https://github.com/andymccurdy/redis-py).
 
-Use `RedisOutput` directly (as shown above), or use the `MicroBenchRedis`
-convenience subclass:
-
 ```python
-from microbench import MicroBenchRedis
+from microbench import MicroBench, RedisOutput
 
-class RedisBench(MicroBenchRedis):
-    redis_connection = {'host': 'localhost', 'port': 6379}
-    redis_key = 'microbench:mykey'
-
-benchmark = RedisBench()
+benchmark = MicroBench(outputs=[RedisOutput('microbench:mykey',
+                                             host='localhost', port=6379)])
 ```
 
-To retrieve results, use `get_results()` just like the base class:
+Results are retrieved with `get_results()` as usual:
 
 ```python
 results = benchmark.get_results()

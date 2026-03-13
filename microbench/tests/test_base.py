@@ -22,8 +22,8 @@ from microbench import (
     MBPythonVersion,
     MBReturnValue,
     MicroBench,
-    MicroBenchRedis,
     Output,
+    RedisOutput,
 )
 from microbench import __version__ as microbench_version
 
@@ -471,27 +471,25 @@ def test_no_supporting_sink_raises():
         bench.get_results()
 
 
-def test_redis_get_results():
-    """MicroBenchRedis.get_results() reads results back from Redis."""
-    # Mock redis.StrictRedis so we don't need a real server
-    redis_store = []
-
+def _make_mock_redis(redis_store):
+    """Return a mock redis module wired to the given list as a backing store."""
     mock_redis_client = MagicMock()
     mock_redis_client.rpush.side_effect = lambda key, val: redis_store.append(
         val.encode('utf8') if isinstance(val, str) else val
     )
     mock_redis_client.lrange.side_effect = lambda key, start, end: redis_store
-
     mock_redis = MagicMock()
     mock_redis.StrictRedis.return_value = mock_redis_client
+    return mock_redis, mock_redis_client
+
+
+def test_redis_output_get_results():
+    """RedisOutput.get_results() reads results back from Redis."""
+    redis_store = []
+    mock_redis, mock_redis_client = _make_mock_redis(redis_store)
 
     with patch.dict('sys.modules', {'redis': mock_redis}):
-
-        class RedisBench(MicroBenchRedis):
-            redis_connection = {}
-            redis_key = 'test:bench'
-
-        bench = RedisBench()
+        bench = MicroBench(outputs=[RedisOutput('test:bench')])
 
         @bench
         def noop():
@@ -504,51 +502,32 @@ def test_redis_get_results():
         assert 'start_time' in results.columns
         assert 'finish_time' in results.columns
 
-        # Verify rpush was called with the correct key
         mock_redis_client.rpush.assert_called_once()
         assert mock_redis_client.rpush.call_args[0][0] == 'test:bench'
 
 
-def test_redis_get_results_without_pandas():
-    """MicroBenchRedis.get_results() raises ImportError without pandas."""
+def test_redis_output_get_results_without_pandas():
+    """RedisOutput.get_results() raises ImportError without pandas."""
     import microbench
 
-    mock_redis = MagicMock()
-    mock_redis.StrictRedis.return_value = MagicMock()
+    redis_store = []
+    mock_redis, _ = _make_mock_redis(redis_store)
 
     with patch.dict('sys.modules', {'redis': mock_redis}):
-
-        class RedisBench(MicroBenchRedis):
-            redis_connection = {}
-            redis_key = 'test:bench'
-
-        bench = RedisBench()
+        bench = MicroBench(outputs=[RedisOutput('test:bench')])
 
         with patch.object(microbench, 'pandas', None):
             with pytest.raises(ImportError, match='pandas'):
                 bench.get_results()
 
 
-def test_redis_multiple_results():
-    """MicroBenchRedis.get_results() returns all stored results."""
+def test_redis_output_multiple_results():
+    """RedisOutput.get_results() returns all stored results."""
     redis_store = []
-
-    mock_redis_client = MagicMock()
-    mock_redis_client.rpush.side_effect = lambda key, val: redis_store.append(
-        val.encode('utf8') if isinstance(val, str) else val
-    )
-    mock_redis_client.lrange.side_effect = lambda key, start, end: redis_store
-
-    mock_redis = MagicMock()
-    mock_redis.StrictRedis.return_value = mock_redis_client
+    mock_redis, _ = _make_mock_redis(redis_store)
 
     with patch.dict('sys.modules', {'redis': mock_redis}):
-
-        class RedisBench(MicroBenchRedis):
-            redis_connection = {}
-            redis_key = 'test:bench'
-
-        bench = RedisBench()
+        bench = MicroBench(outputs=[RedisOutput('test:bench')])
 
         @bench
         def func_a():

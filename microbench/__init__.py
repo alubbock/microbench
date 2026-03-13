@@ -50,7 +50,6 @@ except ImportError:
 __all__ = [
     # Core
     'MicroBench',
-    'MicroBenchRedis',
     # Output sinks
     'Output',
     'FileOutput',
@@ -193,6 +192,7 @@ class RedisOutput(Output):
 
     def __init__(self, redis_key, **redis_connection):
         import redis as _redis
+
         self.rclient = _redis.StrictRedis(**redis_connection)
         self.redis_key = redis_key
 
@@ -691,27 +691,6 @@ class MBNvidiaSmi:
                 ]
 
 
-class MicroBenchRedis(MicroBench):
-    """MicroBench subclass that defaults to Redis output.
-
-    Equivalent to ``MicroBench(outputs=[RedisOutput(redis_key, **redis_connection)])``.
-    Specify ``redis_connection`` and ``redis_key`` as class attributes.
-
-    Example::
-
-        class RedisBench(MicroBenchRedis):
-            redis_connection = {'host': 'localhost', 'port': 6379}
-            redis_key = 'microbench:mykey'
-
-        benchmark = RedisBench()
-    """
-
-    def __init__(self, *args, **kwargs):
-        if 'outputs' not in kwargs and 'outfile' not in kwargs:
-            kwargs['outputs'] = [RedisOutput(self.redis_key, **self.redis_connection)]
-        super().__init__(*args, **kwargs)
-
-
 class MonitorThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -725,7 +704,7 @@ class MonitorThread(threading.Thread):
                 'benchmark was started from a non-main thread. Monitoring '
                 'will still be collected but may not stop cleanly on '
                 'SIGINT/SIGTERM.',
-                RuntimeWarning
+                RuntimeWarning,
             )
         self._interval = interval
         self._monitor_data = slot
