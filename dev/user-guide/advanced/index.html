@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://alubbock.github.io/microbench/latest/user-guide/advanced/">
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../extending/">
       
       
         <link rel="next" href="../../api-reference/">
@@ -376,6 +376,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../mixins/" class="md-nav__link">
         
   
@@ -485,34 +513,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -580,6 +580,50 @@
     <span class="md-ellipsis">
       
         Tolerating capture failures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-json-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom JSON encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-a-mixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a mixin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tailing-output-in-real-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tailing output in real time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparing-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing environments
       
     </span>
   </a>
@@ -693,6 +737,50 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#custom-json-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom JSON encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-a-mixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a mixin
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tailing-output-in-real-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tailing output in real time
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparing-environments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing environments
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -740,6 +828,118 @@ where optional dependencies (e.g. <code>nvidia-smi</code>, <code>conda</code>) m
 present on every node. Leave it off during development so misconfigured
 captures surface immediately.</p>
 </div>
+<h2 id="custom-json-encoding">Custom JSON encoding</h2>
+<p>Microbench serialises records as JSON. If a captured value is not
+JSON-serialisable (e.g. a custom object), microbench replaces it with a
+placeholder and emits a <code>JSONEncodeWarning</code>.</p>
+<p>To handle custom types, subclass <code>JSONEncoder</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mb</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">igraph</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyEncoder</span><span class="p">(</span><span class="n">mb</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">Graph</span><span class="p">):</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">mb</span><span class="o">.</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">mb</span><span class="o">.</span><span class="n">MBReturnValue</span><span class="p">):</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="k">pass</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">(</span><span class="n">json_encoder</span><span class="o">=</span><span class="n">MyEncoder</span><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nd">@bench</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="k">def</span><span class="w"> </span><span class="nf">make_graph</span><span class="p">():</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="k">return</span> <span class="n">Graph</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">make_graph</span><span class="p">()</span>  <span class="c1"># no warning</span>
+</code></pre></div>
+<p><code>JSONEncoder</code> already handles <code>datetime</code>, <code>timedelta</code>, <code>timezone</code>, and
+numpy scalar/array types by default.</p>
+<h2 id="writing-a-mixin">Writing a mixin</h2>
+<p>A mixin is simply a class with one or more <code>capture_</code> or <code>capturepost_</code>
+methods. Define it as a standalone class, then combine it with <code>MicroBench</code>
+via multiple inheritance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBMachineType</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the machine architecture (e.g. x86_64, arm64).&quot;&quot;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_machine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBMachineType</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">):</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p>Mixins have no required base class. Python's <strong>Method Resolution Order
+(MRO)</strong> determines the order in which base classes are searched for
+methods — a deterministic left-to-right traversal that visits each class
+exactly once. Because every <code>capture_</code> method has a unique name, all of
+them are found and called regardless of MRO order. The MRO only matters if
+two mixins define a method with the <em>same</em> name, in which case the
+leftmost class in the inheritance list wins.</p>
+<h2 id="tailing-output-in-real-time">Tailing output in real time</h2>
+<p><code>LiveStream</code> tails a JSONL output file in a background thread and fires
+<code>process_*</code> methods on each record as it arrives. It has two main use
+cases:</p>
+<p><strong>1. In-process monitoring</strong> — react to results while a long job is still
+running in the same Python process:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench.livestream</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiveStream</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyStream</span><span class="p">(</span><span class="n">LiveStream</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">process_alert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">10.0</span><span class="p">:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Slow call on </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hostname&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">stream</span> <span class="o">=</span> <span class="n">MyStream</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">)</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># ... runs in background while your job continues ...</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">stream</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">stream</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>2. Separate terminal</strong> — run a watcher script in a second terminal while
+your benchmark job writes to the file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># watch.py — run in a separate terminal: python watch.py</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench.livestream</span><span class="w"> </span><span class="kn">import</span> <span class="n">LiveStream</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Watcher</span><span class="p">(</span><span class="n">LiveStream</span><span class="p">):</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="c1"># Only show records from GPU nodes</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="k">return</span> <span class="s1">&#39;gpu&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;hostname&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;function_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;hostname&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> | </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">stream</span> <span class="o">=</span> <span class="n">Watcher</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">)</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>    <span class="n">stream</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>    <span class="n">stream</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</code></pre></div>
+<p>The base class includes a <code>process_runtime</code> method that adds a <code>runtime</code>
+field (finish_time − start_time) to each record before <code>display()</code> is
+called. Override <code>display()</code> to change how records are shown, or <code>filter()</code>
+to skip records selectively.</p>
+<p>Requires <a href="https://pypi.org/project/python-dateutil/">python-dateutil</a>:
+<code>pip install python-dateutil</code>.</p>
+<h2 id="comparing-environments">Comparing environments</h2>
+<p><code>envdiff</code> produces a side-by-side visual diff of two records in a Jupyter
+notebook, highlighting fields that differ. Useful for diagnosing why the
+same code performs differently on two nodes.</p>
+<p>Requires <a href="https://ipython.org/">IPython</a>: <code>pip install ipython</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench.diff</span><span class="w"> </span><span class="kn">import</span> <span class="n">envdiff</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Compare the environment of the slowest and fastest calls</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">slowest</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()]</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">fastest</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">envdiff</span><span class="p">(</span><span class="n">slowest</span><span class="p">,</span> <span class="n">fastest</span><span class="p">)</span>
+</code></pre></div>
+<p>Differences are highlighted in red in the rendered output.</p>
 
 
 
