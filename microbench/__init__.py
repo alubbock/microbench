@@ -214,6 +214,7 @@ class MicroBench:
         json_encoder=JSONEncoder,
         tz=timezone.utc,
         iterations=1,
+        warmup=0,
         duration_counter=time.perf_counter,
         outputs=None,
         *args,
@@ -232,6 +233,9 @@ class MicroBench:
                 Defaults to timezone.utc.
             iterations (int, optional): Number of iterations to run function.
                 Defaults to 1.
+            warmup (int, optional): Number of unrecorded calls to make before
+                timing begins. Useful for priming caches or JIT compilation.
+                Defaults to 0.
             duration_counter (callable, optional): Timer function to use for
                 run_durations. Defaults to time.perf_counter.
             outputs (list of Output, optional): One or more :class:`Output`
@@ -258,6 +262,7 @@ class MicroBench:
         self._duration_counter = duration_counter
         self.tz = tz
         self.iterations = iterations
+        self.warmup = warmup
 
         if outputs is not None:
             self._outputs = list(outputs)
@@ -388,6 +393,9 @@ class MicroBench:
                         'This functionality requires the "line_profiler" package'
                     )
                 self._line_profiler = line_profiler.LineProfiler(func)
+
+            for _ in range(self.warmup):
+                func(*args, **kwargs)
 
             self.pre_start_triggers(bm_data)
 
