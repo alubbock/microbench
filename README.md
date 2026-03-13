@@ -156,7 +156,7 @@ MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword argu
 MBReturnValue          | Wrapped function's return value
 MBPythonVersion        | `python_version` (e.g. 3.6.0) and `python_executable` (e.g. `/usr/bin/python`, which should indicate any active virtual environment)
 MBHostInfo             | `hostname`<br>`operating_system`
-MBHostCpuCores         | `cpu_cores_logical` (number of cores, requires `psutil`)
+MBHostCpuCores         | `cpu_cores_logical` and `cpu_cores_physical` (requires `psutil`)
 MBHostRamTotal         | `ram_total` (total RAM in bytes, requires `psutil`)
 MBNvidiaSmi            | Various NVIDIA GPU fields, detailed in a later section
 MBLineProfiler         | `line_profiler` containing line-by-line profile (see section below)
