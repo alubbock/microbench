@@ -206,6 +206,34 @@ def test_telemetry_from_non_main_thread():
     )
 
 
+def test_functioncall_args_not_double_encoded():
+    """MBFunctionCall must store raw values, not JSON strings (B5 fix).
+
+    Before the fix, self.to_json(v) stored a JSON string which then got
+    re-serialized, turning e.g. {'k': 1} into the string '{"k": 1}'.
+    """
+
+    class Bench(MicroBench, MBFunctionCall):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def dummy(pos_int, pos_dict, kw_str='default'):
+        pass
+
+    dummy(42, {'key': 'value'}, kw_str='hello')
+
+    results = bench.get_results()
+    args = results['args'][0]
+    kwargs = results['kwargs'][0]
+
+    # Values must be their native Python types, not JSON-encoded strings
+    assert args[0] == 42, f'Expected int 42, got {args[0]!r}'
+    assert args[1] == {'key': 'value'}, f'Expected dict, got {args[1]!r}'
+    assert kwargs['kw_str'] == 'hello', f'Expected str hello, got {kwargs["kw_str"]!r}'
+
+
 def test_unjsonencodable_arg_kwarg_retval():
     class Bench(MicroBench, MBFunctionCall, MBReturnValue):
         pass
