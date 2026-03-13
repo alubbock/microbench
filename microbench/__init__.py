@@ -285,11 +285,12 @@ class MBFunctionCall:
     """Capture function arguments and keyword arguments"""
 
     def capture_function_args_and_kwargs(self, bm_data):
-        # Check all args are encodeable as JSON
+        # Check all args are encodeable as JSON, then store the raw value
         bm_data['args'] = []
         for i, v in enumerate(bm_data['_args']):
             try:
-                bm_data['args'].append(self.to_json(v))
+                self.to_json(v)
+                bm_data['args'].append(v)
             except TypeError:
                 warnings.warn(
                     f'Function argument {i} is not JSON encodable (type: {type(v)}). '
@@ -298,11 +299,12 @@ class MBFunctionCall:
                 )
                 bm_data['args'].append(_UNENCODABLE_PLACEHOLDER_VALUE)
 
-        # Check all kwargs are encodeable as JSON
+        # Check all kwargs are encodeable as JSON, then store the raw value
         bm_data['kwargs'] = {}
         for k, v in bm_data['_kwargs'].items():
             try:
-                bm_data['kwargs'][k] = self.to_json(v)
+                self.to_json(v)
+                bm_data['kwargs'][k] = v
             except TypeError:
                 warnings.warn(
                     f'Function keyword argument "{k}" is not JSON encodable'
