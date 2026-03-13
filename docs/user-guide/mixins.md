@@ -27,6 +27,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBHostInfo` | `hostname`, `operating_system` | — |
 | `MBHostCpuCores` | `cpu_cores_logical`, `cpu_cores_physical` | psutil |
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
+| `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
 | `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
@@ -80,6 +81,48 @@ The return value must be JSON-serialisable. If it is not, a
 `JSONEncodeWarning` is issued and a placeholder is stored. See
 [Custom JSON encoding](extending.md#custom-json-encoding) to handle
 custom types.
+
+## HPC / SLURM
+
+### `MBSlurmInfo`
+
+Captures all `SLURM_*` environment variables into a `slurm` dict. Keys are
+lowercased with the `SLURM_` prefix stripped, so `SLURM_JOB_ID` becomes
+`slurm['job_id']`. If the benchmark runs outside a SLURM job, `slurm` is
+an empty dict.
+
+```python
+from microbench import MicroBench, MBSlurmInfo
+
+class Bench(MicroBench, MBSlurmInfo):
+    pass
+
+bench = Bench()
+```
+
+Each record will contain:
+
+```json
+{
+  "slurm": {
+    "job_id": "12345",
+    "array_task_id": "3",
+    "nodelist": "gpu-node-[01-04]",
+    "cpus_per_task": "4"
+  }
+}
+```
+
+Access individual values in pandas with:
+
+```python
+results['slurm'].apply(lambda s: s.get('job_id'))
+```
+
+!!! tip
+    `MBSlurmInfo` supersedes the manual `env_vars = ('SLURM_JOB_ID', ...)`
+    pattern — it captures every `SLURM_*` variable automatically with no
+    configuration.
 
 ## Package versions
 

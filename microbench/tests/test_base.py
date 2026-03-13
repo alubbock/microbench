@@ -21,6 +21,7 @@ from microbench import (
     MBInstalledPackages,
     MBPythonVersion,
     MBReturnValue,
+    MBSlurmInfo,
     MicroBench,
     Output,
     RedisOutput,
@@ -85,6 +86,55 @@ def test_multi_iterations():
 
     assert len(results['run_durations'][0]) == iterations
     assert all(dur >= 0 for dur in results['run_durations'][0])
+
+
+def test_mb_slurm_info():
+    class Bench(MicroBench, MBSlurmInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    slurm_env = {
+        'SLURM_JOB_ID': '12345',
+        'SLURM_ARRAY_TASK_ID': '3',
+        'SLURM_NODELIST': 'gpu-node-01',
+        'NOT_SLURM': 'ignored',
+    }
+
+    with patch.dict(os.environ, slurm_env, clear=False):
+        noop()
+
+    results = bench.get_results()
+    slurm = results['slurm'][0]
+    assert slurm['job_id'] == '12345'
+    assert slurm['array_task_id'] == '3'
+    assert slurm['nodelist'] == 'gpu-node-01'
+    assert 'not_slurm' not in slurm
+
+
+def test_mb_slurm_info_empty():
+    """slurm field is an empty dict when no SLURM_* vars are set."""
+
+    class Bench(MicroBench, MBSlurmInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    # Strip any real SLURM vars that might be in the test environment
+    clean_env = {k: v for k, v in os.environ.items() if not k.startswith('SLURM_')}
+    with patch.dict(os.environ, clean_env, clear=True):
+        noop()
+
+    results = bench.get_results()
+    assert results['slurm'][0] == {}
 
 
 def test_warmup():
