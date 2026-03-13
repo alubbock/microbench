@@ -555,7 +555,7 @@ class MBNvidiaSmi:
                     ' to capture data for all GPUs'
                 )
             for gpu in gpus:
-                if not self._nvidia_gpu_regex.match(gpu):
+                if not self._nvidia_gpu_regex.match(str(gpu)):
                     raise ValueError(
                         'nvidia_gpus must be a list of GPU indexes (zero-based),'
                         ' UUIDs, or PCI bus IDs'
@@ -570,7 +570,7 @@ class MBNvidiaSmi:
             '--query-gpu=uuid,{}'.format(','.join(nvidia_attributes)),
         ]
         if gpus:
-            cmd += ['-i', ','.join(gpus)]
+            cmd += ['-i', ','.join(str(g) for g in gpus)]
 
         # Execute the command
         res = subprocess.check_output(cmd).decode('utf8')
