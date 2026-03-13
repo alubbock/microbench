@@ -41,5 +41,5 @@ jobs:
           VERSION="${GITHUB_REF#refs/tags/v}"
           MAJOR="${VERSION%%.*}"
           MINOR="$(echo "$VERSION" | cut -d. -f2)"
-          mike deploy --push --update-aliases "${MAJOR}.${MINOR}" latest
+          mike deploy "${MAJOR}.${MINOR}" latest --push --update-aliases
           mike set-default --push latest
