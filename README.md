@@ -68,12 +68,11 @@ def myfunction(arg1, arg2, ...):
 ```
 
 That's it! When `myfunction()` is called, metadata will be captured
-into a `io.StringIO()` buffer, which can be read as follows
+into an in-memory buffer, which can be read as follows
 (using the `pandas` library):
 
 ```python
-import pandas as pd
-results = pd.read_json(basic_bench.outfile, lines=True)
+results = basic_bench.get_results()
 ```
 
 The above example captures the fields `start_time`, `finish_time`,
@@ -418,29 +417,74 @@ def return_a_graph():
 return_a_graph()
 ```
 
-## Redis support
+## Output sinks
 
-By default, microbench appends output to a file, but output can be directed
-elsewhere, e.g. [redis](https://redis.io) - an in-memory, networked data source.
-This option is useful when a shared filesystem is not available.
+By default, microbench writes results to an in-memory buffer. You can direct
+output elsewhere by passing an `outputs` list to the constructor. Each element
+must be an instance of an `Output` subclass.
 
-Redis support requires [redis-py](https://github.com/andymccurdy/redis-py).
+### Saving to a file
 
-To use this feature, inherit from `MicroBenchRedis` instead of `MicroBench`,
-and specify the redis connection and key name as in the following example:
+Pass a file path with `outfile` (shorthand for a single `FileOutput`):
 
 ```python
-from microbench import MicroBenchRedis
+from microbench import MicroBench
 
-class RedisBench(MicroBenchRedis):
-    # redis_connection contains arguments for redis.StrictClient()
-    redis_connection = {'host': 'localhost', 'port': 6379}
-    redis_key = 'microbench:mykey'
-
-benchmark = RedisBench()
+benchmark = MicroBench(outfile='/home/user/my-benchmarks.jsonl')
 ```
 
-To retrieve results, use `get_results()` just like the base class:
+Or use `FileOutput` directly when combining with other sinks:
+
+```python
+from microbench import MicroBench, FileOutput
+
+benchmark = MicroBench(outputs=[FileOutput('/home/user/my-benchmarks.jsonl')])
+```
+
+### Multiple sinks
+
+Pass a list of sinks to write results to several destinations simultaneously.
+For example, to write to both a local file and a Redis server:
+
+```python
+from microbench import MicroBench, FileOutput, RedisOutput
+
+benchmark = MicroBench(outputs=[
+    FileOutput('/home/user/my-benchmarks.jsonl'),
+    RedisOutput('microbench:mykey', host='redis-host', port=6379),
+])
+```
+
+`get_results()` reads from the first sink that supports it.
+
+### Custom output sinks
+
+Subclass `Output` and implement `write` to send results anywhere:
+
+```python
+from microbench import MicroBench, Output
+
+class MyOutput(Output):
+    def write(self, bm_json_str):
+        send_to_my_system(bm_json_str)
+
+benchmark = MicroBench(outputs=[MyOutput()])
+```
+
+### Redis support
+
+[Redis](https://redis.io) is a useful destination when a shared filesystem is
+not available. Redis support requires
+[redis-py](https://github.com/andymccurdy/redis-py).
+
+```python
+from microbench import MicroBench, RedisOutput
+
+benchmark = MicroBench(outputs=[RedisOutput('microbench:mykey',
+                                             host='localhost', port=6379)])
+```
+
+Results are retrieved with `get_results()` as usual:
 
 ```python
 results = benchmark.get_results()
@@ -450,10 +494,10 @@ results = benchmark.get_results()
 
 The runtime impact varies depending on what information is captured and by platform.
 Broadly, capturing environment variables, Python package versions, and timing
-information for a function has a negligible impact. Capturing telemetry and
+information for a function has a negligible impact. Periodic monitoring and
 invoking external programs (like `nvidia-smi` for GPU information) has a larger impact,
 although the latter is a one-off per invocation and typically less than one second.
-Telemetry capture intervals should be kept relatively infrequent (e.g., every minute
+Monitor sampling intervals should be kept relatively infrequent (e.g., every minute
 or two, rather than every second) to avoid significant runtime impacts.
 
 ### Duration timings
