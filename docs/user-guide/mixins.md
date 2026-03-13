@@ -27,6 +27,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBHostInfo` | `hostname`, `operating_system` | — |
 | `MBHostCpuCores` | `cpu_cores_logical`, `cpu_cores_physical` | psutil |
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
+| `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
@@ -81,6 +82,58 @@ The return value must be JSON-serialisable. If it is not, a
 `JSONEncodeWarning` is issued and a placeholder is stored. See
 [Custom JSON encoding](extending.md#custom-json-encoding) to handle
 custom types.
+
+## Host resources
+
+### `MBHostCpuCores` and `MBHostRamTotal`
+
+Capture static host hardware information. Requires
+[psutil](https://pypi.org/project/psutil/).
+
+```python
+from microbench import MicroBench, MBHostCpuCores, MBHostRamTotal
+
+class Bench(MicroBench, MBHostCpuCores, MBHostRamTotal):
+    pass
+```
+
+Fields: `cpu_cores_logical`, `cpu_cores_physical`, `ram_total` (bytes).
+
+## Job resource utilisation
+
+### `MBPeakMemory`
+
+Captures the peak Python memory allocation during the benchmarked function
+(across all iterations when `iterations > 1`) as `peak_memory_bytes` (bytes).
+Uses [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html) from
+the standard library — no extra dependencies required.
+
+```python
+from microbench import MicroBench, MBPeakMemory
+
+class Bench(MicroBench, MBPeakMemory):
+    pass
+
+bench = Bench()
+
+@bench
+def process(data):
+    return sorted(data)
+
+process(list(range(1_000_000, 0, -1)))
+# record contains: {"peak_memory_bytes": 8056968, ...}
+```
+
+!!! note
+    `tracemalloc` tracks memory that goes through Python's allocator, which
+    covers Python objects and most C-extension allocations. Memory allocated
+    directly via `malloc` in C extensions (e.g. some large NumPy operations)
+    is not tracked.
+
+!!! tip "Continuous resource monitoring"
+    `MBPeakMemory` gives a single high-water mark per call. For time-series
+    sampling of memory, CPU, and other metrics *while the function runs*,
+    see [Periodic monitoring](monitoring.md).
 
 ## HPC / SLURM
 

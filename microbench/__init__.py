@@ -61,6 +61,7 @@ __all__ = [
     'MBHostInfo',
     'MBHostCpuCores',
     'MBHostRamTotal',
+    'MBPeakMemory',
     'MBSlurmInfo',
     'MBGlobalPackages',
     'MBInstalledPackages',
@@ -697,6 +698,38 @@ class MBHostRamTotal(_NeedsPsUtil):
     def capture_total_ram(self, bm_data):
         self._check_psutil()
         bm_data['ram_total'] = psutil.virtual_memory().total
+
+
+class MBPeakMemory:
+    """Capture peak Python memory allocation during the benchmarked function.
+
+    Uses :mod:`tracemalloc` from the Python standard library (no extra
+    dependencies). Records the peak memory allocated in bytes across all
+    iterations as ``peak_memory_bytes``.
+
+    Note:
+        ``tracemalloc`` tracks memory that goes through Python's allocator,
+        which covers Python objects and most C-extension allocations. Memory
+        allocated directly via ``malloc`` in C extensions (e.g. some large
+        NumPy arrays) is not tracked.
+    """
+
+    def capture_peak_memory(self, bm_data):
+        import tracemalloc
+
+        self._tracemalloc_was_tracing = tracemalloc.is_tracing()
+        if self._tracemalloc_was_tracing:
+            tracemalloc.reset_peak()
+        else:
+            tracemalloc.start()
+
+    def capturepost_peak_memory(self, bm_data):
+        import tracemalloc
+
+        _, peak = tracemalloc.get_traced_memory()
+        bm_data['peak_memory_bytes'] = peak
+        if not self._tracemalloc_was_tracing:
+            tracemalloc.stop()
 
 
 class MBNvidiaSmi:
