@@ -1,4 +1,26 @@
+from unittest.mock import patch
+
+import pytest
+
+import microbench
 from microbench import MBLineProfiler, MicroBench
+
+
+def test_line_profiler_missing_package():
+    """MBLineProfiler raises ImportError when line_profiler is not installed."""
+
+    class Bench(MicroBench, MBLineProfiler):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.object(microbench, 'line_profiler', None):
+        with pytest.raises(ImportError, match='line_profiler'):
+            noop()
 
 
 def test_line_profiler():
