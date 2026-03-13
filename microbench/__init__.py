@@ -27,11 +27,6 @@ try:
 except ImportError:
     psutil = None
 try:
-    import conda
-    import conda.testing.conda_cli
-except ImportError:
-    conda = None
-try:
     import numpy
 except ImportError:
     numpy = None
@@ -404,23 +399,15 @@ class MBGlobalPackages:
 
 
 class MBCondaPackages:
-    """Capture conda packages; requires 'conda' package (pip install conda)"""
+    """Capture conda packages using the conda CLI"""
 
     include_builds = True
     include_channels = False
 
     def capture_conda_packages(self, bm_data):
-        if conda is None:
-            # Use subprocess
-            pkg_list = subprocess.check_output(['conda', 'list']).decode('utf8')
-        else:
-            # Use conda API
-            pkg_list, stderr, ret_code = conda.testing.conda_cli.run_command(
-                conda.testing.conda_cli.Commands.LIST
-            )
-
-            if ret_code != 0 or stderr:
-                raise RuntimeError(f'Error running conda list: {stderr}')
+        pkg_list = subprocess.check_output(
+            ['conda', 'list', '--prefix', sys.prefix]
+        ).decode('utf8')
 
         bm_data['conda_versions'] = {}
 
