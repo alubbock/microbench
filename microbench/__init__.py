@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 import types
+import uuid
 import warnings
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
@@ -34,6 +35,12 @@ try:
     import pandas
 except ImportError:
     pandas = None
+
+
+# Generated once at import time; shared by all MicroBench instances in this
+# process, allowing records from independent bench suites to be correlated.
+# A new value is produced for each separate process invocation.
+_run_id = str(uuid.uuid4())
 
 
 try:
@@ -269,6 +276,8 @@ class MicroBench:
             self._outputs = [FileOutput()]
 
     def pre_start_triggers(self, bm_data):
+        bm_data['mb_run_id'] = _run_id
+        bm_data['mb_version'] = __version__
         # Store timezone
         bm_data['timestamp_tz'] = str(self.tz)
         # Store duration counter function name

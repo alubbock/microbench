@@ -11,6 +11,7 @@ import numpy
 import pandas
 import pytest
 
+import microbench
 from microbench import (
     _UNENCODABLE_PLACEHOLDER_VALUE,
     FileOutput,
@@ -28,6 +29,38 @@ from microbench import (
 from microbench import __version__ as microbench_version
 
 from .globals_capture import globals_bench
+
+
+def test_mb_run_id_and_version():
+    """mb_run_id is consistent across bench suites; mb_version matches package."""
+    bench_a = MicroBench()
+    bench_b = MicroBench()
+
+    @bench_a
+    def noop_a():
+        pass
+
+    @bench_b
+    def noop_b():
+        pass
+
+    noop_a()
+    noop_b()
+
+    res_a = bench_a.get_results()
+    res_b = bench_b.get_results()
+
+    # Both suites in the same process share the same run_id
+    assert res_a['mb_run_id'][0] == res_b['mb_run_id'][0]
+    # run_id looks like a UUID
+    assert len(res_a['mb_run_id'][0]) == 36
+
+    # mb_version matches the installed package version
+    assert res_a['mb_version'][0] == microbench_version
+    assert res_b['mb_version'][0] == microbench_version
+
+    # run_id matches the module-level value directly
+    assert res_a['mb_run_id'][0] == microbench._run_id
 
 
 def test_function():
