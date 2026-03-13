@@ -56,6 +56,18 @@ Each call produces one record. `results` is a pandas DataFrame:
 Full documentation, including a getting-started guide, mixin reference, and
 API docs, is at **https://alubbock.github.io/microbench/**.
 
+## Citing microbench
+
+If you use microbench in your research, please cite:
+
+> Lubbock, A.L.R. and Lopez, C.F. (2022). Microbench: automated metadata
+> management for systems biology benchmarking and reproducibility in Python.
+> *Bioinformatics*, 38(20), 4823–4825.
+> https://doi.org/10.1093/bioinformatics/btac580
+
+Although the paper was written in the context of systems biology, microbench
+is a general-purpose benchmarking tool applicable to any Python workload.
+
 ## Feedback
 
 Bug reports and feature requests are welcome in
