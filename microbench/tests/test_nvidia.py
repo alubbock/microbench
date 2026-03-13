@@ -121,3 +121,19 @@ def test_nvidia_gpus_invalid_format_raises():
 
     with pytest.raises(ValueError, match='nvidia_gpus must be'):
         noop()
+
+
+def test_nvidia_gpus_integer_accepted():
+    """Integer GPU indexes must be accepted (README documents this usage)."""
+
+    class Bench(MicroBench, MBNvidiaSmi):
+        nvidia_gpus = (0,)
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_SMI_OUTPUT):
+        noop()
