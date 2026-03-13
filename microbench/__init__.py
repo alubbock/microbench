@@ -486,7 +486,8 @@ class MBHostCpuCores(_NeedsPsUtil):
 
     def capture_cpu_cores(self, bm_data):
         self._check_psutil()
-        bm_data['cpu_cores_logical'] = psutil.cpu_count()
+        bm_data['cpu_cores_logical'] = psutil.cpu_count(logical=True)
+        bm_data['cpu_cores_physical'] = psutil.cpu_count(logical=False)
 
 
 class MBHostRamTotal(_NeedsPsUtil):
