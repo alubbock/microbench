@@ -71,4 +71,5 @@ nav:
     - Extending microbench: user-guide/extending.md
     - Advanced usage: user-guide/advanced.md
   - API reference: api-reference.md
+  - Citing microbench: citing.md
   - Changelog: changelog.md
