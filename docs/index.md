@@ -36,6 +36,8 @@ Some mixins have optional requirements:
 | `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
 | `MBCondaPackages` | `conda` on `PATH` |
 | `RedisOutput` | [redis-py](https://github.com/andymccurdy/redis-py) |
+| `LiveStream` | [python-dateutil](https://pypi.org/project/python-dateutil/) |
+| `envdiff` | [IPython](https://ipython.org/) |
 
 ## Quick example
 
