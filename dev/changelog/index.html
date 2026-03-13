@@ -830,9 +830,17 @@
 </code></pre></div></p>
 <h3 id="new-features">New features</h3>
 <ul>
-<li><strong>Multi-sink output architecture</strong> (#52): Results can now be written to
+<li>
+<p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
+  before timing begins, priming caches or JIT compilation without affecting
+  results. Warmup calls are unrecorded and do not interact with the monitor
+  thread or capture triggers.</p>
+</li>
+<li>
+<p><strong>Multi-sink output architecture</strong> (#52): Results can now be written to
   multiple destinations simultaneously by passing an <code>outputs</code> list to
-  <code>MicroBench</code>. Three classes make up the new output API:</li>
+  <code>MicroBench</code>. Three classes make up the new output API:</p>
+</li>
 <li><code>Output</code> — abstract base class; subclass this to implement custom sinks.</li>
 <li><code>FileOutput</code> — writes JSONL to a file path or file-like object (wraps the
     previous default behaviour).</li>
