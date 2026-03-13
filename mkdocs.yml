@@ -1,0 +1,73 @@
+site_name: microbench
+site_description: Micro-benchmarking and reproducibility metadata capture for Python
+site_url: https://alubbock.github.io/microbench/
+repo_url: https://github.com/alubbock/microbench
+repo_name: alubbock/microbench
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - admonition
+  - tables
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_if_no_docstring: false
+            show_attribute_values: true
+            filters:
+              - "!^_"
+  - mike:
+      alias_type: symlink
+      canonical_version: latest
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - User guide:
+    - Mixins: user-guide/mixins.md
+    - Output: user-guide/output.md
+    - Periodic telemetry: user-guide/monitoring.md
+    - Extending microbench: user-guide/extending.md
+    - Configuration: user-guide/configuration.md
+  - API reference: api-reference.md
+  - Changelog: changelog.md

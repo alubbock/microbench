@@ -23,6 +23,7 @@ Homepage = "https://github.com/alubbock/microbench"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "pandas", "numpy", "line_profiler", "psutil"]
+docs = ["mkdocs-material", "mkdocstrings[python]", "mike", "pymdown-extensions"]
 
 [tool.setuptools.packages.find]
 where = ["."]
