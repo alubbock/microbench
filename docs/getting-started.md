@@ -50,7 +50,7 @@ import numpy, pandas, time
 class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
     capture_versions = (numpy, pandas)
-    env_vars = ('SLURM_ARRAY_TASK_ID',)
+    env_vars = ('CUDA_VISIBLE_DEVICES',)
 
 benchmark = MyBench(experiment='run-1', iterations=3,
                     duration_counter=time.monotonic)
@@ -58,7 +58,7 @@ benchmark = MyBench(experiment='run-1', iterations=3,
 
 - `outfile` saves results to a file (one JSON object per line).
 - `capture_versions` records the versions of specified packages.
-- `env_vars` captures environment variables as `env_<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for a SLURM example.
+- `env_vars` captures environment variables as `env_<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for more. For SLURM jobs, use `MBSlurmInfo` instead.
 - `iterations=3` runs the function three times, recording all three durations.
 - `duration_counter` overrides the timer (see [Configuration](user-guide/configuration.md)).
 - `experiment='run-1'` adds a custom `experiment` field to every record.

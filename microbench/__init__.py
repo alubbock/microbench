@@ -61,6 +61,7 @@ __all__ = [
     'MBHostInfo',
     'MBHostCpuCores',
     'MBHostRamTotal',
+    'MBSlurmInfo',
     'MBGlobalPackages',
     'MBInstalledPackages',
     'MBCondaPackages',
@@ -502,6 +503,31 @@ def _is_microbench_internal(filename):
     if abs_file.startswith(_microbench_tests_dir + os.sep):
         return False
     return abs_file == _microbench_dir or abs_file.startswith(_microbench_dir + os.sep)
+
+
+class MBSlurmInfo:
+    """Capture all SLURM_* environment variables.
+
+    Results are stored in the ``slurm`` field as a dict, with keys
+    lowercased and the ``SLURM_`` prefix stripped. If no SLURM environment
+    variables are set (e.g. running locally), ``slurm`` is an empty dict.
+
+    Example output::
+
+        {
+            "slurm": {
+                "job_id": "12345",
+                "array_task_id": "3",
+                "nodelist": "gpu-node-[01-04]",
+                "cpus_per_task": "4"
+            }
+        }
+    """
+
+    def capture_slurm(self, bm_data):
+        bm_data['slurm'] = {
+            k[6:].lower(): v for k, v in os.environ.items() if k.startswith('SLURM_')
+        }
 
 
 class MBGlobalPackages:

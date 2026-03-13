@@ -39,6 +39,11 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`MBSlurmInfo` mixin**: captures all `SLURM_*` environment variables into
+  a `slurm` dict (keys lowercased, `SLURM_` prefix stripped). Empty dict
+  when running outside a SLURM job. Supersedes the manual
+  `env_vars = ('SLURM_JOB_ID', ...)` pattern.
+
 - **`warmup` parameter**: pass `warmup=N` to run the function `N` times
   before timing begins, priming caches or JIT compilation without affecting
   results. Warmup calls are unrecorded and do not interact with the monitor

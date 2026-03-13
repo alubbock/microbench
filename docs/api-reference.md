@@ -26,6 +26,8 @@
 
 ::: microbench.MBHostRamTotal
 
+::: microbench.MBSlurmInfo
+
 ::: microbench.MBGlobalPackages
 
 ::: microbench.MBInstalledPackages
