@@ -2,540 +2,59 @@
 
 ![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
 
-Microbench is a small Python package for benchmarking Python functions, and
-optionally capturing extra runtime/environment information. It is most useful in
-clustered/distributed environments, where the same function runs under different
-environments, and is designed to be extensible with new
-functionality. In addition to benchmarking, this can help reproducibility by
-e.g. logging the versions of key Python packages, or even all packages loaded
-into the global environment. Other captured metadata can include CPU and RAM
-usage, environment variables, and hardware specifications.
+Microbench is a small Python package for benchmarking Python functions and
+capturing reproducibility metadata — designed for clustered and distributed
+environments where the same code runs across many machines.
 
-## Requirements
+## Key features
 
-Microbench by default has no dependencies outside of the Python standard
-library, although [pandas](https://pandas.pydata.org/) is recommended to
-examine results. However, some mixins (extensions) have specific requirements:
-
-* The [line_profiler](https://github.com/rkern/line_profiler)
-  package needs to be installed for line-by-line code benchmarking.
-* The CPU cores, total RAM, and telemetry extensions require
-  [psutil](https://pypi.org/project/psutil/).
-* The NVIDIA GPU plugin requires the
-  [nvidia-smi](https://developer.nvidia.com/nvidia-system-management-interface)
-  utility, which usually ships with the NVIDIA graphics card drivers. It needs
-  to be on your `PATH`.
+- **Zero-config timing** — decorate a function, get timestamps and run
+  durations immediately, no setup required
+- **Extensible via mixins** — capture Python version, hostname, CPU/RAM
+  specs, conda/pip package versions, NVIDIA GPU info, line-level profiles,
+  and more by adding mixin classes
+- **Cluster and HPC ready** — capture SLURM environment variables, psutil
+  resource metrics, and per-process run IDs for correlating results across
+  nodes
+- **JSONL output** — one JSON object per call; load into pandas with
+  `read_json(..., lines=True)`; no schema lock-in, add any extra fields you
+  need
+- **Flexible output** — write to a local file, in-memory buffer, Redis, or
+  custom sinks; file writes use `O_APPEND` for safe concurrent access on
+  shared filesystems
 
 ## Installation
-
-To install using `pip`:
 
 ```
 pip install microbench
 ```
 
-## Usage
-
-Microbench is designed for benchmarking Python functions. These examples will
-assume you have already defined a Python function `myfunction` that you wish to
-benchmark:
-
-```python
-def myfunction(arg1, arg2, ...):
-    ...
-```
-
-### Minimal example
-
-First, create a benchmark suite, which specifies the configuration and
-information to capture.
-
-Here's a minimal, complete example:
+## Quick start
 
 ```python
 from microbench import MicroBench
 
-basic_bench = MicroBench()
-```
+bench = MicroBench(outfile='/home/user/results.jsonl', experiment='baseline')
 
-To attach the benchmark to your function, simply use `basic_bench` as a
-decorator, like this:
-
-```python
-@basic_bench
-def myfunction(arg1, arg2, ...):
-    ...
-```
-
-That's it! When `myfunction()` is called, metadata will be captured
-into an in-memory buffer, which can be read as follows
-(using the `pandas` library):
-
-```python
-results = basic_bench.get_results()
-```
-
-The above example captures the following fields in every record:
-
-| Field | Description |
-|-------|-------------|
-| `mb_run_id` | UUID generated once when `microbench` is imported. The same value appears in every record produced by the same process, so results from independent bench suites can be correlated with `groupby('mb_run_id')`. A new UUID is produced for each fresh process invocation. |
-| `mb_version` | Version of the `microbench` package that produced the record; useful when benchmark results are stored long-term and the code evolves. |
-| `start_time` | Timestamp when the function was first called (ISO-8601, UTC by default). |
-| `finish_time` | Timestamp when the function returned (ISO-8601, UTC by default). |
-| `run_durations` | List of per-iteration durations in seconds (one entry per iteration). |
-| `function_name` | Name of the decorated function. |
-| `timestamp_tz` | Timezone used for `start_time`/`finish_time` (see Timezones section). |
-| `duration_counter` | Name of the timer function used for `run_durations` (see Duration timings section). |
-
-Microbench can capture many
-other types of metadata from the environment, resource usage, and
-hardware, which are covered below.
-
-### Extended examples
-
-Here's a more complete example using mixins (the `MB` prefixed class
-names) to extend functionality. Note that keyword arguments can be supplied
-to the constructor (in this case `some_info=123`) to specify additional
-information to capture. We also specify `iterations=3`, which means that the
-called function with be executed 3 times (the returned result will always
-be from the final run) with timings captured for each run. We specify a custom
-duration counter, `time.monotonic` instead of the default `time.perf_counter`
-(see Duration timings section later in this README for explanation).
-This example also specifies the `outfile` option,
-which appends metadata to a file on disk.
-
-```python
-from microbench import *
-import numpy, pandas, time
-
-class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
-    outfile = '/home/user/my-benchmarks'
-    capture_versions = (numpy, pandas)  # Or use MBGlobalPackages/MBInstalledPackages
-    env_vars = ('SLURM_ARRAY_TASK_ID', )
-
-benchmark = MyBench(some_info=123, iterations=3, duration_counter=time.monotonic)
-```
-
-The `env_vars` option from the example above specifies a list of environment
-variables to capture as `env_<variable name>`. In this example,
-the [slurm](https://slurm.schedmd.com) array task ID will be stored as
-`env_SLURM_ARRAY_TASK_ID`. Where the environment variable is not set, the
-value will be `null`.
-
-To capture package versions, you can either specify them individually (as
-above), or you can capture the versions of every package in the global
-environment. In the following example, we would capture the versions of
-`microbench`, `numpy`, and `pandas` automatically.
-
-```python
-from microbench import *
-import numpy, pandas
-
-class Bench2(MicroBench, MBGlobalPackages):
-    outfile = '/home/user/bench2'
-
-bench2 = Bench2()
-```
-
-If you want to go even further, and capture the version of every package
-available for import, there's a mixin for that:
-
-```python
-from microbench import *
-
-class Bench3(MicroBench, MBInstalledPackages):
-    pass
-
-bench3 = Bench3()
-```
-
- Mixin                 | Fields captured
------------------------|----------------
-*(default)*            | `start_time`<br>`finish_time`<br>`function_name`
-MBGlobalPackages       | `package_versions`, with entry for every package in the global environment
-MBInstalledPackages    | `package_versions`, with entry for every package available for import
-MBCondaPackages        | `conda_versions`, with entry for every conda package in the environment
-MBFunctionCall         | `args` (positional arguments)<br>`kwargs` (keyword arguments)
-MBReturnValue          | Wrapped function's return value
-MBPythonVersion        | `python_version` (e.g. 3.6.0) and `python_executable` (e.g. `/usr/bin/python`, which should indicate any active virtual environment)
-MBHostInfo             | `hostname`<br>`operating_system`
-MBHostCpuCores         | `cpu_cores_logical` and `cpu_cores_physical` (requires `psutil`)
-MBHostRamTotal         | `ram_total` (total RAM in bytes, requires `psutil`)
-MBNvidiaSmi            | Various NVIDIA GPU fields, detailed in a later section
-MBLineProfiler         | `line_profiler` containing line-by-line profile (see section below)
-
-## Examine results
-
-Each result is a [JSON](https://en.wikipedia.org/wiki/JSON) object. When using
-the `outfile` option, a JSON object for each `@benchmark` call is stored on a
-separate line in the file. The output from the minimal example above for a
-single run will look similar to the following:
-
-```json
-{"start_time": "2018-08-06T10:28:24.806493+00:00", "finish_time": "2018-08-06T10:28:24.867456+00:00", "run_durations": [0.60857599999999999], "function_name": "my_function", "timestamp_tz": "UTC", "duration_counter": "perf_counter"}
-```
-
-Start and finish times are given as timestamps in ISO-8601 format, in the UTC
-timezone by default (see Timezones section of this README).
-
-Run_durations are given in seconds, captured using the `time.perf_counter`
-function by default, but this can be overridden (see Duration timings section
-of this README).
-
-The simplest way to examine results in detail is to load them into a
-[pandas](https://pandas.pydata.org/) dataframe:
-
-```python
-# Read results directly from active benchmark suite
-benchmark.get_results()
-
-# Or, equivalently when using a file, read it using pandas directly
-import pandas
-results = pandas.read_json('/home/user/my-benchmarks', lines=True)
-```
-
-Pandas has powerful data manipulation capabilities. For example, to calculate
-the average runtime by Python version:
-
-```python
-# Calculate overall runtime
-results['runtime'] = results['finish_time'] - results['start_time']
-
-# Average overall runtime by Python version
-results.groupby('python_version')['runtime'].mean()
-```
-
-Many more advanced operations are available. The
-[pandas tutorial](https://pandas.pydata.org/pandas-docs/stable/tutorials.html)
-is recommended.
-
-## Line profiler support
-
-Microbench also has support for [line_profiler](https://github.com/rkern/line_profiler), which shows the execution time
-of each line of Python code. Note that this will slow down your code, so only use it if needed, but it's useful for
-discovering bottlenecks within a function. Requires the `line_profiler` package to be installed
-(e.g. `pip install line_profiler`).
-
-> **Security note:** Line profiler results are stored using Python's `pickle`
-> format (base64-encoded). `MBLineProfiler.decode_line_profile()` uses
-> `pickle.loads`, which can execute arbitrary code. Only decode line profiler
-> results from trusted sources (e.g. your own benchmark output files).
-
-```python
-from microbench import MicroBench, MBLineProfiler
-import pandas
-
-# Create our benchmark suite using the MBLineProfiler mixin
-class LineProfilerBench(MicroBench, MBLineProfiler):
-    pass
-
-lpbench = LineProfilerBench()
-
-# Decorate our function with the benchmark suite
-@lpbench
-def my_function():
-    """ Inefficient function for line profiler """
-    acc = 0
-    for i in range(1000000):
-        acc += i
-
-    return acc
-
-# Call the function as normal
-my_function()
-
-# Read the results into a Pandas DataFrame
-results = lpbench.get_results()
-
-# Get the line profiler report as an object
-lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
-
-# Print the line profiler report
-MBLineProfiler.print_line_profile(results['line_profiler'][0])
-```
-
-The last line of the previous example will print the line profiler report, showing the execution time of each line of
-code. Example:
-
-```
-Timer unit: 1e-06 s
-
-Total time: 0.476723 s
-File: /home/user/my_test.py
-Function: my_function at line 12
-
-Line #      Hits         Time  Per Hit   % Time  Line Contents
-==============================================================
-    12                                               @lpbench
-    13                                               def my_function():
-    14                                                   """ Inefficient function for line profiler """
-    15         1          2.0      2.0      0.0          acc = 0
-    16   1000001     217874.0      0.2     45.7          for i in range(1000000):
-    17   1000000     258846.0      0.3     54.3              acc += i
-    18
-    19         1          1.0      1.0      0.0          return acc
-```
-
-## NVIDIA GPU support
-
-Attributes about NVIDIA GPUs can be captured using the `MBNvidiaSmi` plugin.
-This requires the `nvidia-smi` utility to be available in the current `PATH`.
-
-By default, the `gpu_name` (model number) and `memory.total` attributes are
-captured. Extra attributes can be specified using the class or object-level
-variable `nvidia_attributes`. To see which attributes are available, run
-`nvidia-smi --help-query-gpu`.
-
-By default, all installed GPUs will be polled. To limit to a specific GPU,
-specify the `nvidia_gpus` attribute as a tuple of GPU IDs, which can be
-zero-based GPU indexes (can change between reboots, not recommended),
-GPU UUIDs, or PCI bus IDs. You can find out GPU UUIDs by running
-`nvidia-smi -L`.
-
-Here's an example specifying the optional `nvidia_attributes` and
-`nvidia_gpus` fields:
-
-```python
-from microbench import MicroBench, MBNvidiaSmi
-
-class GpuBench(MicroBench, MBNvidiaSmi):
-    outfile = '/home/user/gpu-benchmarks'
-    nvidia_attributes = ('gpu_name', 'memory.total', 'pcie.link.width.max')
-    nvidia_gpus = (0, )  # Usually better to specify GPU UUIDs here instead
-
-gpu_bench = GpuBench()
-```
-
-## Periodic monitoring support
-
-Microbench can periodically sample resource usage during the execution of a
-function using a background thread. For example, this is useful to track how
-memory usage changes over time during a long-running computation.
-
-Periodic monitoring requires the `psutil` library.
-
-Microbench launches and cleans up the monitoring thread automatically.
-Define a `monitor` static method on your benchmark class, which accepts
-a [psutil.Process](https://psutil.readthedocs.io/en/latest/#psutil.Process)
-object and returns the sample data as a dictionary. Samples are stored as a
-list in the `monitor` field of each result record.
-
-The default sampling interval is every 60 seconds, which can be customized
-using the `monitor_interval` class variable.
-
-A minimal example to capture memory usage every 90 seconds is shown below:
-
-```python
-from microbench import MicroBench
-
-class MonitorBench(MicroBench):
-    monitor_interval = 90
-
-    @staticmethod
-    def monitor(process):
-        return process.memory_full_info()._asdict()
-
-monitor_bench = MonitorBench()
-```
-
-## Extending microbench
-
-Microbench includes a few mixins for basic functionality as described in the
-extended example, above.
-
-You can also add functions to your benchmark suite to capture
-extra information at runtime. These functions must be prefixed with `capture_`
-for them to run automatically before the function starts, or `capturepost_`
-for them to run automatically when the function completes. They take
-a single argument, `bm_data`, a dictionary to be extended with extra data.
-Care should be taken to avoid overwriting existing key names.
-
-Here's an example to capture the machine type (`i386`, `x86_64` etc.):
-
-```python
-from microbench import MicroBench
-import platform
-
-class Bench(MicroBench):
-    outfile = '/home/user/my-benchmarks'
-
-    def capture_machine_platform(self, bm_data):
-        bm_data['platform'] = platform.machine()
-
-benchmark = Bench()
-```
-
-## Extending JSONEncoder
-
-Microbench encodes data in JSON, but sometimes Microbench will
-encounter data types (like custom objects or classes)
-that are not encodable as JSON by default (usually meaning they
-don't have a way to be represented as a string, list, or
-dictionary). For example, when using the `MBFunctionCall` and
-`MBReturnValue`, a warning will be shown if any argument or
-return value (respectively) is not encodable as JSON, and the
-value will be replaced with a placeholder to allow the metadata
-capture to continue, and a warning will be shown.
-
-If you wish to actually capture those values, you will need to
-specify a way to convert the object to JSON. This is done using
-by extending `microbench.JSONEncoder` with a test for the object
-type and implementing a conversion to a string, list, or dict.
-
-For example, to capture a `Graph` object from the `igraph`
-package using `str(graph)` as the representation, we could
-do the following (note that we could use any representation
-we want, e.g. if we wanted to capture the object in a more
-or less detailed way):
-
-```
-import microbench as mb
-from igraph import Graph
-
-# Extend the JSONEncoder to encode Graph objects
-class CustomJSONEncoder(mb.JSONEncoder):
-    def default(self, o):
-        # Encode igraph.Graph objects as strings
-        if isinstance(o, Graph):
-            return str(o)
-
-        # Add further isinstance(o, ...) cases here
-        # if needed
-
-        # Make sure to call super() to handle
-        # default cases
-        return super().default(o)
-
-# Define your benchmark class as normal
-class Bench(mb.MicroBench, mb.MBReturnValue):
-    pass
-
-# Create a benchmark suite with the custom JSON
-# encoder from above
-bench = Bench(json_encoder=CustomJSONEncoder)
-
-# Attach the benchmark suite to our function
 @bench
-def return_a_graph():
-    return Graph(2, ((0, 1), (0, 2)))
+def my_function(n):
+    return sum(range(n))
 
-# This should now work without warnings or errors
-return_a_graph()
+my_function(1_000_000)
+results = bench.get_results()
 ```
 
-## Output sinks
+Each call produces one record. `results` is a pandas DataFrame:
 
-By default, microbench writes results to an in-memory buffer. You can direct
-output elsewhere by passing an `outputs` list to the constructor. Each element
-must be an instance of an `Output` subclass.
-
-### Saving to a file
-
-Pass a file path with `outfile` (shorthand for a single `FileOutput`):
-
-```python
-from microbench import MicroBench
-
-benchmark = MicroBench(outfile='/home/user/my-benchmarks.jsonl')
+```
+   mb_run_id                             mb_version  function_name  run_durations  experiment
+0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function    [0.049823]     baseline
 ```
 
-Or use `FileOutput` directly when combining with other sinks:
+## Documentation
 
-```python
-from microbench import MicroBench, FileOutput
-
-benchmark = MicroBench(outputs=[FileOutput('/home/user/my-benchmarks.jsonl')])
-```
-
-### Multiple sinks
-
-Pass a list of sinks to write results to several destinations simultaneously.
-For example, to write to both a local file and a Redis server:
-
-```python
-from microbench import MicroBench, FileOutput, RedisOutput
-
-benchmark = MicroBench(outputs=[
-    FileOutput('/home/user/my-benchmarks.jsonl'),
-    RedisOutput('microbench:mykey', host='redis-host', port=6379),
-])
-```
-
-`get_results()` reads from the first sink that supports it.
-
-### Custom output sinks
-
-Subclass `Output` and implement `write` to send results anywhere:
-
-```python
-from microbench import MicroBench, Output
-
-class MyOutput(Output):
-    def write(self, bm_json_str):
-        send_to_my_system(bm_json_str)
-
-benchmark = MicroBench(outputs=[MyOutput()])
-```
-
-### Redis support
-
-[Redis](https://redis.io) is a useful destination when a shared filesystem is
-not available. Redis support requires
-[redis-py](https://github.com/andymccurdy/redis-py).
-
-```python
-from microbench import MicroBench, RedisOutput
-
-benchmark = MicroBench(outputs=[RedisOutput('microbench:mykey',
-                                             host='localhost', port=6379)])
-```
-
-Results are retrieved with `get_results()` as usual:
-
-```python
-results = benchmark.get_results()
-```
-
-## Runtime impact considerations
-
-The runtime impact varies depending on what information is captured and by platform.
-Broadly, capturing environment variables, Python package versions, and timing
-information for a function has a negligible impact. Periodic monitoring and
-invoking external programs (like `nvidia-smi` for GPU information) has a larger impact,
-although the latter is a one-off per invocation and typically less than one second.
-Monitor sampling intervals should be kept relatively infrequent (e.g., every minute
-or two, rather than every second) to avoid significant runtime impacts.
-
-### Duration timings
-
-By default, `run_durations` are given in seconds using the `time.perf_counter` function,
-which should be sufficient for most use cases. You can use any function that
-returns a float or integer number for time. Some examples would be `time.perf_counter_ns`
-if you want time in nanoseconds, or `time.monotonic` for a monotonic clock impervious
-to clock adjustments (ideal for very long-running code). Use the `duration_counter=...`
-argument when creating a benchmark suite object, as seen in the Extended examples
-section of this README, above.
-
-### Timezones
-
-Microbench captures `start_time` and `finish_time` as ISO-8601 timestamps in the
-UTC timezone by default. The timezone is also recorded in the `timestamp_tz` field
-(e.g. `"UTC"` by default).
-
-The timezone can be overridden by passing a `tz=...` argument when creating a
-benchmark suite object, where the value is a `datetime.timezone` object. This
-affects both the timestamps themselves and the `timestamp_tz` label. UTC is
-recommended when comparing results across machines in different locations.
-
-For example, to use the local machine's timezone:
-
-```python
-import datetime
-from microbench import MicroBench
-
-bench = MicroBench(tz=datetime.datetime.now().astimezone().tzinfo)
-```
+Full documentation, including a getting-started guide, mixin reference, and
+API docs, is at **https://alubbock.github.io/microbench/**.
 
 ## Feedback
 
