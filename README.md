@@ -441,23 +441,10 @@ class RedisBench(MicroBenchRedis):
 benchmark = RedisBench()
 ```
 
-To retrieve results, the `redis` package can be used directly:
+To retrieve results, use `get_results()` just like the base class:
 
 ```python
-import redis
-import pandas
-
-# Establish the connection to redis
-rconn = redis.StrictRedis(host=..., port=...)
-
-# Read the redis data from 'myrediskey' into a list of byte arrays
-redis_data = redis.lrange('myrediskey', 0, -1)
-
-# Convert the list into a single string
-json_data = '\n'.join(r.decode('utf8') for r in redis_data)
-
-# Read the string into a pandas dataframe
-results = pandas.read_json(json_data, lines=True)
+results = benchmark.get_results()
 ```
 
 ## Runtime impact considerations

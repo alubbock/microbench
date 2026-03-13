@@ -598,6 +598,17 @@ class MicroBenchRedis(MicroBench):
     def output_result(self, bm_data):
         self.rclient.rpush(self.redis_key, self.to_json(bm_data))
 
+    def get_results(self):
+        if not pandas:
+            raise ImportError(
+                'This functionality requires the "pandas" package'
+            )
+        redis_data = self.rclient.lrange(self.redis_key, 0, -1)
+        json_data = '\n'.join(r.decode('utf8') for r in redis_data)
+        return pandas.read_json(
+            io.StringIO(json_data), lines=True
+        )
+
 
 class TelemetryThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
