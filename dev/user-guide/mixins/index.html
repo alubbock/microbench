@@ -486,6 +486,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hpc-slurm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HPC / SLURM
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HPC / SLURM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbslurminfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBSlurmInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#package-versions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -827,6 +855,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hpc-slurm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HPC / SLURM
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HPC / SLURM">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbslurminfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBSlurmInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#package-versions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -988,6 +1044,11 @@ combine any number of microbench mixins without conflicts, and their
 <td>psutil</td>
 </tr>
 <tr>
+<td><code>MBSlurmInfo</code></td>
+<td><code>slurm</code> dict of all <code>SLURM_*</code> env vars (empty dict if not in a SLURM job)</td>
+<td>—</td>
+</tr>
+<tr>
 <td><code>MBGlobalPackages</code></td>
 <td><code>package_versions</code> for every package in the caller's global scope</td>
 <td>—</td>
@@ -1052,15 +1113,47 @@ function as <code>args</code> (list) and <code>kwargs</code> (dict):</p>
 <code>JSONEncodeWarning</code> is issued and a placeholder is stored. See
 <a href="../extending/#custom-json-encoding">Custom JSON encoding</a> to handle
 custom types.</p>
+<h2 id="hpc-slurm">HPC / SLURM</h2>
+<h3 id="mbslurminfo"><code>MBSlurmInfo</code></h3>
+<p>Captures all <code>SLURM_*</code> environment variables into a <code>slurm</code> dict. Keys are
+lowercased with the <code>SLURM_</code> prefix stripped, so <code>SLURM_JOB_ID</code> becomes
+<code>slurm['job_id']</code>. If the benchmark runs outside a SLURM job, <code>slurm</code> is
+an empty dict.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;slurm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;job_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;12345&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;array_task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;nodelist&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpu-node-[01-04]&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&quot;cpus_per_task&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>Access individual values in pandas with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;slurm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;job_id&#39;</span><span class="p">))</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><code>MBSlurmInfo</code> supersedes the manual <code>env_vars = ('SLURM_JOB_ID', ...)</code>
+pattern — it captures every <code>SLURM_*</code> variable automatically with no
+configuration.</p>
+</div>
 <h2 id="package-versions">Package versions</h2>
 <h3 id="mbglobalpackages"><code>MBGlobalPackages</code></h3>
 <p>Captures the version of every module imported in the caller's global
 namespace:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">pass</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="k">pass</span>
 </code></pre></div>
 <p>The <code>package_versions</code> field will contain <code>{"numpy": "1.26.0", "pandas": "2.1.0", ...}</code>.</p>
 <h3 id="mbinstalledpackages"><code>MBInstalledPackages</code></h3>
@@ -1068,32 +1161,32 @@ namespace:</p>
 Useful for full reproducibility audits. Can be slow on environments with
 many packages.</p>
 <p>Set <code>capture_paths = True</code> to also record installation paths:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
 <h3 id="mbcondapackages"><code>MBCondaPackages</code></h3>
 <p>Captures all packages in the active conda environment using the <code>conda</code> CLI.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>
 </code></pre></div>
 <h3 id="capture_versions"><code>capture_versions</code></h3>
 <p>To capture specific package versions without a mixin, list them on the
 class:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="nvidia-gpu-mbnvidiasmi">NVIDIA GPU — <code>MBNvidiaSmi</code></h2>
 <p>Captures attributes for each installed GPU via <code>nvidia-smi</code>.</p>
 <p>By default captures <code>gpu_name</code> and <code>memory.total</code>. Customise with
 <code>nvidia_attributes</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;pcie.link.width.max&#39;</span><span class="p">)</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123&#39;</span><span class="p">,)</span>  <span class="c1"># UUIDs preferred; omit to capture all</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;pcie.link.width.max&#39;</span><span class="p">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123&#39;</span><span class="p">,)</span>  <span class="c1"># UUIDs preferred; omit to capture all</span>
 </code></pre></div>
 <p>Results are stored as <code>nvidia_&lt;attr&gt;</code> dicts keyed by GPU UUID, e.g.
 <code>nvidia_gpu_name: {"GPU-abc123": "NVIDIA A100"}</code>.</p>
@@ -1102,24 +1195,24 @@ Run <code>nvidia-smi -L</code> to list GPU UUIDs.</p>
 <h2 id="line-profiler-mblineprofiler">Line profiler — <code>MBLineProfiler</code></h2>
 <p>Captures a line-by-line timing profile of the decorated function using
 <a href="https://github.com/rkern/line_profiler">line_profiler</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">pass</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="nd">@bench</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="k">return</span> <span class="n">acc</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">my_function</span><span class="p">()</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="k">return</span> <span class="n">acc</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
 </code></pre></div>
 <p>The profile is stored as a base64-encoded pickle in the <code>line_profiler</code> field.
 Use <code>MBLineProfiler.decode_line_profile()</code> to deserialise it, or

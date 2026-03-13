@@ -831,6 +831,12 @@
 <h3 id="new-features">New features</h3>
 <ul>
 <li>
+<p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
+  a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
+  when running outside a SLURM job. Supersedes the manual
+  <code>env_vars = ('SLURM_JOB_ID', ...)</code> pattern.</p>
+</li>
+<li>
 <p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
   before timing begins, priming caches or JIT compilation without affecting
   results. Warmup calls are unrecorded and do not interact with the monitor
