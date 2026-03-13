@@ -505,6 +505,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -830,6 +858,15 @@
 </code></pre></div></p>
 <h3 id="new-features">New features</h3>
 <ul>
+<li>
+<p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
+  a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
+  methods instead of aborting the benchmark call. Failures are recorded in
+  <code>mb_capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
+  the field is absent when all captures succeed. Designed for production
+  jobs on heterogeneous cluster nodes where optional dependencies may not
+  be present on every node.</p>
+</li>
 <li>
 <p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
   a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
