@@ -39,6 +39,17 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`bench.record(name)` context manager**: times an arbitrary code block
+  and writes one record, without requiring the code to be in a named
+  function. All mixins, static fields, and output sinks behave identically
+  to the decorator form.
+
+- **Exception capture**: when a benchmarked block raises — via
+  `bench.record()` or a `@bench`-decorated function — the record is
+  written before the exception propagates. An `exception` field is added
+  containing `{"type": ..., "message": ...}`. The exception is always
+  re-raised. With `--iterations N`, timing stops at the first exception.
+
 - **Command-line interface** (`python -m microbench`): wrap any external
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.

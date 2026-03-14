@@ -1241,3 +1241,250 @@ def test_mb_file_hash_missing_file_raises(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         noop()
+
+
+# ---------------------------------------------------------------------------
+# bench.record() context manager
+# ---------------------------------------------------------------------------
+
+
+def test_record_standard_fields():
+    """bench.record() produces a record with all standard timing fields."""
+    bench = MicroBench()
+
+    with bench.record('my_block'):
+        pass
+
+    results = bench.get_results()
+    assert len(results) == 1
+    row = results.iloc[0]
+    assert row['function_name'] == 'my_block'
+    assert 'start_time' in results.columns
+    assert 'finish_time' in results.columns
+    assert len(row['run_durations']) == 1
+    assert 'mb_run_id' in results.columns
+    assert 'mb_version' in results.columns
+
+
+def test_record_no_name_defaults():
+    """bench.record() with no name sets function_name to '<record>'."""
+    bench = MicroBench()
+
+    with bench.record():
+        pass
+
+    results = bench.get_results()
+    assert results.iloc[0]['function_name'] == '<record>'
+
+
+def test_record_static_fields():
+    """Static fields passed to MicroBench() appear in bench.record() output."""
+    bench = MicroBench(experiment='run-1', trial=3)
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert results.iloc[0]['experiment'] == 'run-1'
+    assert results.iloc[0]['trial'] == 3
+
+
+def test_record_mixin_fields():
+    """Mixin capture methods run during bench.record()."""
+
+    class Bench(MicroBench, MBHostInfo):
+        pass
+
+    bench = Bench()
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert 'hostname' in results.columns
+    assert 'operating_system' in results.columns
+
+
+def test_record_multiple_records():
+    """Each bench.record() call appends a separate record."""
+    bench = MicroBench()
+
+    with bench.record('first'):
+        pass
+    with bench.record('second'):
+        pass
+
+    results = bench.get_results()
+    assert len(results) == 2
+    assert list(results['function_name']) == ['first', 'second']
+
+
+def test_record_exception_captured_and_reraised():
+    """Exceptions inside bench.record() are recorded then re-raised."""
+    bench = MicroBench()
+
+    with pytest.raises(ValueError, match='oops'):
+        with bench.record('block'):
+            raise ValueError('oops')
+
+    results = bench.get_results()
+    assert len(results) == 1
+    exc = results.iloc[0]['exception']
+    assert exc['type'] == 'ValueError'
+    assert exc['message'] == 'oops'
+
+
+def test_record_no_exception_field_on_success():
+    """No 'exception' field is present when the block completes normally."""
+    bench = MicroBench()
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert 'exception' not in results.columns
+
+
+def test_record_coexists_with_decorator():
+    """bench.record() and @bench decorator write to the same output sink."""
+    bench = MicroBench()
+
+    with bench.record('ctx'):
+        pass
+
+    @bench
+    def decorated():
+        pass
+
+    decorated()
+
+    results = bench.get_results()
+    assert len(results) == 2
+    assert set(results['function_name']) == {'ctx', 'decorated'}
+
+
+# ---------------------------------------------------------------------------
+# Exception capture — decorator
+# ---------------------------------------------------------------------------
+
+
+def test_decorator_exception_captured_and_reraised():
+    """Exceptions from @bench functions are recorded then re-raised."""
+    bench = MicroBench()
+
+    @bench
+    def failing():
+        raise RuntimeError('boom')
+
+    with pytest.raises(RuntimeError, match='boom'):
+        failing()
+
+    results = bench.get_results()
+    assert len(results) == 1
+    exc = results.iloc[0]['exception']
+    assert exc['type'] == 'RuntimeError'
+    assert exc['message'] == 'boom'
+
+
+def test_decorator_no_exception_field_on_success():
+    """No 'exception' field when the decorated function returns normally."""
+    bench = MicroBench()
+
+    @bench
+    def ok():
+        pass
+
+    ok()
+
+    results = bench.get_results()
+    assert 'exception' not in results.columns
+
+
+def test_decorator_exception_stops_iterations():
+    """An exception on iteration 2 stops the loop; only 2 durations recorded."""
+    call_count = 0
+
+    bench = MicroBench(iterations=5)
+
+    @bench
+    def sometimes_fails():
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise ValueError('fail on second')
+
+    with pytest.raises(ValueError):
+        sometimes_fails()
+
+    results = bench.get_results()
+    assert call_count == 2
+    assert len(results.iloc[0]['run_durations']) == 2
+
+
+def test_decorator_return_value_mixin_skipped_on_exception():
+    """MBReturnValue does not set return_value when the function raised."""
+
+    class Bench(MicroBench, MBReturnValue):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def failing():
+        raise TypeError('no return')
+
+    with pytest.raises(TypeError):
+        failing()
+
+    results = bench.get_results()
+    assert 'return_value' not in results.columns
+
+
+# ---------------------------------------------------------------------------
+# Mixin behaviour with bench.record()
+# ---------------------------------------------------------------------------
+
+
+def test_record_mbfunctioncall_produces_empty_args():
+    """MBFunctionCall with bench.record() records args=[] kwargs={} (no callable)."""
+
+    class Bench(MicroBench, MBFunctionCall):
+        pass
+
+    bench = Bench()
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert results.iloc[0]['args'] == []
+    assert results.iloc[0]['kwargs'] == {}
+
+
+def test_record_mbreturnvalue_ignored():
+    """MBReturnValue is silently a no-op with bench.record() (no return value)."""
+
+    class Bench(MicroBench, MBReturnValue):
+        pass
+
+    bench = Bench()
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert 'return_value' not in results.columns
+
+
+def test_record_mblineprofiler_raises():
+    """MBLineProfiler raises NotImplementedError with bench.record()."""
+    from microbench import MBLineProfiler
+
+    class Bench(MicroBench, MBLineProfiler):
+        pass
+
+    bench = Bench()
+
+    with pytest.raises(NotImplementedError, match='MBLineProfiler'):
+        with bench.record('block'):
+            pass
