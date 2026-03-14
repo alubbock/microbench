@@ -906,6 +906,13 @@
   <code>env_vars = ('SLURM_JOB_ID', ...)</code> pattern.</p>
 </li>
 <li>
+<p><strong><code>MBFileHash</code> mixin</strong>: records a cryptographic checksum of specified files
+  in the <code>file_hashes</code> field (a dict mapping path to hex digest). Defaults to
+  hashing <code>sys.argv[0]</code> — the running script. Set <code>hash_files</code> to an iterable
+  of paths to hash specific files instead. Set <code>hash_algorithm</code> to any
+  algorithm accepted by <code>hashlib.new</code> (default: <code>'sha256'</code>).</p>
+</li>
+<li>
 <p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
   before timing begins, priming caches or JIT compilation without affecting
   results. Warmup calls are unrecorded and do not interact with the monitor
