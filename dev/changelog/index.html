@@ -937,6 +937,14 @@
   be present on every node.</p>
 </li>
 <li>
+<p><strong><code>MBLoadedModules</code> mixin</strong>: captures the loaded Lmod / Environment
+  Modules software stack into a <code>loaded_modules</code> dict mapping module name
+  to version string (e.g. <code>{"gcc": "12.2.0", "openmpi": "4.1.5"}</code>). Reads
+  the standard <code>LOADEDMODULES</code> environment variable — no subprocess, no
+  extra dependencies. Empty dict when no modules are loaded. Included in
+  the CLI defaults alongside <code>MBHostInfo</code> and <code>MBSlurmInfo</code>.</p>
+</li>
+<li>
 <p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
   hash, branch name, and dirty flag (uncommitted changes present) via
   <code>git</code> ≥ 2.11 on PATH. Stored in <code>git_info</code>. Set <code>git_repo</code> to inspect

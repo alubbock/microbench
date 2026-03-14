@@ -980,10 +980,11 @@ executables where adding a Python decorator is not practical.</p>
 </tbody>
 </table>
 <h2 id="default-mixins">Default mixins</h2>
-<p>When no <code>--mixin</code> is specified, <code>MBHostInfo</code> and <code>MBSlurmInfo</code> are
-included automatically, capturing hostname, operating system, and all
-<code>SLURM_*</code> environment variables. This covers the most common cluster
-metadata with no configuration.</p>
+<p>When no <code>--mixin</code> is specified, <code>MBHostInfo</code>, <code>MBSlurmInfo</code>, and
+<code>MBLoadedModules</code> are included automatically, capturing hostname,
+operating system, all <code>SLURM_*</code> environment variables, and the loaded
+Lmod/Environment Modules software stack. All three degrade gracefully
+to empty dicts outside of their respective environments.</p>
 <p>Specifying <code>--mixin</code> replaces the defaults entirely. Use <code>--no-mixin</code> to
 disable all mixins and record only timing and command fields:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Only Python version — no host info or SLURM</span>
@@ -994,8 +995,8 @@ disable all mixins and record only timing and command fields:</p>
 </code></pre></div>
 <p>Available mixins (those marked <code>cli_compatible</code>):
 <code>MBCondaPackages</code>, <code>MBFileHash</code>, <code>MBGitInfo</code>, <code>MBHostCpuCores</code>,
-<code>MBHostInfo</code>, <code>MBHostRamTotal</code>, <code>MBInstalledPackages</code>, <code>MBNvidiaSmi</code>,
-<code>MBPythonVersion</code>, <code>MBSlurmInfo</code>.</p>
+<code>MBHostInfo</code>, <code>MBHostRamTotal</code>, <code>MBInstalledPackages</code>, <code>MBLoadedModules</code>,
+<code>MBNvidiaSmi</code>, <code>MBPythonVersion</code>, <code>MBSlurmInfo</code>.</p>
 <p>See <a href="../user-guide/mixins/">Mixins</a> for details on each.</p>
 <h2 id="capture-failures">Capture failures</h2>
 <p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
