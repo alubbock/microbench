@@ -912,6 +912,23 @@
 </code></pre></div></p>
 <h3 id="new-features">New features</h3>
 <ul>
+<li><strong><code>bench.record_on_exit(name, handle_sigterm=True)</code></strong>: registers a
+  process-exit handler that writes one benchmark record when the script
+  terminates. Captures wall-clock duration from the call site to exit plus
+  all mixin fields. Designed for SLURM jobs and batch scripts where
+  restructuring code around a decorator is impractical. Key behaviours:</li>
+<li>By default installs a SIGTERM handler (main thread only) that writes
+    the record, chains to any existing SIGTERM handler, then re-delivers
+    SIGTERM so the process exits with the conventional code 143 (128 + 15).</li>
+<li>Wraps <code>sys.excepthook</code> to capture unhandled exceptions into an
+    <code>exception</code> field before the process exits.</li>
+<li>Adds an <code>exit_signal</code> field when the exit was triggered by SIGTERM.</li>
+<li>Falls back to writing the record to <code>sys.stderr</code> if the primary output
+    sink raises (e.g. filesystem unmounted at exit time).</li>
+<li>
+<p>Calling a second time on the same instance replaces the first
+    registration and resets the start time.</p>
+</li>
 <li>
 <p><strong><code>bench.record(name)</code> context manager</strong>: times an arbitrary code block
   and writes one record, without requiring the code to be in a named

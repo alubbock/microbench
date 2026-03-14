@@ -410,6 +410,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#timing-entire-scripts-with-record_on_exit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timing entire scripts with record_on_exit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#benchmarking-external-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -845,6 +856,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#timing-entire-scripts-with-record_on_exit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timing entire scripts with record_on_exit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#benchmarking-external-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1048,20 +1070,48 @@ exception is re-raised normally:</p>
 <li><code>MBReturnValue</code> — silently a no-op; no <code>return_value</code> field is set.</li>
 <li><code>MBLineProfiler</code> — raises <code>NotImplementedError</code>; it requires a callable to profile and cannot be used with <code>bench.record()</code>. Use the <code>@bench</code> decorator instead.</li>
 </ul>
+<h2 id="timing-entire-scripts-with-record_on_exit">Timing entire scripts with <code>record_on_exit</code></h2>
+<p>Call <code>bench.record_on_exit(name)</code> once near the top of a script to time
+the full process lifetime. The record is written automatically when the
+process exits — no restructuring of the script is required:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;/scratch/results.jsonl&#39;</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">capture_optional</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># recommended: don&#39;t let a failed capture abort exit</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s1">&#39;baseline&#39;</span><span class="p">)</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">bench</span><span class="o">.</span><span class="n">record_on_exit</span><span class="p">(</span><span class="s1">&#39;simulation&#39;</span><span class="p">)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="n">run_simulation</span><span class="p">()</span>  <span class="c1"># whatever the script does</span>
+</code></pre></div>
+<p>A single record is appended to <code>results.jsonl</code> when the process exits,
+containing the wall-clock duration from the <code>record_on_exit()</code> call to
+exit plus all mixin fields captured at exit time.</p>
+<p><strong>SIGTERM handling (SLURM walltime):</strong> By default microbench installs a
+SIGTERM handler. When SLURM hits the job's walltime limit it sends SIGTERM
+(with a grace period before SIGKILL); the handler writes the record before
+re-delivering the signal so job accounting sees the correct exit code.
+Pass <code>handle_sigterm=False</code> to opt out.</p>
+<p><strong>Exception capture:</strong> If the script exits due to an unhandled exception,
+the record includes an <code>exception</code> field with the error type and message.
+The exception is still printed and the process still exits non-zero.</p>
+<p><strong>Limitations:</strong> SIGKILL and <code>os._exit()</code> cannot be caught; no record
+will be written in those cases.</p>
 <h2 id="benchmarking-external-commands">Benchmarking external commands</h2>
 <p>Microbench can also wrap shell commands, scripts, and compiled executables
 without writing any Python code. This is useful for SLURM jobs or any
 workload where adding a Python decorator is not practical:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
 </code></pre></div>
 <p>Host information and SLURM environment variables are captured by default.
 Use <code>--field KEY=VALUE</code> to attach labels and <code>--iterations N</code> to run the
 command multiple times:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 <p>See the <a href="../cli/">CLI reference</a> for all options.</p>
 
