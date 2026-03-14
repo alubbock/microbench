@@ -1,3 +1,4 @@
+import atexit
 import base64
 import inspect
 import io
@@ -493,6 +494,139 @@ class MicroBench:
                 model.fit(X, y)
         """
         return _ContextManagerRun(self, name)
+
+    def record_on_exit(self, name=None, handle_sigterm=True):
+        """Register a process-exit handler that writes one benchmark record.
+
+        Call once near the start of a script. When the process exits normally
+        (or via SIGTERM when *handle_sigterm* is ``True``), a record is written
+        containing the wall-clock duration from this call to exit, plus all
+        mixin fields captured at exit time.
+
+        Calling this method a second time on the same instance replaces the
+        previous registration and resets the start time.
+
+        Args:
+            name (str, optional): Value for the ``function_name`` field.
+                Defaults to ``'<process>'``.
+            handle_sigterm (bool): Install a SIGTERM handler that writes the
+                record before re-delivering the signal. Only effective when
+                called from the main thread. Defaults to ``True``.
+
+        Fields added beyond the standard timing fields:
+
+        - ``exit_signal``: ``'SIGTERM'`` when the handler was triggered by
+          SIGTERM; absent otherwise.
+        - ``exception``: ``{"type": ..., "message": ...}`` when the process
+          is exiting due to an unhandled exception; absent otherwise.
+
+        .. note::
+            SIGKILL and ``os._exit()`` cannot be caught; no record will be
+            written in those cases. Use ``capture_optional = True`` on the
+            benchmark class so that slow or unavailable capture methods do
+            not delay the exit handler.
+
+        Example::
+
+            bench = MyBench(outfile='/scratch/results.jsonl')
+            bench.record_on_exit('simulation')
+
+            run_simulation()
+        """
+        # Deregister any previous registration from this instance.
+        if hasattr(self, '_record_on_exit_handler'):
+            atexit.unregister(self._record_on_exit_handler)
+
+        _start_counter = self._duration_counter()
+        _start_time = datetime.now(self.tz)
+
+        # Wrap sys.excepthook to capture unhandled exceptions.  atexit
+        # handlers cannot reliably read sys.exc_info() at exit time.
+        _exception_info = [None]
+        _orig_excepthook = sys.excepthook
+
+        def _excepthook(exc_type, exc_val, exc_tb):
+            _exception_info[0] = (exc_type, exc_val)
+            _orig_excepthook(exc_type, exc_val, exc_tb)
+
+        sys.excepthook = _excepthook
+
+        # Shared state to prevent double-writing if both atexit and the
+        # SIGTERM handler fire in the same exit sequence.
+        _ctx = {'fired': False}
+
+        def _exit_handler(exit_signal=None):
+            if _ctx['fired']:
+                return
+            _ctx['fired'] = True
+
+            bm_data = dict()
+            bm_data.update(self._bm_static)
+            bm_data['function_name'] = name or '<process>'
+            bm_data['_args'] = ()
+            bm_data['_kwargs'] = {}
+
+            self.pre_start_triggers(bm_data)
+            # pre_start_triggers sets start_time and run_durations=[]; override
+            # both with the values recorded at the call site.
+            bm_data['start_time'] = _start_time
+            bm_data['run_durations'] = [self._duration_counter() - _start_counter]
+
+            self.post_finish_triggers(bm_data)
+
+            if _exception_info[0] is not None:
+                exc_type, exc_val = _exception_info[0]
+                bm_data['exception'] = {
+                    'type': exc_type.__name__,
+                    'message': str(exc_val),
+                }
+
+            if exit_signal is not None:
+                bm_data['exit_signal'] = exit_signal
+
+            bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
+
+            try:
+                self.output_result(bm_data)
+            except Exception:
+                # Fallback: write JSON directly to stderr so the record is not
+                # silently lost if the primary output sink is unavailable.
+                try:
+                    sys.stderr.write(self.to_json(bm_data) + '\n')
+                except Exception:
+                    pass
+
+        # Unique wrapper so atexit.unregister can target exactly this
+        # registration on a subsequent record_on_exit() call.
+        def _atexit_handler():
+            _exit_handler()
+
+        self._record_on_exit_handler = _atexit_handler
+        atexit.register(_atexit_handler)
+
+        if handle_sigterm:
+            if threading.current_thread() is threading.main_thread():
+                _prev_sigterm = signal.getsignal(signal.SIGTERM)
+
+                def _sigterm_handler(signum, frame):
+                    _exit_handler(exit_signal='SIGTERM')
+                    # Chain to any previously installed handler (e.g.
+                    # MonitorThread.terminate) so it also runs cleanly.
+                    if callable(_prev_sigterm):
+                        _prev_sigterm(signum, frame)
+                    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+                    os.kill(os.getpid(), signal.SIGTERM)
+
+                signal.signal(signal.SIGTERM, _sigterm_handler)
+            else:
+                warnings.warn(
+                    'bench.record_on_exit(): SIGTERM handler not registered '
+                    'because called from a non-main thread. The record will '
+                    'still be written on normal exit but may be lost if the '
+                    'process receives SIGTERM.',
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
 
 
 class _ContextManagerRun:

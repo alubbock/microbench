@@ -182,6 +182,42 @@ except SolverError:
 - `MBReturnValue` — silently a no-op; no `return_value` field is set.
 - `MBLineProfiler` — raises `NotImplementedError`; it requires a callable to profile and cannot be used with `bench.record()`. Use the `@bench` decorator instead.
 
+## Timing entire scripts with `record_on_exit`
+
+Call `bench.record_on_exit(name)` once near the top of a script to time
+the full process lifetime. The record is written automatically when the
+process exits — no restructuring of the script is required:
+
+```python
+from microbench import MicroBench, MBHostInfo, MBSlurmInfo
+
+class MyBench(MicroBench, MBHostInfo, MBSlurmInfo):
+    outfile = '/scratch/results.jsonl'
+    capture_optional = True  # recommended: don't let a failed capture abort exit
+
+bench = MyBench(experiment='baseline')
+bench.record_on_exit('simulation')
+
+run_simulation()  # whatever the script does
+```
+
+A single record is appended to `results.jsonl` when the process exits,
+containing the wall-clock duration from the `record_on_exit()` call to
+exit plus all mixin fields captured at exit time.
+
+**SIGTERM handling (SLURM walltime):** By default microbench installs a
+SIGTERM handler. When SLURM hits the job's walltime limit it sends SIGTERM
+(with a grace period before SIGKILL); the handler writes the record before
+re-delivering the signal so job accounting sees the correct exit code.
+Pass `handle_sigterm=False` to opt out.
+
+**Exception capture:** If the script exits due to an unhandled exception,
+the record includes an `exception` field with the error type and message.
+The exception is still printed and the process still exits non-zero.
+
+**Limitations:** SIGKILL and `os._exit()` cannot be caught; no record
+will be written in those cases.
+
 ## Benchmarking external commands
 
 Microbench can also wrap shell commands, scripts, and compiled executables
