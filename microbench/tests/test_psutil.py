@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import pytest
 
-import microbench
 from microbench import MBHostCpuCores, MBHostRamTotal, MicroBench
 
 
@@ -31,6 +30,9 @@ def test_psutil():
 
 def test_psutil_missing_raises():
     """_NeedsPsUtil._check_psutil raises ImportError when psutil is unavailable."""
-    with patch.object(microbench, 'psutil', None):
+    import microbench.mixins
+    from microbench.mixins import _NeedsPsUtil
+
+    with patch.object(microbench.mixins, 'psutil', None):
         with pytest.raises(ImportError, match='psutil'):
-            microbench._NeedsPsUtil._check_psutil()
+            _NeedsPsUtil._check_psutil()
