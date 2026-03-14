@@ -27,7 +27,7 @@ def _get_mixin_map():
     }
 
 
-_DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo')
+_DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo', 'MBLoadedModules')
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
 

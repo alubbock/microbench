@@ -67,6 +67,7 @@ __all__ = [
     'MBHostRamTotal',
     'MBPeakMemory',
     'MBSlurmInfo',
+    'MBLoadedModules',
     'MBGitInfo',
     'MBFileHash',
     'MBGlobalPackages',
@@ -566,6 +567,43 @@ class MBSlurmInfo:
         bm_data['slurm'] = {
             k[6:].lower(): v for k, v in os.environ.items() if k.startswith('SLURM_')
         }
+
+
+class MBLoadedModules:
+    """Capture loaded Lmod / Environment Modules.
+
+    Reads the ``LOADEDMODULES`` environment variable set by both Lmod and
+    Environment Modules and records the loaded modules as a dict mapping
+    module name to version string. If no modules are loaded, or the
+    benchmark is not running in a module-enabled environment,
+    ``loaded_modules`` is an empty dict.
+
+    Example output::
+
+        {
+            "loaded_modules": {
+                "gcc": "12.2.0",
+                "openmpi": "4.1.5",
+                "python": "3.10.4"
+            }
+        }
+
+    Module entries without a version (e.g. ``null``) are stored with an
+    empty string as the version.
+    """
+
+    cli_compatible = True
+
+    def capture_loaded_modules(self, bm_data):
+        loaded = os.environ.get('LOADEDMODULES', '')
+        modules = {}
+        for entry in loaded.split(':'):
+            entry = entry.strip()
+            if not entry:
+                continue
+            name, _, version = entry.partition('/')
+            modules[name] = version
+        bm_data['loaded_modules'] = modules
 
 
 class MBGitInfo:

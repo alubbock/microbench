@@ -22,6 +22,7 @@ from microbench import (
     MBGitInfo,
     MBHostInfo,
     MBInstalledPackages,
+    MBLoadedModules,
     MBPeakMemory,
     MBPythonVersion,
     MBReturnValue,
@@ -270,6 +271,94 @@ def test_mb_slurm_info_empty():
 
     results = bench.get_results()
     assert results['slurm'][0] == {}
+
+
+def test_mb_loaded_modules():
+    """loaded_modules captures name/version pairs from LOADEDMODULES."""
+
+    class Bench(MicroBench, MBLoadedModules):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.dict(
+        os.environ,
+        {'LOADEDMODULES': 'gcc/12.2.0:openmpi/4.1.5:python/3.10.4'},
+        clear=False,
+    ):
+        noop()
+
+    modules = bench.get_results()['loaded_modules'][0]
+    assert modules['gcc'] == '12.2.0'
+    assert modules['openmpi'] == '4.1.5'
+    assert modules['python'] == '3.10.4'
+
+
+def test_mb_loaded_modules_empty():
+    """loaded_modules is an empty dict when LOADEDMODULES is unset."""
+
+    class Bench(MicroBench, MBLoadedModules):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    clean_env = {k: v for k, v in os.environ.items() if k != 'LOADEDMODULES'}
+    with patch.dict(os.environ, clean_env, clear=True):
+        noop()
+
+    assert bench.get_results()['loaded_modules'][0] == {}
+
+
+def test_mb_loaded_modules_no_version():
+    """Module entries without a version store an empty string."""
+
+    class Bench(MicroBench, MBLoadedModules):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.dict(os.environ, {'LOADEDMODULES': 'null:gcc/12.2.0'}, clear=False):
+        noop()
+
+    modules = bench.get_results()['loaded_modules'][0]
+    assert modules['null'] == ''
+    assert modules['gcc'] == '12.2.0'
+
+
+def test_mb_loaded_modules_version_with_slash():
+    """Module versions containing slashes are captured in full."""
+
+    class Bench(MicroBench, MBLoadedModules):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    # Some module systems use hierarchical names like GCC/12.2.0-GCCcore-12.2.0
+    with patch.dict(
+        os.environ,
+        {'LOADEDMODULES': 'GCC/12.2.0-GCCcore-12.2.0'},
+        clear=False,
+    ):
+        noop()
+
+    modules = bench.get_results()['loaded_modules'][0]
+    assert modules['GCC'] == '12.2.0-GCCcore-12.2.0'
 
 
 def test_warmup():

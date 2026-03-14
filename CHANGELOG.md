@@ -61,6 +61,13 @@ All notable changes to microbench are documented here.
   jobs on heterogeneous cluster nodes where optional dependencies may not
   be present on every node.
 
+- **`MBLoadedModules` mixin**: captures the loaded Lmod / Environment
+  Modules software stack into a `loaded_modules` dict mapping module name
+  to version string (e.g. `{"gcc": "12.2.0", "openmpi": "4.1.5"}`). Reads
+  the standard `LOADEDMODULES` environment variable — no subprocess, no
+  extra dependencies. Empty dict when no modules are loaded. Included in
+  the CLI defaults alongside `MBHostInfo` and `MBSlurmInfo`.
+
 - **`MBGitInfo` mixin**: captures the repository root path, current commit
   hash, branch name, and dirty flag (uncommitted changes present) via
   `git` ≥ 2.11 on PATH. Stored in `git_info`. Set `git_repo` to inspect
