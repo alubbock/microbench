@@ -63,6 +63,7 @@ __all__ = [
     'MBHostRamTotal',
     'MBPeakMemory',
     'MBSlurmInfo',
+    'MBGitInfo',
     'MBGlobalPackages',
     'MBInstalledPackages',
     'MBCondaPackages',
@@ -550,6 +551,79 @@ class MBSlurmInfo:
     def capture_slurm(self, bm_data):
         bm_data['slurm'] = {
             k[6:].lower(): v for k, v in os.environ.items() if k.startswith('SLURM_')
+        }
+
+
+class MBGitInfo:
+    """Capture git repository information.
+
+    Requires ``git`` ≥ 2.11 to be available on ``PATH``. Records the
+    current commit hash, branch name, and whether the working tree has
+    uncommitted changes. Results are stored in the ``git_info`` field.
+
+    By default inspects the repository containing the running script
+    (``sys.argv[0]``), falling back to the shell's working directory
+    when the script path is unavailable (e.g. interactive Python). Set
+    ``git_path`` explicitly to target a specific directory, which is
+    useful when the script and the repository root are in different
+    locations.
+
+    Attributes:
+        git_path (str, optional): Directory to inspect. Defaults to the
+            directory of the running script, or the shell's working
+            directory if unavailable.
+
+    Example output::
+
+        {
+            "git_info": {
+                "repo": "/home/user/project",
+                "commit": "a1b2c3d4e5f6...",
+                "branch": "main",
+                "dirty": false
+            }
+        }
+    """
+
+    def capture_git_info(self, bm_data):
+        if hasattr(self, 'git_path'):
+            cwd = self.git_path
+        else:
+            argv0 = sys.argv[0] if sys.argv else ''
+            if argv0 and not argv0.startswith('-'):
+                cwd = os.path.dirname(os.path.abspath(argv0))
+            else:
+                cwd = None  # fall back to shell's working directory
+
+        kwargs = {'cwd': cwd, 'stderr': subprocess.DEVNULL}
+
+        repo = (
+            subprocess.check_output(['git', 'rev-parse', '--show-toplevel'], **kwargs)
+            .decode()
+            .strip()
+        )
+
+        output = subprocess.check_output(
+            ['git', 'status', '--porcelain=v2', '--branch'], **kwargs
+        ).decode()
+
+        commit = ''
+        branch = ''
+        dirty = False
+        for line in output.splitlines():
+            if line.startswith('# branch.oid '):
+                commit = line[13:]
+            elif line.startswith('# branch.head '):
+                head = line[14:]
+                branch = '' if head == '(detached)' else head
+            elif not line.startswith('#'):
+                dirty = True
+
+        bm_data['git_info'] = {
+            'repo': repo,
+            'commit': commit,
+            'branch': branch,
+            'dirty': dirty,
         }
 
 
