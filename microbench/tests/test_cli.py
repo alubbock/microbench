@@ -1,10 +1,22 @@
 import io
 import json
+import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from microbench.__main__ import main
+
+
+def _make_mock_popen(returncode=0, stdout_lines=None, stderr_lines=None):
+    """Create a mock Popen process for --stdout/--stderr capture tests."""
+    mock_proc = MagicMock()
+    mock_proc.__enter__.return_value = mock_proc
+    mock_proc.__exit__.return_value = False
+    mock_proc.returncode = returncode
+    mock_proc.stdout = iter(stdout_lines) if stdout_lines is not None else None
+    mock_proc.stderr = iter(stderr_lines) if stderr_lines is not None else None
+    return mock_proc
 
 
 def _run_main(argv, mock_returncode=0):
@@ -283,16 +295,11 @@ def test_cli_no_stdout_capture_by_default():
 
 def test_cli_capture_stdout_records_output():
     """--stdout records subprocess stdout as a list and re-prints to terminal."""
-    import subprocess as _subprocess
-
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = b'hello\n'
-    mock_result.stderr = None
+    mock_proc = _make_mock_popen(returncode=0, stdout_lines=[b'hello\n'])
 
     buf = io.StringIO()
     terminal = io.StringIO()
-    with patch('subprocess.run', return_value=mock_result) as mock_run:
+    with patch('subprocess.Popen', return_value=mock_proc) as mock_popen:
         with patch('sys.stdout', buf):
             with patch('sys.__stdout__', terminal):
                 with pytest.raises(SystemExit):
@@ -302,19 +309,16 @@ def test_cli_capture_stdout_records_output():
     assert record['stdout'] == ['hello\n']
     assert 'stderr' not in record
     assert terminal.getvalue() == 'hello\n'
-    assert mock_run.call_args[1].get('stdout') == _subprocess.PIPE
+    assert mock_popen.call_args[1].get('stdout') == subprocess.PIPE
 
 
 def test_cli_capture_stdout_suppress():
     """--stdout=suppress records output without re-printing to terminal."""
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = b'hello\n'
-    mock_result.stderr = None
+    mock_proc = _make_mock_popen(returncode=0, stdout_lines=[b'hello\n'])
 
     buf = io.StringIO()
     terminal = io.StringIO()
-    with patch('subprocess.run', return_value=mock_result):
+    with patch('subprocess.Popen', return_value=mock_proc):
         with patch('sys.stdout', buf):
             with patch('sys.__stdout__', terminal):
                 with pytest.raises(SystemExit):
@@ -327,14 +331,11 @@ def test_cli_capture_stdout_suppress():
 
 def test_cli_capture_stderr_records_output():
     """--stderr records subprocess stderr as a list and re-prints to terminal."""
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = None
-    mock_result.stderr = b'warning\n'
+    mock_proc = _make_mock_popen(returncode=0, stderr_lines=[b'warning\n'])
 
     buf = io.StringIO()
     terminal_err = io.StringIO()
-    with patch('subprocess.run', return_value=mock_result):
+    with patch('subprocess.Popen', return_value=mock_proc):
         with patch('sys.stdout', buf):
             with patch('sys.__stderr__', terminal_err):
                 with pytest.raises(SystemExit):
@@ -348,14 +349,11 @@ def test_cli_capture_stderr_records_output():
 
 def test_cli_capture_stderr_suppress():
     """--stderr=suppress records stderr without re-printing."""
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = None
-    mock_result.stderr = b'warning\n'
+    mock_proc = _make_mock_popen(returncode=0, stderr_lines=[b'warning\n'])
 
     buf = io.StringIO()
     terminal_err = io.StringIO()
-    with patch('subprocess.run', return_value=mock_result):
+    with patch('subprocess.Popen', return_value=mock_proc):
         with patch('sys.stdout', buf):
             with patch('sys.__stderr__', terminal_err):
                 with pytest.raises(SystemExit):
@@ -368,15 +366,15 @@ def test_cli_capture_stderr_suppress():
 
 def test_cli_capture_stdout_multiple_iterations():
     """With --iterations, stdout has one entry per timed iteration (warmup excluded)."""
-    mock_results = [
-        MagicMock(returncode=0, stdout=b'warmup\n', stderr=None),  # warmup
-        MagicMock(returncode=0, stdout=b'run1\n', stderr=None),
-        MagicMock(returncode=0, stdout=b'run2\n', stderr=None),
-        MagicMock(returncode=0, stdout=b'run3\n', stderr=None),
+    mock_procs = [
+        _make_mock_popen(returncode=0, stdout_lines=[b'warmup\n']),  # warmup
+        _make_mock_popen(returncode=0, stdout_lines=[b'run1\n']),
+        _make_mock_popen(returncode=0, stdout_lines=[b'run2\n']),
+        _make_mock_popen(returncode=0, stdout_lines=[b'run3\n']),
     ]
 
     buf = io.StringIO()
-    with patch('subprocess.run', side_effect=mock_results):
+    with patch('subprocess.Popen', side_effect=mock_procs):
         with patch('sys.stdout', buf):
             with patch('sys.__stdout__', io.StringIO()):
                 with pytest.raises(SystemExit):
@@ -391,13 +389,12 @@ def test_cli_capture_stdout_multiple_iterations():
 
 def test_cli_capture_stdout_and_stderr():
     """--stdout and --stderr can be used together."""
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = b'out\n'
-    mock_result.stderr = b'err\n'
+    mock_proc = _make_mock_popen(
+        returncode=0, stdout_lines=[b'out\n'], stderr_lines=[b'err\n']
+    )
 
     buf = io.StringIO()
-    with patch('subprocess.run', return_value=mock_result):
+    with patch('subprocess.Popen', return_value=mock_proc):
         with patch('sys.stdout', buf):
             with patch('sys.__stdout__', io.StringIO()):
                 with patch('sys.__stderr__', io.StringIO()):

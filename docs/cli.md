@@ -24,8 +24,8 @@ python -m microbench [options] -- COMMAND [ARGS...]
 | `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
-| `--stdout[=suppress]` | Capture stdout into the record. Output is still shown on the terminal unless `=suppress` is given. |
-| `--stderr[=suppress]` | Capture stderr into the record. Output is still shown on the terminal unless `=suppress` is given. |
+| `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
+| `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
 Use `--` to separate microbench options from the command being benchmarked.
@@ -123,6 +123,18 @@ With 10 iterations and 2 warmup runs, the record contains:
 
 Warmup runs are excluded from all three lists. The process exits with
 `max(returncode)` so any failing iteration propagates to the shell.
+
+!!! note "Subprocess-side buffering"
+    When stdout or stderr is captured via a pipe, many programs switch from
+    line-buffered to block-buffered mode because they detect they are not
+    writing to a TTY. Output will still stream to the terminal in real time
+    from microbench's perspective, but the subprocess itself may batch writes
+    into larger chunks. Use `stdbuf -oL` (Linux) or the program's own
+    unbuffering flag (e.g. `python -u`) if you need per-line flushing:
+
+    ```bash
+    python -m microbench --stdout -- stdbuf -oL ./run_simulation.sh
+    ```
 
 To detect failed iterations when analysing results with pandas:
 
