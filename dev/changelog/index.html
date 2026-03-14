@@ -895,6 +895,12 @@
   be present on every node.</p>
 </li>
 <li>
+<p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
+  hash, branch name, and dirty flag (uncommitted changes present) via
+  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git_info</code>. Set <code>git_repo</code> to inspect
+  a specific repository directory.</p>
+</li>
+<li>
 <p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
   benchmarked function as <code>peak_memory_bytes</code> (bytes), using
   <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
