@@ -378,7 +378,8 @@ class MicroBench:
         )
 
     def capture_function_name(self, bm_data):
-        bm_data['function_name'] = bm_data['_func'].__name__
+        if '_func' in bm_data:
+            bm_data['function_name'] = bm_data['_func'].__name__
 
     def _capture_package_version(self, bm_data, pkg, skip_if_none=False):
         bm_data.setdefault('package_versions', {})
@@ -433,18 +434,29 @@ class MicroBench:
 
             self.pre_start_triggers(bm_data)
 
+            res = None
+            exc_info = None
             for _ in range(self.iterations):
                 self.pre_run_triggers(bm_data)
-
-                if isinstance(self, MBLineProfiler):
-                    res = self._line_profiler.runcall(func, *args, **kwargs)
-                else:
-                    res = func(*args, **kwargs)
+                try:
+                    if isinstance(self, MBLineProfiler):
+                        res = self._line_profiler.runcall(func, *args, **kwargs)
+                    else:
+                        res = func(*args, **kwargs)
+                except Exception as e:
+                    exc_info = e
+                    self.post_run_triggers(bm_data)
+                    break
                 self.post_run_triggers(bm_data)
 
             self.post_finish_triggers(bm_data)
 
-            if isinstance(self, MBReturnValue):
+            if exc_info is not None:
+                bm_data['exception'] = {
+                    'type': type(exc_info).__name__,
+                    'message': str(exc_info),
+                }
+            elif isinstance(self, MBReturnValue):
                 try:
                     self.to_json(res)
                     bm_data['return_value'] = res
@@ -461,9 +473,67 @@ class MicroBench:
 
             self.output_result(bm_data)
 
+            if exc_info is not None:
+                raise exc_info
+
             return res
 
         return inner
+
+    def record(self, name=None):
+        """Return a context manager that times a block and writes one record.
+
+        Args:
+            name (str, optional): Value for the ``function_name`` field.
+                Defaults to ``'<record>'``.
+
+        Example::
+
+            with bench.record('training'):
+                model.fit(X, y)
+        """
+        return _ContextManagerRun(self, name)
+
+
+class _ContextManagerRun:
+    """Context manager returned by :meth:`MicroBench.record`."""
+
+    __slots__ = ('_bench', '_name', '_bm_data')
+
+    def __init__(self, bench, name):
+        self._bench = bench
+        self._name = name
+
+    def __enter__(self):
+        if isinstance(self._bench, MBLineProfiler):
+            raise NotImplementedError(
+                'MBLineProfiler requires a callable to profile and cannot be '
+                'used with bench.record(). Use the @bench decorator instead.'
+            )
+        bm_data = dict()
+        bm_data.update(self._bench._bm_static)
+        bm_data['function_name'] = self._name or '<record>'
+        # Sentinels so MBFunctionCall produces args=[], kwargs={} rather than
+        # a KeyError; _func is intentionally absent so capture_function_name
+        # leaves function_name as set above.
+        bm_data['_args'] = ()
+        bm_data['_kwargs'] = {}
+        self._bm_data = bm_data
+        self._bench.pre_start_triggers(bm_data)
+        self._bench.pre_run_triggers(bm_data)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._bench.post_run_triggers(self._bm_data)
+        self._bench.post_finish_triggers(self._bm_data)
+        if exc_type is not None:
+            self._bm_data['exception'] = {
+                'type': exc_type.__name__,
+                'message': str(exc_val),
+            }
+        bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
+        self._bench.output_result(bm_data)
+        return False  # never suppress exceptions
 
 
 class MBFunctionCall:

@@ -139,6 +139,49 @@ results.groupby('mb_run_id')['total_duration'].describe()
 
 See the [pandas documentation](https://pandas.pydata.org/docs/) for more.
 
+## Timing code blocks
+
+Use `bench.record(name)` when the code you want to time is not easily
+wrapped in a function — for example, a block in a notebook cell or a
+section of a script:
+
+```python
+from microbench import MicroBench, MBHostInfo
+
+class MyBench(MicroBench, MBHostInfo):
+    outfile = '/home/user/results.jsonl'
+
+bench = MyBench(experiment='run-1')
+
+with bench.record('data_loading'):
+    dataset = load_dataset('/data/train.h5')
+
+with bench.record('preprocessing'):
+    X, y = preprocess(dataset)
+```
+
+Each `with` block produces one record. The `name` argument sets the
+`function_name` field. All mixins, static fields, and output sinks
+behave identically to the decorator form.
+
+If the block raises an exception the record is still written, with an
+`exception` field containing the error type and message, and the
+exception is re-raised normally:
+
+```python
+try:
+    with bench.record('risky_step'):
+        result = unstable_solver(data)
+except SolverError:
+    pass  # record written with exception field; continue to next step
+```
+
+**Mixin compatibility notes:**
+
+- `MBFunctionCall` — records `args=[]` and `kwargs={}` (no callable to inspect); not an error, but not meaningful.
+- `MBReturnValue` — silently a no-op; no `return_value` field is set.
+- `MBLineProfiler` — raises `NotImplementedError`; it requires a callable to profile and cannot be used with `bench.record()`. Use the `@bench` decorator instead.
+
 ## Benchmarking external commands
 
 Microbench can also wrap shell commands, scripts, and compiled executables

@@ -1,5 +1,35 @@
 # Advanced usage
 
+## Exception capture
+
+When a benchmarked block raises an exception — whether via `bench.record()`
+or a `@bench`-decorated function — microbench writes the record before
+propagating the exception. The record includes an `exception` field with
+the error type and message:
+
+```json
+{
+  "function_name": "risky_step",
+  "run_durations": [0.042],
+  "exception": {"type": "SolverError", "message": "convergence failed"}
+}
+```
+
+The exception is always re-raised — microbench never silences errors.
+Failing calls still appear in your results file and can be identified in
+analysis:
+
+```python
+import pandas
+results = pandas.read_json('/home/user/results.jsonl', lines=True)
+
+# Records where the call raised
+failed = results[results['exception'].notna()]
+```
+
+With `--iterations N`, timing stops at the first exception; the record
+contains durations for all iterations up to and including the failing one.
+
 ## Tolerating capture failures
 
 By default, an exception in any `capture_` or `capturepost_` method
