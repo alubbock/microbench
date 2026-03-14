@@ -1,5 +1,4 @@
 import base64
-import importlib
 import inspect
 import io
 import json
@@ -14,6 +13,7 @@ import sys
 import threading
 import time
 import types
+import uuid
 import warnings
 from collections.abc import Iterable
 from datetime import datetime, timedelta, timezone
@@ -46,6 +46,10 @@ except ImportError:
         __version__ = _version('microbench')
     except Exception:
         __version__ = 'unknown'
+
+# Generated once at import time; shared by all MicroBench instances in this
+# process, allowing records from independent bench suites to be correlated.
+_run_id = str(uuid.uuid4())
 
 __all__ = [
     # Core
@@ -282,6 +286,9 @@ class MicroBench:
         bm_data['timestamp_tz'] = str(self.tz)
         # Store duration counter function name
         bm_data['duration_counter'] = self._duration_counter.__name__
+        # Run ID and package version (added to every record automatically)
+        bm_data['mb_run_id'] = _run_id
+        bm_data['mb_version'] = __version__
 
         # Capture environment variables
         if hasattr(self, 'env_vars'):
@@ -501,6 +508,8 @@ class MBReturnValue:
 class MBPythonVersion:
     """Capture the Python version and location of the Python executable"""
 
+    cli_compatible = True
+
     def capture_python_version(self, bm_data):
         bm_data['python_version'] = platform.python_version()
 
@@ -510,6 +519,8 @@ class MBPythonVersion:
 
 class MBHostInfo:
     """Capture the hostname and operating system"""
+
+    cli_compatible = True
 
     def capture_hostname(self, bm_data):
         bm_data['hostname'] = socket.gethostname()
@@ -549,6 +560,8 @@ class MBSlurmInfo:
         }
     """
 
+    cli_compatible = True
+
     def capture_slurm(self, bm_data):
         bm_data['slurm'] = {
             k[6:].lower(): v for k, v in os.environ.items() if k.startswith('SLURM_')
@@ -586,6 +599,8 @@ class MBGitInfo:
             }
         }
     """
+
+    cli_compatible = True
 
     def capture_git_info(self, bm_data):
         if hasattr(self, 'git_repo'):
@@ -658,6 +673,8 @@ class MBFileHash:
         }
     """
 
+    cli_compatible = True
+
     def capture_file_hashes(self, bm_data):
         import hashlib
 
@@ -724,6 +741,7 @@ class MBCondaPackages:
             Defaults to ``False``.
     """
 
+    cli_compatible = True
     include_builds = True
     include_channels = False
 
@@ -758,9 +776,12 @@ class MBInstalledPackages:
             package under ``package_paths``. Defaults to ``False``.
     """
 
+    cli_compatible = True
     capture_paths = False
 
     def capture_packages(self, bm_data):
+        import importlib.metadata
+
         bm_data['package_versions'] = {}
         if self.capture_paths:
             bm_data['package_paths'] = {}
@@ -815,6 +836,8 @@ class _NeedsPsUtil:
 class MBHostCpuCores(_NeedsPsUtil):
     """Capture the number of logical CPU cores"""
 
+    cli_compatible = True
+
     def capture_cpu_cores(self, bm_data):
         self._check_psutil()
         bm_data['cpu_cores_logical'] = psutil.cpu_count(logical=True)
@@ -823,6 +846,8 @@ class MBHostCpuCores(_NeedsPsUtil):
 
 class MBHostRamTotal(_NeedsPsUtil):
     """Capture the total host RAM in bytes"""
+
+    cli_compatible = True
 
     def capture_total_ram(self, bm_data):
         self._check_psutil()
@@ -879,6 +904,7 @@ class MBNvidiaSmi:
             after a reboot). Omit to poll all installed GPUs.
     """
 
+    cli_compatible = True
     _nvidia_default_attributes = ('gpu_name', 'memory.total')
     _nvidia_gpu_regex = re.compile(r'^[0-9A-Za-z\-:]+$')
 

@@ -35,6 +35,55 @@ from microbench import __version__ as microbench_version
 from .globals_capture import globals_bench
 
 
+def test_mb_run_id_and_version():
+    """Every record contains mb_run_id (UUID) and mb_version."""
+    import re
+
+    import microbench
+
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    noop()
+
+    results = bench.get_results()
+
+    # mb_run_id is a valid UUID and consistent across calls
+    uuid_re = re.compile(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    )
+    assert results['mb_run_id'].nunique() == 1
+    assert uuid_re.match(results['mb_run_id'][0])
+
+    # mb_version matches the installed package version
+    assert (results['mb_version'] == microbench.__version__).all()
+
+
+def test_mb_run_id_shared_across_instances():
+    """All MicroBench instances in the same process share the same mb_run_id."""
+    bench_a = MicroBench()
+    bench_b = MicroBench()
+
+    @bench_a
+    def func_a():
+        pass
+
+    @bench_b
+    def func_b():
+        pass
+
+    func_a()
+    func_b()
+
+    run_id_a = bench_a.get_results()['mb_run_id'][0]
+    run_id_b = bench_b.get_results()['mb_run_id'][0]
+    assert run_id_a == run_id_b
+
+
 def test_function():
     class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
         capture_versions = (pandas, io)
@@ -302,6 +351,35 @@ def test_capture_packages_importlib():
 
     results = pkg_bench.get_results()
     assert pandas.__version__ == results['package_versions'][0]['pandas']
+
+
+def test_capture_packages_self_imports_metadata():
+    """capture_packages imports importlib.metadata itself, not via prior imports."""
+    import sys
+
+    # Evict importlib.metadata so the method's own import statement is exercised.
+    # Without 'import importlib.metadata' inside capture_packages, this would raise
+    # AttributeError: module 'importlib' has no attribute 'metadata'.
+    saved = sys.modules.pop('importlib.metadata', None)
+    try:
+
+        class PkgBench(MicroBench, MBInstalledPackages):
+            pass
+
+        bench = PkgBench()
+
+        @bench
+        def noop():
+            pass
+
+        noop()
+
+        results = bench.get_results()
+        assert isinstance(results['package_versions'][0], dict)
+        assert len(results['package_versions'][0]) > 0
+    finally:
+        if saved is not None:
+            sys.modules['importlib.metadata'] = saved
 
 
 def test_monitor():
