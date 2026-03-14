@@ -189,3 +189,68 @@ def test_cli_iterations_and_warmup():
 
     assert mock_run.call_count == 6
     assert len(record['run_durations']) == 4
+
+
+def test_cli_iterations_returncode_latches_failure():
+    """With --iterations, a failing run is not masked by later successful runs."""
+    mock_results = [MagicMock(returncode=1), MagicMock(returncode=0)]
+    buf = io.StringIO()
+    with patch('subprocess.run', side_effect=mock_results) as mock_run:
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit) as exc:
+                main(['--iterations', '2', '--', 'true'])
+
+    assert exc.value.code == 1
+    assert json.loads(buf.getvalue())['returncode'] == 1
+    assert mock_run.call_count == 2
+
+
+def test_cli_multiple_mixins():
+    """Multiple --mixin flags all take effect."""
+    _, record, _ = _run_main(
+        ['--mixin', 'MBHostInfo', '--mixin', 'MBPythonVersion', '--', 'true']
+    )
+
+    assert 'hostname' in record
+    assert 'python_version' in record
+
+
+def test_cli_all_overrides_mixin():
+    """--all takes precedence over --mixin."""
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        buf = io.StringIO()
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit):
+                with patch('subprocess.check_output', side_effect=Exception('skip')):
+                    main(['--mixin', 'MBHostInfo', '--all', '--', 'true'])
+
+    record = json.loads(buf.getvalue())
+    # --all should activate every mixin, so slurm (from MBSlurmInfo) must be present
+    # even though --mixin only listed MBHostInfo
+    assert 'slurm' in record
+
+
+def test_cli_field_invalid_format():
+    """--field without = exits non-zero."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--field', 'no-equals', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_field_value_with_equals():
+    """--field preserves = characters in the value."""
+    _, record, _ = _run_main(['--field', 'url=a=b=c', '--', 'true'])
+
+    assert record['url'] == 'a=b=c'
+
+
+def test_cli_field_values_are_strings():
+    """--field values are always stored as strings, not coerced to other types."""
+    _, record, _ = _run_main(
+        ['--field', 'count=42', '--field', 'ratio=3.14', '--', 'true']
+    )
+
+    assert record['count'] == '42'
+    assert isinstance(record['count'], str)
+    assert record['ratio'] == '3.14'
+    assert isinstance(record['ratio'], str)

@@ -11,6 +11,7 @@ mixins.
 ## Key features
 
 - **Zero-config timing** — decorate a function and get start/finish timestamps and run durations immediately, with no setup
+- **Command-line interface** — wrap any shell command or compiled executable with `python -m microbench -- COMMAND` and capture host metadata alongside timing without writing Python code; ideal for SLURM jobs
 - **Extensible via mixins** — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more
 - **Cluster and HPC ready** — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes
 - **JSONL output** — one JSON object per call; load directly into pandas with `read_json(..., lines=True)`; no schema lock-in

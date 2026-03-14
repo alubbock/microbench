@@ -45,9 +45,11 @@ All notable changes to microbench are documented here.
   Records `command` (full argument list) and `returncode` alongside the
   standard timing fields. Use `--mixin` to select metadata to capture
   (defaults to `MBHostInfo` and `MBSlurmInfo`); use `--field KEY=VALUE` to
-  attach extra labels. Capture failures are non-fatal by default
-  (`capture_optional = True`), making the CLI safe across heterogeneous
-  cluster nodes.
+  attach extra labels; use `--iterations N` and `--warmup N` for repeat
+  timing. Capture failures are non-fatal by default (`capture_optional =
+  True`), making the CLI safe across heterogeneous cluster nodes. With
+  `--iterations`, `returncode` records the last non-zero exit code across
+  all iterations, or 0 if all succeeded.
 
 - **`capture_optional` class attribute**: set `capture_optional = True` on
   a benchmark class to catch exceptions from `capture_` and `capturepost_`

@@ -146,10 +146,12 @@ def main(argv=None):
         **extra_fields,
     )
     bench._subprocess_command = cmd
+    bench._subprocess_returncode = 0
 
     def run():
         result = subprocess.run(cmd)
-        bench._subprocess_returncode = result.returncode
+        if result.returncode != 0:
+            bench._subprocess_returncode = result.returncode
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()

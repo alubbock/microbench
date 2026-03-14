@@ -12,6 +12,10 @@ result, the metadata shows exactly what was running.
 
 - **Zero-config timing** — decorate a function, get timestamps and run
   durations immediately, no setup required
+- **Command-line interface** — wrap any shell command, script, or compiled
+  executable with `python -m microbench -- COMMAND` and capture host
+  metadata alongside timing without writing Python code; ideal for SLURM
+  jobs
 - **Extensible via _mixins_** — capture Python version, hostname, CPU/RAM
   specs, conda/pip package versions, NVIDIA GPU info, line-level profiles,
   peak memory usage, and more by adding mixin classes
@@ -97,6 +101,22 @@ Constructor arguments:
 - `iterations=3` runs the function three times, recording all three durations.
 - `duration_counter` overrides the timer function, if you need precise timing.
 - `experiment='run-1'` adds a custom `experiment` field to every record.
+
+## Command-line interface
+
+Microbench can also wrap any external command and record metadata alongside
+timing, without writing Python code:
+
+```bash
+python -m microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
+```
+
+This is useful for SLURM jobs, shell scripts, and compiled executables. Host
+info and SLURM variables are captured by default. Use `--mixin`, `--field`,
+`--iterations`, and `--warmup` to customise the run.
+
+See the [CLI documentation](https://alubbock.github.io/microbench/cli/) for
+the full option reference.
 
 ## Documentation
 

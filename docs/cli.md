@@ -35,7 +35,7 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 | Field | Description |
 |---|---|
 | `command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
-| `returncode` | Exit code of the command. |
+| `returncode` | Exit code of the command. With `--iterations`, this is the last non-zero exit code seen across all iterations, or 0 if all succeeded. |
 | `function_name` | Basename of the executable, e.g. `"run_sim.sh"`. |
 
 ## Default mixins

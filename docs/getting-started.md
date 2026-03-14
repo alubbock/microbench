@@ -138,3 +138,27 @@ results.groupby('mb_run_id')['total_duration'].describe()
 ```
 
 See the [pandas documentation](https://pandas.pydata.org/docs/) for more.
+
+## Benchmarking external commands
+
+Microbench can also wrap shell commands, scripts, and compiled executables
+without writing any Python code. This is useful for SLURM jobs or any
+workload where adding a Python decorator is not practical:
+
+```bash
+python -m microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
+```
+
+Host information and SLURM environment variables are captured by default.
+Use `--field KEY=VALUE` to attach labels and `--iterations N` to run the
+command multiple times:
+
+```bash
+python -m microbench \
+    --outfile results.jsonl \
+    --field experiment=baseline \
+    --iterations 5 \
+    -- ./run_simulation.sh
+```
+
+See the [CLI reference](cli.md) for all options.
