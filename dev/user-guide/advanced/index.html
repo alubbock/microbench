@@ -1047,7 +1047,7 @@ production use.</p>
 <p>When <code>handle_sigterm=True</code>, microbench installs a SIGTERM handler that:</p>
 <ol>
 <li>Writes the record</li>
-<li>Chains to any previously installed SIGTERM handler (e.g. <code>MonitorThread</code>)</li>
+<li>Chains to any previously installed SIGTERM handler</li>
 <li>Restores the default OS signal disposition (<code>SIG_DFL</code>) and re-delivers
    SIGTERM to the process</li>
 </ol>
