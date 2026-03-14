@@ -23,7 +23,7 @@ production use.
 When `handle_sigterm=True`, microbench installs a SIGTERM handler that:
 
 1. Writes the record
-2. Chains to any previously installed SIGTERM handler (e.g. `MonitorThread`)
+2. Chains to any previously installed SIGTERM handler
 3. Restores the default OS signal disposition (`SIG_DFL`) and re-delivers
    SIGTERM to the process
 
