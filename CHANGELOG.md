@@ -61,6 +61,12 @@ All notable changes to microbench are documented here.
   when running outside a SLURM job. Supersedes the manual
   `env_vars = ('SLURM_JOB_ID', ...)` pattern.
 
+- **`MBFileHash` mixin**: records a cryptographic checksum of specified files
+  in the `file_hashes` field (a dict mapping path to hex digest). Defaults to
+  hashing `sys.argv[0]` — the running script. Set `hash_files` to an iterable
+  of paths to hash specific files instead. Set `hash_algorithm` to any
+  algorithm accepted by `hashlib.new` (default: `'sha256'`).
+
 - **`warmup` parameter**: pass `warmup=N` to run the function `N` times
   before timing begins, priming caches or JIT compilation without affecting
   results. Warmup calls are unrecorded and do not interact with the monitor

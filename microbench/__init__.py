@@ -64,6 +64,7 @@ __all__ = [
     'MBPeakMemory',
     'MBSlurmInfo',
     'MBGitInfo',
+    'MBFileHash',
     'MBGlobalPackages',
     'MBInstalledPackages',
     'MBCondaPackages',
@@ -625,6 +626,59 @@ class MBGitInfo:
             'branch': branch,
             'dirty': dirty,
         }
+
+
+class MBFileHash:
+    """Capture cryptographic hashes of specified files.
+
+    Useful for recording the exact state of scripts or configuration
+    files alongside benchmark results, so results can be tied to a
+    specific version of the code even without version control.
+
+    By default hashes the running script (``sys.argv[0]``). Set
+    ``hash_files`` to an iterable of paths to hash specific files
+    instead. Files are read in 64 KB chunks, so large files are handled
+    without loading them fully into memory.
+
+    Attributes:
+        hash_files (iterable of str, optional): File paths to hash.
+            Defaults to ``[sys.argv[0]]``.
+        hash_algorithm (str, optional): Hash algorithm name accepted by
+            :func:`hashlib.new`. Defaults to ``'sha256'``. Use ``'md5'``
+            for faster hashing of large files where cryptographic strength
+            is not required.
+
+    Example output::
+
+        {
+            "file_hashes": {
+                "run_experiment.py": "e3b0c44298fc1c14..."
+            }
+        }
+    """
+
+    def capture_file_hashes(self, bm_data):
+        import hashlib
+
+        if hasattr(self, 'hash_files'):
+            paths = list(self.hash_files)
+        else:
+            argv0 = sys.argv[0] if sys.argv else ''
+            paths = [argv0] if argv0 and not argv0.startswith('-') else []
+
+        algorithm = getattr(self, 'hash_algorithm', 'sha256')
+        hashes = {}
+        for path in paths:
+            with open(path, 'rb') as f:
+                if hasattr(hashlib, 'file_digest'):
+                    # Python 3.11+: C-level loop, faster for large files
+                    hashes[path] = hashlib.file_digest(f, algorithm).hexdigest()
+                else:
+                    h = hashlib.new(algorithm)
+                    for chunk in iter(lambda: f.read(65536), b''):
+                        h.update(chunk)
+                    hashes[path] = h.hexdigest()
+        bm_data['file_hashes'] = hashes
 
 
 class MBGlobalPackages:
