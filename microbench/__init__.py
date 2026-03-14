@@ -488,6 +488,28 @@ class MicroBench:
         if hasattr(self, '_record_on_exit_handler'):
             atexit.unregister(self._record_on_exit_handler)
 
+        # Terminate any monitor thread from a previous record_on_exit() call;
+        # its samples will be discarded because the start time is also reset.
+        if hasattr(self, '_record_on_exit_monitor_thread'):
+            self._record_on_exit_monitor_thread.terminate()
+            # No join here: we don't need the data and don't want to block.
+
+        # Start the monitor thread *now* so it spans the full process lifetime
+        # from this call to exit.  _exit_handler terminates it and injects the
+        # samples into the record, replacing the exit-time-only slot that
+        # pre_start_triggers would otherwise create.
+        _monitor_slot = None
+        _early_monitor = None
+        if hasattr(self, 'monitor'):
+            interval = getattr(self, 'monitor_interval', 60)
+            _monitor_slot = []
+            _early_monitor = _MonitorThread(
+                self.monitor, interval, _monitor_slot, self.tz
+            )
+            _early_monitor.start()
+            # Store handle so a subsequent record_on_exit() can terminate it.
+            self._record_on_exit_monitor_thread = _early_monitor
+
         _start_counter = self._duration_counter()
         _start_time = datetime.now(self.tz)
 
@@ -511,6 +533,13 @@ class MicroBench:
                 return
             _ctx['fired'] = True
 
+            # Stop the process-lifetime monitor thread before pre_start_triggers
+            # starts a new (exit-time-only) one.
+            if _early_monitor is not None:
+                _early_monitor.terminate()
+                timeout = getattr(self, 'monitor_timeout', 30)
+                _early_monitor.join(timeout)
+
             bm_data = dict()
             bm_data.update(self._bm_static)
             bm_data['function_name'] = name or '<process>'
@@ -522,6 +551,9 @@ class MicroBench:
             # both with the values recorded at the call site.
             bm_data['start_time'] = _start_time
             bm_data['run_durations'] = [self._duration_counter() - _start_counter]
+            # Replace exit-time-only monitor samples with our full-run ones.
+            if _monitor_slot is not None:
+                bm_data['monitor'] = _monitor_slot
 
             self.post_finish_triggers(bm_data)
 

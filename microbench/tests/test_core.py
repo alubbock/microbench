@@ -1043,3 +1043,91 @@ async def test_async_monitor_thread():
     assert not monitor_bench._monitor_thread.is_alive()
     results = monitor_bench.get_results()
     assert len(results['monitor'][0]) > 0
+
+
+@pytest.mark.asyncio
+async def test_monitor_with_arecord():
+    """Monitor thread starts and stops correctly with bench.arecord()."""
+
+    class MonitorBench(MicroBench):
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    bench = MonitorBench()
+
+    async with bench.arecord('block'):
+        await asyncio.sleep(0)
+
+    assert not bench._monitor_thread.is_alive()
+    results = bench.get_results()
+    assert len(results) == 1
+    assert len(results.iloc[0]['monitor']) > 0
+
+
+# ---------------------------------------------------------------------------
+# monitor + record_on_exit() — monitor spans process lifetime
+# ---------------------------------------------------------------------------
+
+
+def test_monitor_record_on_exit_samples_span_lifetime():
+    """Monitor samples are collected from record_on_exit() call time, not exit.
+
+    Before the fix, the monitor thread started inside _exit_handler, so it
+    collected at most one sample (from the exit instant).  After the fix it
+    starts at record_on_exit() call time and accumulates samples throughout
+    the process lifetime.
+    """
+
+    class MonitorBench(MicroBench):
+        monitor_interval = 0.05
+
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    bench = MonitorBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        time.sleep(0.25)  # long enough for several monitor samples
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+    monitor_data = results.iloc[0]['monitor']
+    assert len(monitor_data) >= 2, (
+        f'Expected >=2 monitor samples across process lifetime, got {len(monitor_data)}'
+    )
+
+
+def test_monitor_record_on_exit_re_registration_terminates_old_thread():
+    """Re-calling record_on_exit() terminates the previous monitor thread."""
+
+    class MonitorBench(MicroBench):
+        monitor_interval = 60  # long interval — thread should not sample again
+
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    bench = MonitorBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('first')
+        first_thread = bench._record_on_exit_monitor_thread
+        assert first_thread.is_alive()
+
+        bench.record_on_exit('second')
+        # Give the first thread time to notice the terminate signal
+        first_thread.join(timeout=2.0)
+        assert not first_thread.is_alive(), 'Old monitor thread should be stopped'
+
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert results.iloc[0]['function_name'] == 'second'
