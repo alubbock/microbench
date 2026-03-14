@@ -2,8 +2,10 @@
 
 ## Minimal example
 
-Create a benchmark suite, attach it to a function as a decorator, then call
-the function as normal:
+Microbench works by adding a Python decorator (e.g. `@bench`) to the function
+you want to benchmark. To benchmark `my_function`, you create the
+benchmark suite `bench`, add the decorator to your function, and simply
+call it as normal:
 
 ```python
 from microbench import MicroBench
@@ -28,7 +30,7 @@ Every record contains these fields automatically:
 
 | Field | Description |
 |---|---|
-| `mb_run_id` | UUID generated once when `microbench` is imported. Identical across all bench suites in the same process — use `groupby('mb_run_id')` to correlate records from independent suites. |
+| `mb_run_id` | UUID generated once when `microbench` is imported. Identical across all bench suites in the same process — use `groupby('mb_run_id')` to correlate records from different benchmarks in the same run. |
 | `mb_version` | Version of the `microbench` package that produced the record. |
 | `start_time` | ISO-8601 timestamp when the function was called (UTC by default). |
 | `finish_time` | ISO-8601 timestamp when the function returned. |
@@ -39,26 +41,41 @@ Every record contains these fields automatically:
 
 ## Extended example
 
-Subclass `MicroBench` when you want to add [mixins](user-guide/mixins.md)
-or set reusable configuration. Pass keyword arguments to the constructor to
-attach experiment metadata to every record:
+Here's an extended example to give you an idea of real-world usage.
 
 ```python
-from microbench import MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo
+from microbench import MicroBench, MBFunctionCall, MBPythonVersion, \
+    MBHostInfo, MBSlurmInfo
 import numpy, pandas, time
 
-class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
+class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo, MBSlurmInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
     capture_versions = (numpy, pandas)
     env_vars = ('CUDA_VISIBLE_DEVICES',)
 
 benchmark = MyBench(experiment='run-1', iterations=3,
                     duration_counter=time.monotonic)
+
+@benchmark
+def myfunction(arg1, arg2):
+    ...
+
+myfunction(x, y)
 ```
 
+Mixins used:
+- `MBFunctionCall` records the supplied arguments `x` and `y`.
+- `MBPythonVersion` captures the Python version.
+- `MBHostInfo` captures `hostname` and `operating_system`.
+- `MBSlurmInfo` captures all `SLURM_` environment variables (used by the
+  [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
+
+Class variables:
 - `outfile` saves results to a file (one JSON object per line).
 - `capture_versions` records the versions of specified packages.
-- `env_vars` captures environment variables as `env_<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for more. For SLURM jobs, use `MBSlurmInfo` instead.
+- `env_vars` captures environment variables as `env_<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for more.
+
+Constructor arguments:
 - `iterations=3` runs the function three times, recording all three durations.
 - `duration_counter` overrides the timer (see [Configuration](user-guide/configuration.md)).
 - `experiment='run-1'` adds a custom `experiment` field to every record.
@@ -94,7 +111,7 @@ import pandas
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 ```
 
-Or via `get_results()`, which works regardless of the output sink:
+Or via `get_results()`, which works regardless of the output destination:
 
 ```python
 results = bench.get_results()
@@ -110,14 +127,14 @@ import pandas
 
 results = pandas.read_json('/home/user/my-benchmarks.jsonl', lines=True)
 
-# Total elapsed time per call
-results['elapsed'] = results['finish_time'] - results['start_time']
+# run_durations is a list of per-iteration times; sum for total call time
+results['total_duration'] = results['run_durations'].apply(sum)
 
-# Average runtime by Python version
-results.groupby('python_version')['elapsed'].mean()
+# Average call time by Python version
+results.groupby('python_version')['total_duration'].mean()
 
-# Correlate all records from the same process run
-results.groupby('mb_run_id')['elapsed'].describe()
+# Correlate records from the same process run
+results.groupby('mb_run_id')['total_duration'].describe()
 ```
 
 See the [pandas documentation](https://pandas.pydata.org/docs/) for more.
