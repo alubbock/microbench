@@ -256,6 +256,23 @@ class Bench(MicroBench, MBFileHash):
     hash_files = ['run_experiment.py', 'config.yaml']
 ```
 
+Relative paths in `hash_files` are resolved against the **working directory
+at the time the benchmarked function is called**, which may differ from the
+script's location (especially on clusters where a job scheduler launches
+scripts from a scratch directory). Use absolute paths to be safe:
+
+```python
+import os
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+class Bench(MicroBench, MBFileHash):
+    hash_files = [
+        os.path.join(SCRIPT_DIR, 'run_experiment.py'),
+        os.path.join(SCRIPT_DIR, 'config.yaml'),
+    ]
+```
+
 Each record will contain a `file_hashes` dict mapping each path to its
 hex digest:
 
@@ -286,6 +303,7 @@ Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
 
     ```python
     class Bench(MicroBench, MBFileHash):
+        hash_files = ['sometimes_missing.dat']
         capture_optional = True
     ```
 
