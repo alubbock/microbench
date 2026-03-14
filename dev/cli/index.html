@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://alubbock.github.io/microbench/latest/getting-started/">
+        <link rel="canonical" href="https://alubbock.github.io/microbench/latest/cli/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../cli/">
+        <link rel="next" href="../user-guide/configuration/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Getting started - microbench</title>
+        <title>Command-line interface - microbench</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#getting-started" class="md-skip">
+        <a href="#command-line-interface" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Getting started
+              Command-line interface
             
           </span>
         </div>
@@ -292,6 +292,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -311,7 +338,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Command-line interface
   
 
     
@@ -329,7 +356,7 @@
   <span class="md-ellipsis">
     
   
-    Getting started
+    Command-line interface
   
 
     
@@ -355,10 +382,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#minimal-example" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minimal example
+        Usage
       
     </span>
   </a>
@@ -366,10 +393,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#extended-example" class="md-nav__link">
+  <a href="#fields-recorded" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Extended example
+        Fields recorded
       
     </span>
   </a>
@@ -377,10 +404,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#saving-results-to-a-file" class="md-nav__link">
+  <a href="#default-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Saving results to a file
+        Default mixins
       
     </span>
   </a>
@@ -388,10 +415,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#analysing-results" class="md-nav__link">
+  <a href="#capture-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Analysing results
+        Capture failures
       
     </span>
   </a>
@@ -399,10 +426,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benchmarking-external-commands" class="md-nav__link">
+  <a href="#slurm-example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Benchmarking external commands
+        SLURM example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repeated-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeated runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra metadata
       
     </span>
   </a>
@@ -413,33 +462,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Command-line interface
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -779,10 +801,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#minimal-example" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Minimal example
+        Usage
       
     </span>
   </a>
@@ -790,10 +812,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#extended-example" class="md-nav__link">
+  <a href="#fields-recorded" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Extended example
+        Fields recorded
       
     </span>
   </a>
@@ -801,10 +823,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#saving-results-to-a-file" class="md-nav__link">
+  <a href="#default-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Saving results to a file
+        Default mixins
       
     </span>
   </a>
@@ -812,10 +834,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#analysing-results" class="md-nav__link">
+  <a href="#capture-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Analysing results
+        Capture failures
       
     </span>
   </a>
@@ -823,10 +845,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#benchmarking-external-commands" class="md-nav__link">
+  <a href="#slurm-example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Benchmarking external commands
+        SLURM example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repeated-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeated runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra metadata
       
     </span>
   </a>
@@ -853,27 +897,66 @@
   
 
 
-<h1 id="getting-started">Getting started</h1>
-<h2 id="minimal-example">Minimal example</h2>
-<p>Microbench works by adding a Python decorator (e.g. <code>@bench</code>) to the function
-you want to benchmark. To benchmark <code>my_function</code>, you create the
-benchmark suite <code>bench</code>, add the decorator to your function, and simply
-call it as normal:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@bench</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">return</span> <span class="n">x</span> <span class="o">**</span> <span class="mi">2</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">my_function</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<h1 id="command-line-interface">Command-line interface</h1>
+<p>Microbench can wrap any external command and record host metadata
+alongside timing, without writing any Python code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
-<p>By default results are captured into an in-memory buffer. Read them back as
-a pandas DataFrame:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<p>This is particularly useful for SLURM jobs, shell scripts, or compiled
+executables where adding a Python decorator is not practical.</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python -m microbench [options] -- COMMAND [ARGS...]
 </code></pre></div>
-<p>Every record contains these fields automatically:</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--outfile FILE</code> / <code>-o FILE</code></td>
+<td>Append results to FILE in JSONL format. Defaults to stdout.</td>
+</tr>
+<tr>
+<td><code>--mixin MIXIN</code> / <code>-m MIXIN</code></td>
+<td>Mixin to include. Replaces defaults when specified. Can be repeated.</td>
+</tr>
+<tr>
+<td><code>--all</code> / <code>-a</code></td>
+<td>Include all available mixins.</td>
+</tr>
+<tr>
+<td><code>--no-mixin</code></td>
+<td>Disable all mixins including defaults. Records only timing and command fields.</td>
+</tr>
+<tr>
+<td><code>--iterations N</code> / <code>-n N</code></td>
+<td>Run the command N times, recording each duration. Defaults to 1.</td>
+</tr>
+<tr>
+<td><code>--warmup N</code> / <code>-w N</code></td>
+<td>Run the command N times before timing begins (unrecorded). Defaults to 0.</td>
+</tr>
+<tr>
+<td><code>--stdout[=suppress]</code></td>
+<td>Capture stdout into the record. Output is still shown on the terminal unless <code>=suppress</code> is given.</td>
+</tr>
+<tr>
+<td><code>--stderr[=suppress]</code></td>
+<td>Capture stderr into the record. Output is still shown on the terminal unless <code>=suppress</code> is given.</td>
+</tr>
+<tr>
+<td><code>--field KEY=VALUE</code> / <code>-f KEY=VALUE</code></td>
+<td>Extra metadata field. Can be repeated.</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>--</code> to separate microbench options from the command being benchmarked.</p>
+<h2 id="fields-recorded">Fields recorded</h2>
+<p>Every record contains the standard fields (<code>start_time</code>, <code>finish_time</code>,
+<code>run_durations</code>, etc.) plus:</p>
 <table>
 <thead>
 <tr>
@@ -883,130 +966,91 @@ a pandas DataFrame:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>mb_run_id</code></td>
-<td>UUID generated once when <code>microbench</code> is imported. Identical across all bench suites in the same process — use <code>groupby('mb_run_id')</code> to correlate records from different benchmarks in the same run.</td>
+<td><code>command</code></td>
+<td>Full command as a list, e.g. <code>["./run_sim.sh", "--steps", "1000"]</code>.</td>
 </tr>
 <tr>
-<td><code>mb_version</code></td>
-<td>Version of the <code>microbench</code> package that produced the record.</td>
-</tr>
-<tr>
-<td><code>start_time</code></td>
-<td>ISO-8601 timestamp when the function was called (UTC by default).</td>
-</tr>
-<tr>
-<td><code>finish_time</code></td>
-<td>ISO-8601 timestamp when the function returned.</td>
-</tr>
-<tr>
-<td><code>run_durations</code></td>
-<td>List of per-iteration durations in seconds.</td>
+<td><code>returncode</code></td>
+<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value.</td>
 </tr>
 <tr>
 <td><code>function_name</code></td>
-<td>Name of the decorated function.</td>
-</tr>
-<tr>
-<td><code>timestamp_tz</code></td>
-<td>Timezone used for <code>start_time</code>/<code>finish_time</code>.</td>
-</tr>
-<tr>
-<td><code>duration_counter</code></td>
-<td>Name of the timer function used for <code>run_durations</code>.</td>
+<td>Basename of the executable, e.g. <code>"run_sim.sh"</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="extended-example">Extended example</h2>
-<p>Here's an extended example to give you an idea of real-world usage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">,</span> \
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span><span class="o">,</span><span class="w"> </span><span class="nn">time</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;/home/user/my-benchmarks.jsonl&#39;</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">env_vars</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">,)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">benchmark</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s1">&#39;run-1&#39;</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>                    <span class="n">duration_counter</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nd">@benchmark</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">def</span><span class="w"> </span><span class="nf">myfunction</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">):</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="o">...</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="n">myfunction</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<h2 id="default-mixins">Default mixins</h2>
+<p>When no <code>--mixin</code> is specified, <code>MBHostInfo</code> and <code>MBSlurmInfo</code> are
+included automatically, capturing hostname, operating system, and all
+<code>SLURM_*</code> environment variables. This covers the most common cluster
+metadata with no configuration.</p>
+<p>Specifying <code>--mixin</code> replaces the defaults entirely. Use <code>--no-mixin</code> to
+disable all mixins and record only timing and command fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Only Python version — no host info or SLURM</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--mixin<span class="w"> </span>MBPythonVersion<span class="w"> </span>--<span class="w"> </span>./job.sh
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># No mixins at all — timing and command only</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
 </code></pre></div>
-<p>Mixins used:
-- <code>MBFunctionCall</code> records the supplied arguments <code>x</code> and <code>y</code>.
-- <code>MBPythonVersion</code> captures the Python version.
-- <code>MBHostInfo</code> captures <code>hostname</code> and <code>operating_system</code>.
-- <code>MBSlurmInfo</code> captures all <code>SLURM_</code> environment variables (used by the
-  <a href="https://slurm.schedmd.com/overview.html">SLURM</a> cluster system).</p>
-<p>Class variables:
-- <code>outfile</code> saves results to a file (one JSON object per line).
-- <code>capture_versions</code> records the versions of specified packages.
-- <code>env_vars</code> captures environment variables as <code>env_&lt;NAME&gt;</code> fields — see <a href="../user-guide/configuration/#environment-variables">Environment variables</a> for more.</p>
-<p>Constructor arguments:
-- <code>iterations=3</code> runs the function three times, recording all three durations.
-- <code>duration_counter</code> overrides the timer (see <a href="../user-guide/configuration/">Configuration</a>).
-- <code>experiment='run-1'</code> adds a custom <code>experiment</code> field to every record.</p>
-<div class="admonition tip">
-<p class="admonition-title">Class attributes vs constructor arguments</p>
-<p><strong>Class attributes</strong> configure microbench's own behaviour — <code>outfile</code>,
-<code>capture_versions</code>, <code>env_vars</code>, mixin-specific settings like
-<code>nvidia_attributes</code>. They are shared across all instances of the class.</p>
-<p><strong>Constructor keyword arguments</strong> attach experiment metadata to every
-record — use them for labels like <code>experiment=</code>, <code>trial=</code>, <code>node=</code>.
-They are stored verbatim in each JSON record.</p>
-<p>If you don't need mixins, skip the class entirely:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">)</span>
+<p>Available mixins (those marked <code>cli_compatible</code>):
+<code>MBCondaPackages</code>, <code>MBFileHash</code>, <code>MBGitInfo</code>, <code>MBHostCpuCores</code>,
+<code>MBHostInfo</code>, <code>MBHostRamTotal</code>, <code>MBInstalledPackages</code>, <code>MBNvidiaSmi</code>,
+<code>MBPythonVersion</code>, <code>MBSlurmInfo</code>.</p>
+<p>See <a href="../user-guide/mixins/">Mixins</a> for details on each.</p>
+<h2 id="capture-failures">Capture failures</h2>
+<p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
+script not in a git repository) are caught automatically and recorded in
+<code>mb_capture_errors</code> rather than aborting the run. This makes the CLI safe
+to use across heterogeneous cluster nodes.</p>
+<h2 id="slurm-example">SLURM example</h2>
+<p>A typical SLURM job script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1">#SBATCH --job-name=my-sim</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1">#SBATCH --output=slurm-%j.out</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span>--mixin<span class="w"> </span>MBHostInfo<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span>--mixin<span class="w"> </span>MBSlurmInfo<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span>--mixin<span class="w"> </span>MBHostCpuCores<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
 </code></pre></div>
-</div>
-<h2 id="saving-results-to-a-file">Saving results to a file</h2>
-<p>Pass <code>outfile</code> as a constructor argument or set it as a class attribute:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">)</span>
+<p>Each node that runs this job appends one JSONL record to <code>results.jsonl</code>,
+capturing hostname, CPU count, and all SLURM variables (job ID, array task
+ID, node list, etc.) alongside the wall-clock time of the simulation.</p>
+<p>Read the results with pandas:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
 </code></pre></div>
-<p>Results are appended in <a href="https://jsonlines.org/">JSONL</a> format (one JSON
-object per line). Read them back with pandas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<h2 id="repeated-runs">Repeated runs</h2>
+<p>Use <code>--iterations</code> to run the command multiple times within a single record.
+This is useful when the command is short-lived and you want to amortise
+per-record overhead or reduce timing noise:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span>--warmup<span class="w"> </span><span class="m">2</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
-<p>Or via <code>get_results()</code>, which works regardless of the output destination:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<p>With 10 iterations and 2 warmup runs, the record contains:</p>
+<ul>
+<li><code>run_durations</code> — list of 10 wall-clock durations in seconds</li>
+<li><code>returncode</code> — list of 10 exit codes (one per timed iteration)</li>
+<li><code>stdout</code> / <code>stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
+</ul>
+<p>Warmup runs are excluded from all three lists. The process exits with
+<code>max(returncode)</code> so any failing iteration propagates to the shell.</p>
+<p>To detect failed iterations when analysing results with pandas:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="analysing-results">Analysing results</h2>
-<p>Load results into a pandas DataFrame and use its full range of aggregation
-and filtering capabilities:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/home/user/my-benchmarks.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># run_durations is a list of per-iteration times; sum for total call time</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Average call time by Python version</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;python_version&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Correlate records from the same process run</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;mb_run_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+<h2 id="extra-metadata">Extra metadata</h2>
+<p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
 </code></pre></div>
-<p>See the <a href="https://pandas.pydata.org/docs/">pandas documentation</a> for more.</p>
-<h2 id="benchmarking-external-commands">Benchmarking external commands</h2>
-<p>Microbench can also wrap shell commands, scripts, and compiled executables
-without writing any Python code. This is useful for SLURM jobs or any
-workload where adding a Python decorator is not practical:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
-</code></pre></div>
-<p>Host information and SLURM environment variables are captured by default.
-Use <code>--field KEY=VALUE</code> to attach labels and <code>--iterations N</code> to run the
-command multiple times:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
-</code></pre></div>
-<p>See the <a href="../cli/">CLI reference</a> for all options.</p>
+<p>All <code>--field</code> values are stored as strings.</p>
 
 
 

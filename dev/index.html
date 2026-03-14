@@ -410,6 +410,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -424,10 +451,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -445,8 +472,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -812,6 +839,7 @@ mixins.</p>
 <h2 id="key-features">Key features</h2>
 <ul>
 <li><strong>Zero-config timing</strong> — decorate a function and get start/finish timestamps and run durations immediately, with no setup</li>
+<li><strong>Command-line interface</strong> — wrap any shell command or compiled executable with <code>python -m microbench -- COMMAND</code> and capture host metadata alongside timing without writing Python code; ideal for SLURM jobs</li>
 <li><strong>Extensible via mixins</strong> — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more</li>
 <li><strong>Cluster and HPC ready</strong> — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes</li>
 <li><strong>JSONL output</strong> — one JSON object per call; load directly into pandas with <code>read_json(..., lines=True)</code>; no schema lock-in</li>

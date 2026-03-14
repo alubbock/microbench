@@ -319,6 +319,33 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
     
@@ -333,10 +360,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -354,8 +381,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -885,6 +912,21 @@
 </code></pre></div></p>
 <h3 id="new-features">New features</h3>
 <ul>
+<li>
+<p><strong>Command-line interface</strong> (<code>python -m microbench</code>): wrap any external
+  command and record host metadata alongside timing without writing Python
+  code. Useful for SLURM jobs, shell scripts, and compiled executables.
+  Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
+  alongside the standard timing fields. Use <code>--mixin</code> to select metadata
+  to capture (defaults to <code>MBHostInfo</code> and <code>MBSlurmInfo</code>); use
+  <code>--field KEY=VALUE</code> to attach extra labels; use <code>--iterations N</code> and
+  <code>--warmup N</code> for repeat timing; use <code>--stdout[=suppress]</code> and
+  <code>--stderr[=suppress]</code> to capture subprocess output into the record
+  (output is re-printed to the terminal unless <code>=suppress</code> is given).
+  Capture failures are non-fatal by default (<code>capture_optional = True</code>),
+  making the CLI safe across heterogeneous cluster nodes. The process exits
+  with the highest returncode seen across all timed iterations.</p>
+</li>
 <li>
 <p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
   a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
