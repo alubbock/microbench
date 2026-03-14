@@ -1,4 +1,6 @@
 import atexit
+import functools
+import inspect
 import json
 import os
 import signal
@@ -281,6 +283,69 @@ class MicroBench:
         )
 
     def __call__(self, func):
+        if inspect.iscoroutinefunction(func):
+            if isinstance(self, MBLineProfiler):
+                raise NotImplementedError(
+                    'MBLineProfiler does not support async functions. '
+                    'Use a sync wrapper or remove MBLineProfiler.'
+                )
+
+            @functools.wraps(func)
+            async def inner(*args, **kwargs):
+                bm_data = dict()
+                bm_data.update(self._bm_static)
+                bm_data['_func'] = func
+                bm_data['_args'] = args
+                bm_data['_kwargs'] = kwargs
+
+                for _ in range(self.warmup):
+                    await func(*args, **kwargs)
+
+                self.pre_start_triggers(bm_data)
+
+                res = None
+                exc_info = None
+                for _ in range(self.iterations):
+                    self.pre_run_triggers(bm_data)
+                    try:
+                        res = await func(*args, **kwargs)
+                    except Exception as e:
+                        exc_info = e
+                        self.post_run_triggers(bm_data)
+                        break
+                    self.post_run_triggers(bm_data)
+
+                self.post_finish_triggers(bm_data)
+
+                if exc_info is not None:
+                    bm_data['exception'] = {
+                        'type': type(exc_info).__name__,
+                        'message': str(exc_info),
+                    }
+                elif isinstance(self, MBReturnValue):
+                    try:
+                        self.to_json(res)
+                        bm_data['return_value'] = res
+                    except TypeError:
+                        warnings.warn(
+                            f'Return value is not JSON encodable (type: {type(res)}). '
+                            'Extend JSONEncoder class to fix (see README).',
+                            JSONEncodeWarning,
+                        )
+                        bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
+
+                # Delete any underscore-prefixed keys
+                bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
+
+                self.output_result(bm_data)
+
+                if exc_info is not None:
+                    raise exc_info
+
+                return res
+
+            return inner
+
         def inner(*args, **kwargs):
             bm_data = dict()
             bm_data.update(self._bm_static)
@@ -359,6 +424,27 @@ class MicroBench:
                 model.fit(X, y)
         """
         return _ContextManagerRun(self, name)
+
+    def arecord(self, name=None):
+        """Return an async context manager that times a block and writes one record.
+
+        Use with ``async with`` inside an async function or coroutine.
+
+        Args:
+            name (str, optional): Value for the ``function_name`` field.
+                Defaults to ``'<record>'``.
+
+        .. note::
+            Elapsed wall time includes event-loop interleaving from other
+            concurrent tasks. Results are comparable across runs only when
+            the event loop is not saturated by other tasks.
+
+        Example::
+
+            async with bench.arecord('data_load'):
+                await load_data()
+        """
+        return _AsyncContextManagerRun(self, name)
 
     def record_on_exit(self, name=None, handle_sigterm=True):
         """Register a process-exit handler that writes one benchmark record.
@@ -523,6 +609,44 @@ class _ContextManagerRun:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self._bench.post_run_triggers(self._bm_data)
+        self._bench.post_finish_triggers(self._bm_data)
+        if exc_type is not None:
+            self._bm_data['exception'] = {
+                'type': exc_type.__name__,
+                'message': str(exc_val),
+            }
+        bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
+        self._bench.output_result(bm_data)
+        return False  # never suppress exceptions
+
+
+class _AsyncContextManagerRun:
+    """Async context manager returned by :meth:`MicroBench.arecord`."""
+
+    __slots__ = ('_bench', '_name', '_bm_data')
+
+    def __init__(self, bench, name):
+        self._bench = bench
+        self._name = name
+
+    async def __aenter__(self):
+        if isinstance(self._bench, MBLineProfiler):
+            raise NotImplementedError(
+                'MBLineProfiler requires a callable to profile and cannot be '
+                'used with bench.arecord(). Use the @bench decorator instead.'
+            )
+        bm_data = dict()
+        bm_data.update(self._bench._bm_static)
+        bm_data['function_name'] = self._name or '<record>'
+        bm_data['_args'] = ()
+        bm_data['_kwargs'] = {}
+        self._bm_data = bm_data
+        self._bench.pre_start_triggers(bm_data)
+        self._bench.pre_run_triggers(bm_data)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._bench.post_run_triggers(self._bm_data)
         self._bench.post_finish_triggers(self._bm_data)
         if exc_type is not None:

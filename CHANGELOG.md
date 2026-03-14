@@ -39,6 +39,28 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **Async support**: the `@bench` decorator now detects `async def` functions
+  and returns an `async def` wrapper that must be awaited. A new
+  `bench.arecord(name)` method provides the async counterpart of
+  `bench.record()` for use with `async with`. All mixins, static fields,
+  output sinks, `iterations`, and `warmup` work identically to the sync path.
+  `MBLineProfiler` raises `NotImplementedError` at decoration time when used
+  with an async function (line profiling of coroutines is not supported).
+
+  ```python
+  @bench
+  async def fetch():
+      await asyncio.sleep(0.01)
+
+  asyncio.run(fetch())
+
+  async with bench.arecord('load'):
+      await load_data()
+  ```
+
+  **Note:** elapsed time includes event-loop interleaving from other concurrent
+  tasks; run in an otherwise-idle event loop for repeatable results.
+
 - **`bench.record_on_exit(name, handle_sigterm=True)`**: registers a
   process-exit handler that writes one benchmark record when the script
   terminates. Captures wall-clock duration from the call site to exit plus
