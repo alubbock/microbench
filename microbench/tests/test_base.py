@@ -882,11 +882,14 @@ def test_mb_git_info_default_uses_script_dir():
     def noop():
         pass
 
-    with patch.object(sys, 'argv', ['/some/project/script.py']):
+    script = '/some/project/script.py'
+    expected_cwd = os.path.dirname(os.path.abspath(script))
+
+    with patch.object(sys, 'argv', [script]):
         with patch('subprocess.check_output', side_effect=side_effect):
             noop()
 
-    assert all(kw.get('cwd') == '/some/project' for kw in captured_kwargs)
+    assert all(kw.get('cwd') == expected_cwd for kw in captured_kwargs)
 
 
 def test_mb_git_info_custom_path():
