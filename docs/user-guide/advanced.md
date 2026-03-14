@@ -61,6 +61,79 @@ unmounted before the atexit handler fires), microbench falls back to
 writing the raw JSON record to `sys.stderr` so the record is not silently
 lost.
 
+## Sub-timings: `bench.time()`
+
+When a benchmarked block contains several distinct phases, `bench.time(name)`
+lets you label each one. All phases share the same benchmark record — and
+therefore the same metadata capture pass. There is no need to create a separate
+`MicroBench` instance per phase.
+
+```python
+with bench.record('pipeline'):
+    with bench.time('parse'):
+        data = parse(raw)
+    with bench.time('transform'):
+        result = transform(data)
+    with bench.time('write'):
+        write(result)
+```
+
+Sub-timings are appended to `mb_timings` in call order:
+
+```json
+{
+  "function_name": "pipeline",
+  "run_durations": [0.183],
+  "mb_timings": [
+    {"name": "parse",     "duration": 0.041},
+    {"name": "transform", "duration": 0.120},
+    {"name": "write",     "duration": 0.022}
+  ]
+}
+```
+
+`mb_timings` is absent from the record when `bench.time()` is never called.
+
+### Compatibility
+
+`bench.time()` works identically inside all four entry points:
+
+| Entry point | Usage |
+|---|---|
+| `bench.record()` | `with bench.record('name'): ... with bench.time('phase'): ...` |
+| `@bench` decorator (sync) | call `bench.time()` inside the decorated function body |
+| `@bench` decorator (async) | same — use `with bench.time()` (not `async with`) |
+| `bench.arecord()` | `async with bench.arecord('name'): ... with bench.time('phase'): ...` |
+| `bench.record_on_exit()` | call `bench.time()` anywhere after `record_on_exit()` returns |
+
+Calling `bench.time()` outside any active benchmark is a **silent no-op** — it
+records nothing and raises no error.
+
+### Behaviour with `iterations`
+
+With `iterations=N`, each call to the decorated function runs `N` times. Every
+`bench.time()` inside the body fires once per iteration, so `mb_timings` will
+contain `N` entries per named phase:
+
+```python
+bench = MicroBench(iterations=3)
+
+@bench
+def pipeline():
+    with bench.time('step'):
+        ...
+
+pipeline()
+# mb_timings → [{"name": "step", ...}, {"name": "step", ...}, {"name": "step", ...}]
+```
+
+### Exceptions
+
+An exception raised inside `with bench.time('phase')` closes the segment and
+records its duration before the exception propagates. The record will contain
+the partial `mb_timings` for all segments that completed or started before the
+exception.
+
 ## Exception capture
 
 When a benchmarked block raises an exception — whether via `bench.record()`

@@ -28,6 +28,9 @@ result, the metadata shows exactly what was running.
 - **Flexible output** — write to a local file, in-memory buffer, Redis, or
   custom destinations; file writes are safe for simultaneous writes from
   multiple processes
+- **Sub-timings** — label named phases inside a single record with
+  `bench.time(name)`; all phases share one metadata capture pass and results
+  accumulate in `mb_timings` in call order
 
 ## Installation
 

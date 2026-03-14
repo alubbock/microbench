@@ -1131,3 +1131,227 @@ def test_monitor_record_on_exit_re_registration_terminates_old_thread():
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert results.iloc[0]['function_name'] == 'second'
+
+
+# ---------------------------------------------------------------------------
+# bench.time() sub-timing API
+# ---------------------------------------------------------------------------
+
+
+def test_time_with_record():
+    """bench.time() inside bench.record() appends entries to mb_timings."""
+    bench = MicroBench()
+
+    with bench.record('pipeline'):
+        with bench.time('parse'):
+            pass
+        with bench.time('transform'):
+            pass
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 2
+    assert timings[0]['name'] == 'parse'
+    assert timings[1]['name'] == 'transform'
+    assert timings[0]['duration'] >= 0
+    assert timings[1]['duration'] >= 0
+
+
+def test_time_with_decorator():
+    """bench.time() inside a sync @bench-decorated function records sub-timings."""
+    bench = MicroBench()
+
+    @bench
+    def pipeline():
+        with bench.time('step_a'):
+            pass
+        with bench.time('step_b'):
+            pass
+
+    pipeline()
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 2
+    assert timings[0]['name'] == 'step_a'
+    assert timings[1]['name'] == 'step_b'
+
+
+@pytest.mark.asyncio
+async def test_time_with_async_decorator():
+    """bench.time() inside an async @bench-decorated function records sub-timings."""
+    bench = MicroBench()
+
+    @bench
+    async def async_pipeline():
+        with bench.time('fetch'):
+            await asyncio.sleep(0)
+        with bench.time('process'):
+            pass
+
+    await async_pipeline()
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 2
+    assert timings[0]['name'] == 'fetch'
+    assert timings[1]['name'] == 'process'
+
+
+@pytest.mark.asyncio
+async def test_time_with_arecord():
+    """bench.time() inside bench.arecord() records sub-timings."""
+    bench = MicroBench()
+
+    async with bench.arecord('pipeline'):
+        with bench.time('load'):
+            await asyncio.sleep(0)
+        with bench.time('save'):
+            pass
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 2
+    assert timings[0]['name'] == 'load'
+    assert timings[1]['name'] == 'save'
+
+
+def test_time_with_record_on_exit():
+    """bench.time() after bench.record_on_exit() accumulates in mb_timings."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        with bench.time('setup'):
+            pass
+        with bench.time('run'):
+            pass
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 2
+    assert timings[0]['name'] == 'setup'
+    assert timings[1]['name'] == 'run'
+    assert timings[0]['duration'] >= 0
+    assert timings[1]['duration'] >= 0
+
+
+def test_time_noop_outside_benchmark():
+    """bench.time() outside any active benchmark is a silent no-op."""
+    bench = MicroBench()
+
+    # No active context — should not raise
+    with bench.time('orphan'):
+        pass
+
+    # Nothing written
+    results = bench.get_results()
+    assert len(results) == 0
+
+
+def test_time_absent_when_not_used():
+    """mb_timings is absent from the record when bench.time() is never called."""
+    bench = MicroBench()
+
+    with bench.record('block'):
+        pass
+
+    results = bench.get_results()
+    assert 'mb_timings' not in results.columns
+
+
+def test_time_multiple_iterations():
+    """With iterations=3, each bench.time() call appends one entry per iteration."""
+    bench = MicroBench(iterations=3)
+
+    @bench
+    def pipeline():
+        with bench.time('step'):
+            pass
+
+    pipeline()
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 3
+    assert all(t['name'] == 'step' for t in timings)
+
+
+def test_time_exception_closes_segment():
+    """An exception inside bench.time() still records the segment duration."""
+    bench = MicroBench()
+
+    with pytest.raises(ValueError):
+        with bench.record('block'):
+            with bench.time('risky'):
+                raise ValueError('fail')
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 1
+    assert timings[0]['name'] == 'risky'
+    assert timings[0]['duration'] >= 0
+
+
+def test_time_ordering_preserved():
+    """mb_timings entries appear in call order."""
+    bench = MicroBench()
+
+    names = ['alpha', 'beta', 'gamma', 'delta']
+    with bench.record('block'):
+        for n in names:
+            with bench.time(n):
+                pass
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert [t['name'] for t in timings] == names
+
+
+def test_time_same_name_multiple_times():
+    """Calling bench.time() with the same name produces multiple list entries."""
+    bench = MicroBench()
+
+    with bench.record('block'):
+        for _ in range(3):
+            with bench.time('repeat'):
+                pass
+
+    results = bench.get_results()
+    timings = results.iloc[0]['mb_timings']
+    assert len(timings) == 3
+    assert all(t['name'] == 'repeat' for t in timings)
+
+
+@pytest.mark.asyncio
+async def test_time_concurrent_arecord():
+    """Two concurrent arecord() calls get independent mb_timings."""
+    bench = MicroBench()
+
+    async def task_a():
+        async with bench.arecord('a'):
+            with bench.time('a_step'):
+                await asyncio.sleep(0)
+
+    async def task_b():
+        async with bench.arecord('b'):
+            with bench.time('b_step'):
+                await asyncio.sleep(0)
+
+    await asyncio.gather(task_a(), task_b())
+
+    results = bench.get_results()
+    assert len(results) == 2
+    by_name = {row['function_name']: row for _, row in results.iterrows()}
+
+    assert by_name['a']['mb_timings'] == [
+        {'name': 'a_step', 'duration': by_name['a']['mb_timings'][0]['duration']}
+    ]
+    assert by_name['b']['mb_timings'] == [
+        {'name': 'b_step', 'duration': by_name['b']['mb_timings'][0]['duration']}
+    ]
+    assert by_name['a']['mb_timings'][0]['name'] == 'a_step'
+    assert by_name['b']['mb_timings'][0]['name'] == 'b_step'
