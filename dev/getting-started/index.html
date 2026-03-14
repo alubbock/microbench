@@ -399,6 +399,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#timing-code-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timing code blocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#benchmarking-external-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -823,6 +834,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#timing-code-blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timing code blocks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#benchmarking-external-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -991,20 +1013,55 @@ and filtering capabilities:</p>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;mb_run_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
 </code></pre></div>
 <p>See the <a href="https://pandas.pydata.org/docs/">pandas documentation</a> for more.</p>
+<h2 id="timing-code-blocks">Timing code blocks</h2>
+<p>Use <code>bench.record(name)</code> when the code you want to time is not easily
+wrapped in a function — for example, a block in a notebook cell or a
+section of a script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;/home/user/results.jsonl&#39;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">(</span><span class="n">experiment</span><span class="o">=</span><span class="s1">&#39;run-1&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;data_loading&#39;</span><span class="p">):</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="s1">&#39;/data/train.h5&#39;</span><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;preprocessing&#39;</span><span class="p">):</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+</code></pre></div>
+<p>Each <code>with</code> block produces one record. The <code>name</code> argument sets the
+<code>function_name</code> field. All mixins, static fields, and output sinks
+behave identically to the decorator form.</p>
+<p>If the block raises an exception the record is still written, with an
+<code>exception</code> field containing the error type and message, and the
+exception is re-raised normally:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;risky_step&#39;</span><span class="p">):</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">unstable_solver</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">except</span> <span class="n">SolverError</span><span class="p">:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="k">pass</span>  <span class="c1"># record written with exception field; continue to next step</span>
+</code></pre></div>
+<p><strong>Mixin compatibility notes:</strong></p>
+<ul>
+<li><code>MBFunctionCall</code> — records <code>args=[]</code> and <code>kwargs={}</code> (no callable to inspect); not an error, but not meaningful.</li>
+<li><code>MBReturnValue</code> — silently a no-op; no <code>return_value</code> field is set.</li>
+<li><code>MBLineProfiler</code> — raises <code>NotImplementedError</code>; it requires a callable to profile and cannot be used with <code>bench.record()</code>. Use the <code>@bench</code> decorator instead.</li>
+</ul>
 <h2 id="benchmarking-external-commands">Benchmarking external commands</h2>
 <p>Microbench can also wrap shell commands, scripts, and compiled executables
 without writing any Python code. This is useful for SLURM jobs or any
 workload where adding a Python decorator is not practical:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
 </code></pre></div>
 <p>Host information and SLURM environment variables are captured by default.
 Use <code>--field KEY=VALUE</code> to attach labels and <code>--iterations N</code> to run the
 command multiple times:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 <p>See the <a href="../cli/">CLI reference</a> for all options.</p>
 

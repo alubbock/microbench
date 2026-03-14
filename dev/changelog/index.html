@@ -913,6 +913,19 @@
 <h3 id="new-features">New features</h3>
 <ul>
 <li>
+<p><strong><code>bench.record(name)</code> context manager</strong>: times an arbitrary code block
+  and writes one record, without requiring the code to be in a named
+  function. All mixins, static fields, and output sinks behave identically
+  to the decorator form.</p>
+</li>
+<li>
+<p><strong>Exception capture</strong>: when a benchmarked block raises — via
+  <code>bench.record()</code> or a <code>@bench</code>-decorated function — the record is
+  written before the exception propagates. An <code>exception</code> field is added
+  containing <code>{"type": ..., "message": ...}</code>. The exception is always
+  re-raised. With <code>--iterations N</code>, timing stops at the first exception.</p>
+</li>
+<li>
 <p><strong>Command-line interface</strong> (<code>python -m microbench</code>): wrap any external
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
