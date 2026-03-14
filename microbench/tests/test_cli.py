@@ -162,3 +162,30 @@ def test_cli_double_dash_separator():
     mock_run.assert_called_once()
     called_cmd = mock_run.call_args[0][0]
     assert called_cmd == ['echo', 'hello']
+
+
+def test_cli_iterations():
+    """--iterations N runs the command N times and produces N run_durations entries."""
+    _, record, mock_run = _run_main(['--iterations', '3', '--', 'true'])
+
+    assert mock_run.call_count == 3
+    assert len(record['run_durations']) == 3
+
+
+def test_cli_warmup():
+    """--warmup N runs the command N extra times before timing begins."""
+    _, record, mock_run = _run_main(['--warmup', '2', '--', 'true'])
+
+    # 2 warmup calls + 1 timed call
+    assert mock_run.call_count == 3
+    assert len(record['run_durations']) == 1
+
+
+def test_cli_iterations_and_warmup():
+    """--iterations and --warmup together produce the right call count."""
+    _, record, mock_run = _run_main(
+        ['--iterations', '4', '--warmup', '2', '--', 'true']
+    )
+
+    assert mock_run.call_count == 6
+    assert len(record['run_durations']) == 4

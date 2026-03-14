@@ -68,6 +68,22 @@ def _build_parser(mixin_names):
         help='Include all available mixins. Overrides --mixin.',
     )
     parser.add_argument(
+        '--iterations',
+        '-n',
+        type=int,
+        default=1,
+        metavar='N',
+        help='Run the command N times, recording each duration. Defaults to 1.',
+    )
+    parser.add_argument(
+        '--warmup',
+        '-w',
+        type=int,
+        default=0,
+        metavar='N',
+        help='Run N unrecorded warm-up calls before timing begins. Defaults to 0.',
+    )
+    parser.add_argument(
         '--field',
         '-f',
         action='append',
@@ -123,7 +139,12 @@ def main(argv=None):
     )
 
     output = FileOutput(args.outfile) if args.outfile else FileOutput(sys.stdout)
-    bench = BenchClass(outputs=[output], **extra_fields)
+    bench = BenchClass(
+        outputs=[output],
+        iterations=args.iterations,
+        warmup=args.warmup,
+        **extra_fields,
+    )
     bench._subprocess_command = cmd
 
     def run():

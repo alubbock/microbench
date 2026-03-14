@@ -20,6 +20,9 @@ python -m microbench [options] -- COMMAND [ARGS...]
 |---|---|
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
 | `--mixin MIXIN` / `-m MIXIN` | Mixin to include. Replaces defaults when specified. Can be repeated. |
+| `--all` / `-a` | Include all available mixins. |
+| `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
+| `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
 Use `--` to separate microbench options from the command being benchmarked.
@@ -93,6 +96,19 @@ results = pandas.read_json('/scratch/user/results.jsonl', lines=True)
 results['total_duration'] = results['run_durations'].apply(sum)
 results.groupby('slurm.job_id')['total_duration'].describe()
 ```
+
+## Repeated runs
+
+Use `--iterations` to run the command multiple times within a single record.
+This is useful when the command is short-lived and you want to amortise
+per-record overhead or reduce timing noise:
+
+```bash
+python -m microbench --iterations 10 --warmup 2 -- ./run_simulation.sh
+```
+
+`run_durations` will contain 10 entries. The 2 warmup runs are not timed and
+do not appear in the record.
 
 ## Extra metadata
 

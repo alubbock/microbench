@@ -353,6 +353,35 @@ def test_capture_packages_importlib():
     assert pandas.__version__ == results['package_versions'][0]['pandas']
 
 
+def test_capture_packages_self_imports_metadata():
+    """capture_packages imports importlib.metadata itself, not via prior imports."""
+    import sys
+
+    # Evict importlib.metadata so the method's own import statement is exercised.
+    # Without 'import importlib.metadata' inside capture_packages, this would raise
+    # AttributeError: module 'importlib' has no attribute 'metadata'.
+    saved = sys.modules.pop('importlib.metadata', None)
+    try:
+
+        class PkgBench(MicroBench, MBInstalledPackages):
+            pass
+
+        bench = PkgBench()
+
+        @bench
+        def noop():
+            pass
+
+        noop()
+
+        results = bench.get_results()
+        assert isinstance(results['package_versions'][0], dict)
+        assert len(results['package_versions'][0]) > 0
+    finally:
+        if saved is not None:
+            sys.modules['importlib.metadata'] = saved
+
+
 def test_monitor():
     class MonitorBench(MicroBench):
         @staticmethod
