@@ -37,7 +37,6 @@ version_file = "microbench/_version_scm.py"
 
 [tool.pytest.ini_options]
 testpaths = ["microbench/tests"]
-asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 88

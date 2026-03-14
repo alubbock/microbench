@@ -849,6 +849,7 @@ def test_record_on_exit_output_fallback_to_stderr(capsys):
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_standard_fields():
     """@bench on an async def function can be awaited and produces standard fields."""
     bench = MicroBench()
@@ -868,6 +869,7 @@ async def test_async_decorator_standard_fields():
     assert results.iloc[0]['run_durations'][0] >= 0
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_iterations():
     """iterations=N on an async function produces N run_durations."""
     bench = MicroBench(iterations=3)
@@ -882,6 +884,7 @@ async def test_async_decorator_iterations():
     assert len(results.iloc[0]['run_durations']) == 3
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_warmup():
     """warmup=N runs N unrecorded calls before timing begins."""
     call_count = 0
@@ -901,6 +904,7 @@ async def test_async_decorator_warmup():
     assert len(results.iloc[0]['run_durations']) == 3
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_exception():
     """Exception in async function is captured in the record and re-raised."""
     bench = MicroBench()
@@ -919,6 +923,7 @@ async def test_async_decorator_exception():
     assert exc['message'] == 'async boom'
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_return_value():
     """MBReturnValue captures the return value from an async function."""
 
@@ -938,6 +943,7 @@ async def test_async_decorator_return_value():
     assert results.iloc[0]['return_value'] == 42
 
 
+@pytest.mark.asyncio
 async def test_async_decorator_functioncall():
     """MBFunctionCall captures args and kwargs from an async function."""
 
@@ -957,6 +963,7 @@ async def test_async_decorator_functioncall():
     assert results.iloc[0]['kwargs'] == {'y': 2}
 
 
+@pytest.mark.asyncio
 async def test_async_arecord_standard_fields():
     """bench.arecord() works as an async context manager with standard fields."""
     bench = MicroBench()
@@ -973,6 +980,7 @@ async def test_async_arecord_standard_fields():
     assert len(row['run_durations']) == 1
 
 
+@pytest.mark.asyncio
 async def test_async_arecord_no_name_defaults():
     """bench.arecord() with no name sets function_name to '<record>'."""
     bench = MicroBench()
@@ -984,6 +992,7 @@ async def test_async_arecord_no_name_defaults():
     assert results.iloc[0]['function_name'] == '<record>'
 
 
+@pytest.mark.asyncio
 async def test_async_arecord_exception():
     """Exceptions inside bench.arecord() are recorded then re-raised."""
     bench = MicroBench()
@@ -1014,6 +1023,7 @@ def test_async_lineprofiler_raises():
             pass
 
 
+@pytest.mark.asyncio
 async def test_async_monitor_thread():
     """Monitor thread works correctly during async function execution."""
 
