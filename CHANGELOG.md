@@ -39,6 +39,21 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`bench.time(name)` sub-timing API**: label phases inside a single benchmark
+  record with named timing sections. Sub-timings accumulate in `mb_timings` as
+  `[{"name": ..., "duration": ...}, ...]` in call order. Compatible with
+  `bench.record()`, `bench.arecord()`, `@bench` (sync and async), and
+  `bench.record_on_exit()`. Calling outside an active benchmark is a silent
+  no-op; `mb_timings` is absent when `bench.time()` is never called.
+
+  ```python
+  with bench.record('pipeline'):
+      with bench.time('parse'):
+          data = parse(raw)
+      with bench.time('transform'):
+          result = transform(data)
+  ```
+
 - **Async support**: the `@bench` decorator now detects `async def` functions
   and returns an `async def` wrapper that must be awaited. A new
   `bench.arecord(name)` method provides the async counterpart of

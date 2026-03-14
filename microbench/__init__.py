@@ -1,4 +1,5 @@
 import atexit
+import contextvars
 import functools
 import inspect
 import json
@@ -53,6 +54,14 @@ from .mixins import (
 # Generated once at import time; shared by all MicroBench instances in this
 # process, allowing records from independent bench suites to be correlated.
 _run_id = str(uuid.uuid4())
+
+# ContextVar set to the active bm_data dict while inside bench.record(),
+# bench.arecord(), or a @bench-decorated call.  bench.time() reads this to
+# attach sub-timings to the current benchmark.  Each asyncio.Task gets its own
+# copy, so concurrent arecord() calls stay isolated.
+_active_bm_data: contextvars.ContextVar = contextvars.ContextVar(
+    '_active_bm_data', default=None
+)
 
 __all__ = [
     # Core
@@ -302,13 +311,87 @@ class MicroBench:
                     await func(*args, **kwargs)
 
                 self.pre_start_triggers(bm_data)
+                _ctx_token = _active_bm_data.set(bm_data)
 
                 res = None
                 exc_info = None
+                try:
+                    for _ in range(self.iterations):
+                        self.pre_run_triggers(bm_data)
+                        try:
+                            res = await func(*args, **kwargs)
+                        except Exception as e:
+                            exc_info = e
+                            self.post_run_triggers(bm_data)
+                            break
+                        self.post_run_triggers(bm_data)
+
+                    self.post_finish_triggers(bm_data)
+
+                    if exc_info is not None:
+                        bm_data['exception'] = {
+                            'type': type(exc_info).__name__,
+                            'message': str(exc_info),
+                        }
+                    elif isinstance(self, MBReturnValue):
+                        try:
+                            self.to_json(res)
+                            bm_data['return_value'] = res
+                        except TypeError:
+                            warnings.warn(
+                                f'Return value is not JSON encodable '
+                                f'(type: {type(res)}). '
+                                'Extend JSONEncoder class to fix (see README).',
+                                JSONEncodeWarning,
+                            )
+                            bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
+
+                    # Delete any underscore-prefixed keys
+                    bm_data = {
+                        k: v for k, v in bm_data.items() if not k.startswith('_')
+                    }
+
+                    self.output_result(bm_data)
+                finally:
+                    _active_bm_data.reset(_ctx_token)
+
+                if exc_info is not None:
+                    raise exc_info
+
+                return res
+
+            return inner
+
+        def inner(*args, **kwargs):
+            bm_data = dict()
+            bm_data.update(self._bm_static)
+            bm_data['_func'] = func
+            bm_data['_args'] = args
+            bm_data['_kwargs'] = kwargs
+
+            if isinstance(self, MBLineProfiler):
+                if not line_profiler:
+                    raise ImportError(
+                        'This functionality requires the "line_profiler" package'
+                    )
+                self._line_profiler = line_profiler.LineProfiler(func)
+
+            for _ in range(self.warmup):
+                func(*args, **kwargs)
+
+            self.pre_start_triggers(bm_data)
+            _ctx_token = _active_bm_data.set(bm_data)
+
+            res = None
+            exc_info = None
+            try:
                 for _ in range(self.iterations):
                     self.pre_run_triggers(bm_data)
                     try:
-                        res = await func(*args, **kwargs)
+                        if isinstance(self, MBLineProfiler):
+                            res = self._line_profiler.runcall(func, *args, **kwargs)
+                        else:
+                            res = func(*args, **kwargs)
                     except Exception as e:
                         exc_info = e
                         self.post_run_triggers(bm_data)
@@ -338,71 +421,8 @@ class MicroBench:
                 bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
 
                 self.output_result(bm_data)
-
-                if exc_info is not None:
-                    raise exc_info
-
-                return res
-
-            return inner
-
-        def inner(*args, **kwargs):
-            bm_data = dict()
-            bm_data.update(self._bm_static)
-            bm_data['_func'] = func
-            bm_data['_args'] = args
-            bm_data['_kwargs'] = kwargs
-
-            if isinstance(self, MBLineProfiler):
-                if not line_profiler:
-                    raise ImportError(
-                        'This functionality requires the "line_profiler" package'
-                    )
-                self._line_profiler = line_profiler.LineProfiler(func)
-
-            for _ in range(self.warmup):
-                func(*args, **kwargs)
-
-            self.pre_start_triggers(bm_data)
-
-            res = None
-            exc_info = None
-            for _ in range(self.iterations):
-                self.pre_run_triggers(bm_data)
-                try:
-                    if isinstance(self, MBLineProfiler):
-                        res = self._line_profiler.runcall(func, *args, **kwargs)
-                    else:
-                        res = func(*args, **kwargs)
-                except Exception as e:
-                    exc_info = e
-                    self.post_run_triggers(bm_data)
-                    break
-                self.post_run_triggers(bm_data)
-
-            self.post_finish_triggers(bm_data)
-
-            if exc_info is not None:
-                bm_data['exception'] = {
-                    'type': type(exc_info).__name__,
-                    'message': str(exc_info),
-                }
-            elif isinstance(self, MBReturnValue):
-                try:
-                    self.to_json(res)
-                    bm_data['return_value'] = res
-                except TypeError:
-                    warnings.warn(
-                        f'Return value is not JSON encodable (type: {type(res)}). '
-                        'Extend JSONEncoder class to fix (see README).',
-                        JSONEncodeWarning,
-                    )
-                    bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
-
-            # Delete any underscore-prefixed keys
-            bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
-
-            self.output_result(bm_data)
+            finally:
+                _active_bm_data.reset(_ctx_token)
 
             if exc_info is not None:
                 raise exc_info
@@ -445,6 +465,20 @@ class MicroBench:
                 await load_data()
         """
         return _AsyncContextManagerRun(self, name)
+
+    def time(self, name: str) -> '_TimingSection':
+        """Return a context manager recording a named sub-timing within a benchmark.
+
+        Sub-timings are stored in ``mb_timings`` as a list of
+        ``{"name": ..., "duration": ...}`` dicts in call order.
+        Compatible with ``bench.record()``, ``bench.arecord()``,
+        ``@bench`` (sync and async), and ``bench.record_on_exit()``.
+        Calling outside an active benchmark is a silent no-op.
+
+        Args:
+            name (str): Label for this timing section.
+        """
+        return _TimingSection(self, name)
 
     def record_on_exit(self, name=None, handle_sigterm=True):
         """Register a process-exit handler that writes one benchmark record.
@@ -510,6 +544,9 @@ class MicroBench:
             # Store handle so a subsequent record_on_exit() can terminate it.
             self._record_on_exit_monitor_thread = _early_monitor
 
+        # Reset timings list; bench.time() appends here when ContextVar is None.
+        self._record_on_exit_timings = []
+
         _start_counter = self._duration_counter()
         _start_time = datetime.now(self.tz)
 
@@ -567,6 +604,9 @@ class MicroBench:
             if exit_signal is not None:
                 bm_data['exit_signal'] = exit_signal
 
+            if self._record_on_exit_timings:
+                bm_data['mb_timings'] = list(self._record_on_exit_timings)
+
             bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
 
             try:
@@ -615,7 +655,7 @@ class MicroBench:
 class _ContextManagerRun:
     """Context manager returned by :meth:`MicroBench.record`."""
 
-    __slots__ = ('_bench', '_name', '_bm_data')
+    __slots__ = ('_bench', '_name', '_bm_data', '_ctx_token')
 
     def __init__(self, bench, name):
         self._bench = bench
@@ -636,6 +676,7 @@ class _ContextManagerRun:
         bm_data['_args'] = ()
         bm_data['_kwargs'] = {}
         self._bm_data = bm_data
+        self._ctx_token = _active_bm_data.set(bm_data)
         self._bench.pre_start_triggers(bm_data)
         self._bench.pre_run_triggers(bm_data)
         return self
@@ -650,13 +691,14 @@ class _ContextManagerRun:
             }
         bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
         self._bench.output_result(bm_data)
+        _active_bm_data.reset(self._ctx_token)
         return False  # never suppress exceptions
 
 
 class _AsyncContextManagerRun:
     """Async context manager returned by :meth:`MicroBench.arecord`."""
 
-    __slots__ = ('_bench', '_name', '_bm_data')
+    __slots__ = ('_bench', '_name', '_bm_data', '_ctx_token')
 
     def __init__(self, bench, name):
         self._bench = bench
@@ -674,6 +716,7 @@ class _AsyncContextManagerRun:
         bm_data['_args'] = ()
         bm_data['_kwargs'] = {}
         self._bm_data = bm_data
+        self._ctx_token = _active_bm_data.set(bm_data)
         self._bench.pre_start_triggers(bm_data)
         self._bench.pre_run_triggers(bm_data)
         return self
@@ -688,4 +731,40 @@ class _AsyncContextManagerRun:
             }
         bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
         self._bench.output_result(bm_data)
+        _active_bm_data.reset(self._ctx_token)
         return False  # never suppress exceptions
+
+
+class _TimingSection:
+    """Context manager returned by :meth:`MicroBench.time`."""
+
+    __slots__ = ('_bench', '_name', '_bm_data', '_start')
+
+    def __init__(self, bench, name):
+        self._bench = bench
+        self._name = name
+        # Capture the active bm_data now (at construction time) so that nested
+        # bench.time() calls inside async tasks always attach to the right record.
+        self._bm_data = _active_bm_data.get()
+        self._start = None
+
+    def __enter__(self):
+        self._start = self._bench._duration_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._start is None:
+            return False
+        duration = self._bench._duration_counter() - self._start
+        entry = {'name': self._name, 'duration': duration}
+        if self._bm_data is not None:
+            self._bm_data.setdefault('mb_timings', []).append(entry)
+        elif hasattr(self._bench, '_record_on_exit_timings'):
+            self._bench._record_on_exit_timings.append(entry)
+        return False  # never suppress exceptions
+
+    async def __aenter__(self):
+        return self.__enter__()
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        return self.__exit__(exc_type, exc_val, exc_tb)
