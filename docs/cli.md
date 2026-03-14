@@ -43,10 +43,11 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 
 ## Default mixins
 
-When no `--mixin` is specified, `MBHostInfo` and `MBSlurmInfo` are
-included automatically, capturing hostname, operating system, and all
-`SLURM_*` environment variables. This covers the most common cluster
-metadata with no configuration.
+When no `--mixin` is specified, `MBHostInfo`, `MBSlurmInfo`, and
+`MBLoadedModules` are included automatically, capturing hostname,
+operating system, all `SLURM_*` environment variables, and the loaded
+Lmod/Environment Modules software stack. All three degrade gracefully
+to empty dicts outside of their respective environments.
 
 Specifying `--mixin` replaces the defaults entirely. Use `--no-mixin` to
 disable all mixins and record only timing and command fields:
@@ -61,8 +62,8 @@ python -m microbench --no-mixin -- ./job.sh
 
 Available mixins (those marked `cli_compatible`):
 `MBCondaPackages`, `MBFileHash`, `MBGitInfo`, `MBHostCpuCores`,
-`MBHostInfo`, `MBHostRamTotal`, `MBInstalledPackages`, `MBNvidiaSmi`,
-`MBPythonVersion`, `MBSlurmInfo`.
+`MBHostInfo`, `MBHostRamTotal`, `MBInstalledPackages`, `MBLoadedModules`,
+`MBNvidiaSmi`, `MBPythonVersion`, `MBSlurmInfo`.
 
 See [Mixins](user-guide/mixins.md) for details on each.
 

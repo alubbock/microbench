@@ -29,6 +29,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
 | `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
+| `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
 | `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
@@ -178,6 +179,44 @@ results['slurm'].apply(lambda s: s.get('job_id'))
     `MBSlurmInfo` supersedes the manual `env_vars = ('SLURM_JOB_ID', ...)`
     pattern — it captures every `SLURM_*` variable automatically with no
     configuration.
+
+### `MBLoadedModules`
+
+Captures the currently loaded [Lmod](https://lmod.readthedocs.io/) or
+[Environment Modules](https://modules.readthedocs.io/) software stack into a
+`loaded_modules` dict, mapping each module name to its version string. If no
+modules are loaded, or the benchmark is not running in a module-enabled
+environment, `loaded_modules` is an empty dict.
+
+```python
+from microbench import MicroBench, MBLoadedModules
+
+class Bench(MicroBench, MBLoadedModules):
+    pass
+
+bench = Bench()
+```
+
+Each record will contain:
+
+```json
+{
+  "loaded_modules": {
+    "gcc": "12.2.0",
+    "openmpi": "4.1.5",
+    "python": "3.10.4"
+  }
+}
+```
+
+Module entries without a version (e.g. `null`) are stored with an empty
+string as the version. Hierarchical module names such as
+`GCC/12.2.0-GCCcore-12.2.0` are split on the first `/`, so the name is
+`GCC` and the version is `12.2.0-GCCcore-12.2.0`.
+
+This mixin reads the `LOADEDMODULES` environment variable, which is the
+standard set by both Lmod and Environment Modules. No subprocess is
+required and there are no extra dependencies.
 
 ## Code provenance
 

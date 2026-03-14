@@ -75,6 +75,13 @@ def test_cli_default_mixins_include_slurm():
     assert 'slurm' in record
 
 
+def test_cli_default_mixins_include_loaded_modules():
+    """Default configuration includes MBLoadedModules (loaded_modules field)."""
+    _, record, _ = _run_main(['--', 'true'])
+
+    assert 'loaded_modules' in record
+
+
 def test_cli_explicit_mixin_replaces_defaults():
     """Specifying --mixin replaces the default mixin set."""
     _, record, _ = _run_main(['--mixin', 'MBPythonVersion', '--', 'true'])
