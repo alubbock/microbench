@@ -22,7 +22,7 @@ classifiers = [
 Homepage = "https://github.com/alubbock/microbench"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "pandas", "numpy", "line_profiler", "psutil"]
+test = ["pytest", "pytest-asyncio", "pytest-cov", "pandas", "numpy", "line_profiler", "psutil"]
 docs = ["mkdocs-material", "mkdocstrings[python]", "mike", "pymdown-extensions"]
 
 [tool.setuptools.packages.find]
@@ -37,6 +37,7 @@ version_file = "microbench/_version_scm.py"
 
 [tool.pytest.ini_options]
 testpaths = ["microbench/tests"]
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 88

@@ -1,3 +1,4 @@
+import asyncio
 import atexit as _atexit
 import datetime
 import io
@@ -14,6 +15,7 @@ import pytest
 from microbench import (
     MBFunctionCall,
     MBHostInfo,
+    MBLineProfiler,
     MBPythonVersion,
     MBReturnValue,
     MicroBench,
@@ -840,3 +842,194 @@ def test_record_on_exit_output_fallback_to_stderr(capsys):
 
     record = _json.loads(captured.err.strip())
     assert record['function_name'] == 'sim'
+
+
+# ---------------------------------------------------------------------------
+# Async decorator and arecord() context manager
+# ---------------------------------------------------------------------------
+
+
+async def test_async_decorator_standard_fields():
+    """@bench on an async def function can be awaited and produces standard fields."""
+    bench = MicroBench()
+
+    @bench
+    async def async_noop():
+        await asyncio.sleep(0)
+
+    await async_noop()
+
+    results = bench.get_results()
+    assert len(results) == 1
+    assert results.iloc[0]['function_name'] == 'async_noop'
+    assert 'start_time' in results.columns
+    assert 'finish_time' in results.columns
+    assert len(results.iloc[0]['run_durations']) == 1
+    assert results.iloc[0]['run_durations'][0] >= 0
+
+
+async def test_async_decorator_iterations():
+    """iterations=N on an async function produces N run_durations."""
+    bench = MicroBench(iterations=3)
+
+    @bench
+    async def async_noop():
+        await asyncio.sleep(0)
+
+    await async_noop()
+
+    results = bench.get_results()
+    assert len(results.iloc[0]['run_durations']) == 3
+
+
+async def test_async_decorator_warmup():
+    """warmup=N runs N unrecorded calls before timing begins."""
+    call_count = 0
+
+    bench = MicroBench(warmup=2, iterations=3)
+
+    @bench
+    async def async_fn():
+        nonlocal call_count
+        call_count += 1
+
+    await async_fn()
+
+    # 2 warmup + 3 recorded = 5 total
+    assert call_count == 5
+    results = bench.get_results()
+    assert len(results.iloc[0]['run_durations']) == 3
+
+
+async def test_async_decorator_exception():
+    """Exception in async function is captured in the record and re-raised."""
+    bench = MicroBench()
+
+    @bench
+    async def async_fail():
+        raise ValueError('async boom')
+
+    with pytest.raises(ValueError, match='async boom'):
+        await async_fail()
+
+    results = bench.get_results()
+    assert len(results) == 1
+    exc = results.iloc[0]['exception']
+    assert exc['type'] == 'ValueError'
+    assert exc['message'] == 'async boom'
+
+
+async def test_async_decorator_return_value():
+    """MBReturnValue captures the return value from an async function."""
+
+    class Bench(MicroBench, MBReturnValue):
+        pass
+
+    bench = Bench()
+
+    @bench
+    async def async_compute():
+        return 42
+
+    result = await async_compute()
+
+    assert result == 42
+    results = bench.get_results()
+    assert results.iloc[0]['return_value'] == 42
+
+
+async def test_async_decorator_functioncall():
+    """MBFunctionCall captures args and kwargs from an async function."""
+
+    class Bench(MicroBench, MBFunctionCall):
+        pass
+
+    bench = Bench()
+
+    @bench
+    async def async_fn(x, y=10):
+        pass
+
+    await async_fn(1, y=2)
+
+    results = bench.get_results()
+    assert results.iloc[0]['args'] == [1]
+    assert results.iloc[0]['kwargs'] == {'y': 2}
+
+
+async def test_async_arecord_standard_fields():
+    """bench.arecord() works as an async context manager with standard fields."""
+    bench = MicroBench()
+
+    async with bench.arecord('my_block'):
+        await asyncio.sleep(0)
+
+    results = bench.get_results()
+    assert len(results) == 1
+    row = results.iloc[0]
+    assert row['function_name'] == 'my_block'
+    assert 'start_time' in results.columns
+    assert 'finish_time' in results.columns
+    assert len(row['run_durations']) == 1
+
+
+async def test_async_arecord_no_name_defaults():
+    """bench.arecord() with no name sets function_name to '<record>'."""
+    bench = MicroBench()
+
+    async with bench.arecord():
+        pass
+
+    results = bench.get_results()
+    assert results.iloc[0]['function_name'] == '<record>'
+
+
+async def test_async_arecord_exception():
+    """Exceptions inside bench.arecord() are recorded then re-raised."""
+    bench = MicroBench()
+
+    with pytest.raises(RuntimeError, match='async oops'):
+        async with bench.arecord('block'):
+            raise RuntimeError('async oops')
+
+    results = bench.get_results()
+    assert len(results) == 1
+    exc = results.iloc[0]['exception']
+    assert exc['type'] == 'RuntimeError'
+    assert exc['message'] == 'async oops'
+
+
+def test_async_lineprofiler_raises():
+    """MBLineProfiler raises NotImplementedError at decoration time for async funcs."""
+
+    class Bench(MicroBench, MBLineProfiler):
+        pass
+
+    bench = Bench()
+
+    with pytest.raises(NotImplementedError, match='MBLineProfiler'):
+
+        @bench
+        async def async_fn():
+            pass
+
+
+async def test_async_monitor_thread():
+    """Monitor thread works correctly during async function execution."""
+
+    class MonitorBench(MicroBench):
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    monitor_bench = MonitorBench()
+
+    @monitor_bench
+    async def async_noop():
+        await asyncio.sleep(0)
+
+    await async_noop()
+
+    assert not monitor_bench._monitor_thread.is_alive()
+    results = monitor_bench.get_results()
+    assert len(results['monitor'][0]) > 0

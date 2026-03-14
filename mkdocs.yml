@@ -69,6 +69,7 @@ nav:
     - Mixins: user-guide/mixins.md
     - Output: user-guide/output.md
     - Periodic monitoring: user-guide/monitoring.md
+    - Async functions: user-guide/async.md
     - Extending microbench: user-guide/extending.md
     - Advanced usage: user-guide/advanced.md
   - API reference: api-reference.md
