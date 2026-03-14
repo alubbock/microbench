@@ -63,6 +63,7 @@ extra:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - Command-line interface: cli.md
   - User guide:
     - Configuration: user-guide/configuration.md
     - Mixins: user-guide/mixins.md
