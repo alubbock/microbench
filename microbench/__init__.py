@@ -504,7 +504,7 @@ class MicroBench:
             interval = getattr(self, 'monitor_interval', 60)
             _monitor_slot = []
             _early_monitor = _MonitorThread(
-                self.monitor, interval, _monitor_slot, self.tz
+                self.monitor, interval, _monitor_slot, self.tz, daemon=True
             )
             _early_monitor.start()
             # Store handle so a subsequent record_on_exit() can terminate it.
