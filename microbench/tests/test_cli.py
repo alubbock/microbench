@@ -11,6 +11,8 @@ def _run_main(argv, mock_returncode=0):
     """Run main() with a mocked subprocess and captured stdout."""
     mock_result = MagicMock()
     mock_result.returncode = mock_returncode
+    mock_result.stdout = None
+    mock_result.stderr = None
 
     buf = io.StringIO()
     with patch('subprocess.run', return_value=mock_result) as mock_run:
@@ -26,7 +28,7 @@ def test_cli_records_command_and_timing():
 
     assert code == 0
     assert record['command'] == ['sleep', '1']
-    assert record['returncode'] == 0
+    assert record['returncode'] == [0]
     assert 'start_time' in record
     assert 'finish_time' in record
     assert 'run_durations' in record
@@ -38,7 +40,7 @@ def test_cli_nonzero_returncode():
     code, record, _ = _run_main(['--', 'false'], mock_returncode=1)
 
     assert code == 1
-    assert record['returncode'] == 1
+    assert record['returncode'] == [1]
 
 
 def test_cli_custom_field():
@@ -88,6 +90,8 @@ def test_cli_outfile(tmp_path):
     outfile = tmp_path / 'results.jsonl'
     mock_result = MagicMock()
     mock_result.returncode = 0
+    mock_result.stdout = None
+    mock_result.stderr = None
 
     with patch('subprocess.run', return_value=mock_result):
         with pytest.raises(SystemExit):
@@ -95,7 +99,7 @@ def test_cli_outfile(tmp_path):
 
     record = json.loads(outfile.read_text())
     assert record['command'] == ['true']
-    assert record['returncode'] == 0
+    assert record['returncode'] == [0]
 
 
 def test_cli_no_command_exits_with_error():
@@ -170,6 +174,7 @@ def test_cli_iterations():
 
     assert mock_run.call_count == 3
     assert len(record['run_durations']) == 3
+    assert len(record['returncode']) == 3
 
 
 def test_cli_warmup():
@@ -179,6 +184,7 @@ def test_cli_warmup():
     # 2 warmup calls + 1 timed call
     assert mock_run.call_count == 3
     assert len(record['run_durations']) == 1
+    assert len(record['returncode']) == 1
 
 
 def test_cli_iterations_and_warmup():
@@ -189,20 +195,24 @@ def test_cli_iterations_and_warmup():
 
     assert mock_run.call_count == 6
     assert len(record['run_durations']) == 4
+    assert len(record['returncode']) == 4
 
 
-def test_cli_iterations_returncode_latches_failure():
-    """With --iterations, a failing run is not masked by later successful runs."""
-    mock_results = [MagicMock(returncode=1), MagicMock(returncode=0)]
+def test_cli_returncode_is_max_across_iterations():
+    """Process exits with the highest returncode seen across all iterations."""
+    mock_results = [
+        MagicMock(returncode=0, stdout=None, stderr=None),
+        MagicMock(returncode=2, stdout=None, stderr=None),
+        MagicMock(returncode=1, stdout=None, stderr=None),
+    ]
     buf = io.StringIO()
-    with patch('subprocess.run', side_effect=mock_results) as mock_run:
+    with patch('subprocess.run', side_effect=mock_results):
         with patch('sys.stdout', buf):
             with pytest.raises(SystemExit) as exc:
-                main(['--iterations', '2', '--', 'true'])
+                main(['--iterations', '3', '--', 'true'])
 
-    assert exc.value.code == 1
-    assert json.loads(buf.getvalue())['returncode'] == 1
-    assert mock_run.call_count == 2
+    assert exc.value.code == 2
+    assert json.loads(buf.getvalue())['returncode'] == [0, 2, 1]
 
 
 def test_cli_multiple_mixins():
@@ -254,3 +264,146 @@ def test_cli_field_values_are_strings():
     assert isinstance(record['count'], str)
     assert record['ratio'] == '3.14'
     assert isinstance(record['ratio'], str)
+
+
+def test_cli_no_stdout_capture_by_default():
+    """stdout and stderr fields are absent unless --stdout/--stderr are given."""
+    _, record, _ = _run_main(['--', 'echo', 'hello'])
+
+    assert 'stdout' not in record
+    assert 'stderr' not in record
+
+
+def test_cli_capture_stdout_records_output():
+    """--stdout records subprocess stdout as a list and re-prints to terminal."""
+    import subprocess as _subprocess
+
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = b'hello\n'
+    mock_result.stderr = None
+
+    buf = io.StringIO()
+    terminal = io.StringIO()
+    with patch('subprocess.run', return_value=mock_result) as mock_run:
+        with patch('sys.stdout', buf):
+            with patch('sys.__stdout__', terminal):
+                with pytest.raises(SystemExit):
+                    main(['--stdout', '--', 'echo', 'hello'])
+
+    record = json.loads(buf.getvalue())
+    assert record['stdout'] == ['hello\n']
+    assert 'stderr' not in record
+    assert terminal.getvalue() == 'hello\n'
+    assert mock_run.call_args[1].get('stdout') == _subprocess.PIPE
+
+
+def test_cli_capture_stdout_suppress():
+    """--stdout=suppress records output without re-printing to terminal."""
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = b'hello\n'
+    mock_result.stderr = None
+
+    buf = io.StringIO()
+    terminal = io.StringIO()
+    with patch('subprocess.run', return_value=mock_result):
+        with patch('sys.stdout', buf):
+            with patch('sys.__stdout__', terminal):
+                with pytest.raises(SystemExit):
+                    main(['--stdout=suppress', '--', 'echo', 'hello'])
+
+    record = json.loads(buf.getvalue())
+    assert record['stdout'] == ['hello\n']
+    assert terminal.getvalue() == ''  # nothing re-printed
+
+
+def test_cli_capture_stderr_records_output():
+    """--stderr records subprocess stderr as a list and re-prints to terminal."""
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = None
+    mock_result.stderr = b'warning\n'
+
+    buf = io.StringIO()
+    terminal_err = io.StringIO()
+    with patch('subprocess.run', return_value=mock_result):
+        with patch('sys.stdout', buf):
+            with patch('sys.__stderr__', terminal_err):
+                with pytest.raises(SystemExit):
+                    main(['--stderr', '--', 'cmd'])
+
+    record = json.loads(buf.getvalue())
+    assert record['stderr'] == ['warning\n']
+    assert 'stdout' not in record
+    assert terminal_err.getvalue() == 'warning\n'
+
+
+def test_cli_capture_stderr_suppress():
+    """--stderr=suppress records stderr without re-printing."""
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = None
+    mock_result.stderr = b'warning\n'
+
+    buf = io.StringIO()
+    terminal_err = io.StringIO()
+    with patch('subprocess.run', return_value=mock_result):
+        with patch('sys.stdout', buf):
+            with patch('sys.__stderr__', terminal_err):
+                with pytest.raises(SystemExit):
+                    main(['--stderr=suppress', '--', 'cmd'])
+
+    record = json.loads(buf.getvalue())
+    assert record['stderr'] == ['warning\n']
+    assert terminal_err.getvalue() == ''
+
+
+def test_cli_capture_stdout_multiple_iterations():
+    """With --iterations, stdout has one entry per timed iteration (warmup excluded)."""
+    mock_results = [
+        MagicMock(returncode=0, stdout=b'warmup\n', stderr=None),  # warmup
+        MagicMock(returncode=0, stdout=b'run1\n', stderr=None),
+        MagicMock(returncode=0, stdout=b'run2\n', stderr=None),
+        MagicMock(returncode=0, stdout=b'run3\n', stderr=None),
+    ]
+
+    buf = io.StringIO()
+    with patch('subprocess.run', side_effect=mock_results):
+        with patch('sys.stdout', buf):
+            with patch('sys.__stdout__', io.StringIO()):
+                with pytest.raises(SystemExit):
+                    main(
+                        ['--stdout', '--warmup', '1', '--iterations', '3', '--', 'cmd']
+                    )
+
+    record = json.loads(buf.getvalue())
+    assert record['stdout'] == ['run1\n', 'run2\n', 'run3\n']
+    assert len(record['stdout']) == len(record['run_durations'])
+
+
+def test_cli_capture_stdout_and_stderr():
+    """--stdout and --stderr can be used together."""
+    mock_result = MagicMock()
+    mock_result.returncode = 0
+    mock_result.stdout = b'out\n'
+    mock_result.stderr = b'err\n'
+
+    buf = io.StringIO()
+    with patch('subprocess.run', return_value=mock_result):
+        with patch('sys.stdout', buf):
+            with patch('sys.__stdout__', io.StringIO()):
+                with patch('sys.__stderr__', io.StringIO()):
+                    with pytest.raises(SystemExit):
+                        main(['--stdout', '--stderr', '--', 'cmd'])
+
+    record = json.loads(buf.getvalue())
+    assert record['stdout'] == ['out\n']
+    assert record['stderr'] == ['err\n']
+
+
+def test_cli_capture_invalid_value():
+    """--stdout=invalid exits non-zero."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--stdout=invalid', '--', 'cmd'])
+    assert exc.value.code != 0

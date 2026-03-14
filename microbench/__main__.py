@@ -29,6 +29,8 @@ def _get_mixin_map():
 
 _DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo')
 
+_CAPTURE_CHOICES = ('capture', 'suppress')
+
 
 def _build_parser(mixin_names):
     parser = argparse.ArgumentParser(
@@ -84,6 +86,30 @@ def _build_parser(mixin_names):
         help='Run N unrecorded warm-up calls before timing begins. Defaults to 0.',
     )
     parser.add_argument(
+        '--stdout',
+        nargs='?',
+        const='capture',
+        default=None,
+        metavar='suppress',
+        help=(
+            'Capture stdout into the record (one entry per iteration). '
+            'Output is still shown on the terminal by default; '
+            'use --stdout=suppress to hide it.'
+        ),
+    )
+    parser.add_argument(
+        '--stderr',
+        nargs='?',
+        const='capture',
+        default=None,
+        metavar='suppress',
+        help=(
+            'Capture stderr into the record (one entry per iteration). '
+            'Output is still shown on the terminal by default; '
+            'use --stderr=suppress to hide it.'
+        ),
+    )
+    parser.add_argument(
         '--field',
         '-f',
         action='append',
@@ -110,6 +136,13 @@ def main(argv=None):
     if not cmd:
         parser.error('No command specified.')
 
+    for flag, val in (('--stdout', args.stdout), ('--stderr', args.stderr)):
+        if val not in (None,) + _CAPTURE_CHOICES:
+            parser.error(
+                f'{flag}: invalid value {val!r}. '
+                f'Use {flag} to capture or {flag}=suppress to capture and suppress.'
+            )
+
     if args.all_mixins:
         mixin_names = sorted(mixin_map)
     elif args.mixins is not None:
@@ -128,9 +161,20 @@ def main(argv=None):
     from microbench import FileOutput, MicroBench
 
     class _MBSubprocessResult:
+        def capture_subprocess_reset(self, bm_data):
+            # Runs in pre_start_triggers: after warmup, before timed iterations.
+            # Discard any warmup results so only timed iterations are recorded.
+            self._subprocess_returncodes = []
+            self._subprocess_stdout = []
+            self._subprocess_stderr = []
+
         def capturepost_subprocess_result(self, bm_data):
             bm_data['command'] = self._subprocess_command
-            bm_data['returncode'] = self._subprocess_returncode
+            bm_data['returncode'] = self._subprocess_returncodes
+            if self._subprocess_stdout:
+                bm_data['stdout'] = self._subprocess_stdout
+            if self._subprocess_stderr:
+                bm_data['stderr'] = self._subprocess_stderr
 
     BenchClass = type(
         'CLIBench',
@@ -146,17 +190,38 @@ def main(argv=None):
         **extra_fields,
     )
     bench._subprocess_command = cmd
-    bench._subprocess_returncode = 0
+    bench._subprocess_returncodes = []
+    bench._subprocess_stdout = []
+    bench._subprocess_stderr = []
+
+    popen_kwargs = {}
+    if args.stdout in _CAPTURE_CHOICES:
+        popen_kwargs['stdout'] = subprocess.PIPE
+    if args.stderr in _CAPTURE_CHOICES:
+        popen_kwargs['stderr'] = subprocess.PIPE
+
+    # Hold references to the real streams before any patching in tests.
+    _real_stdout = sys.__stdout__
+    _real_stderr = sys.__stderr__
 
     def run():
-        result = subprocess.run(cmd)
-        if result.returncode != 0:
-            bench._subprocess_returncode = result.returncode
+        result = subprocess.run(cmd, **popen_kwargs)
+        bench._subprocess_returncodes.append(result.returncode)
+        if args.stdout in _CAPTURE_CHOICES:
+            out = result.stdout.decode(errors='replace') if result.stdout else ''
+            bench._subprocess_stdout.append(out)
+            if args.stdout == 'capture':
+                _real_stdout.write(out)
+        if args.stderr in _CAPTURE_CHOICES:
+            err = result.stderr.decode(errors='replace') if result.stderr else ''
+            bench._subprocess_stderr.append(err)
+            if args.stderr == 'capture':
+                _real_stderr.write(err)
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()
 
-    sys.exit(bench._subprocess_returncode or 0)
+    sys.exit(max(bench._subprocess_returncodes, default=0))
 
 
 if __name__ == '__main__':

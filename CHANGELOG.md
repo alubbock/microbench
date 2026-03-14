@@ -42,14 +42,16 @@ All notable changes to microbench are documented here.
 - **Command-line interface** (`python -m microbench`): wrap any external
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
-  Records `command` (full argument list) and `returncode` alongside the
-  standard timing fields. Use `--mixin` to select metadata to capture
-  (defaults to `MBHostInfo` and `MBSlurmInfo`); use `--field KEY=VALUE` to
-  attach extra labels; use `--iterations N` and `--warmup N` for repeat
-  timing. Capture failures are non-fatal by default (`capture_optional =
-  True`), making the CLI safe across heterogeneous cluster nodes. With
-  `--iterations`, `returncode` records the last non-zero exit code across
-  all iterations, or 0 if all succeeded.
+  Records `command`, `returncode` (list, one per timed iteration),
+  alongside the standard timing fields. Use `--mixin` to select metadata
+  to capture (defaults to `MBHostInfo` and `MBSlurmInfo`); use
+  `--field KEY=VALUE` to attach extra labels; use `--iterations N` and
+  `--warmup N` for repeat timing; use `--stdout[=suppress]` and
+  `--stderr[=suppress]` to capture subprocess output into the record
+  (output is re-printed to the terminal unless `=suppress` is given).
+  Capture failures are non-fatal by default (`capture_optional = True`),
+  making the CLI safe across heterogeneous cluster nodes. The process exits
+  with the highest returncode seen across all timed iterations.
 
 - **`capture_optional` class attribute**: set `capture_optional = True` on
   a benchmark class to catch exceptions from `capture_` and `capturepost_`

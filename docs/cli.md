@@ -23,6 +23,8 @@ python -m microbench [options] -- COMMAND [ARGS...]
 | `--all` / `-a` | Include all available mixins. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
+| `--stdout[=suppress]` | Capture stdout into the record. Output is still shown on the terminal unless `=suppress` is given. |
+| `--stderr[=suppress]` | Capture stderr into the record. Output is still shown on the terminal unless `=suppress` is given. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
 Use `--` to separate microbench options from the command being benchmarked.
@@ -35,7 +37,7 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 | Field | Description |
 |---|---|
 | `command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
-| `returncode` | Exit code of the command. With `--iterations`, this is the last non-zero exit code seen across all iterations, or 0 if all succeeded. |
+| `returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
 | `function_name` | Basename of the executable, e.g. `"run_sim.sh"`. |
 
 ## Default mixins
