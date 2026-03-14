@@ -32,6 +32,21 @@ _DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo')
 _CAPTURE_CHOICES = ('capture', 'suppress')
 
 
+def _int_at_least(minimum):
+    """Return an argparse type function that accepts integers >= minimum."""
+
+    def _parse(value):
+        try:
+            ivalue = int(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(f'{value!r} is not an integer')
+        if ivalue < minimum:
+            raise argparse.ArgumentTypeError(f'must be >= {minimum}, got {ivalue}')
+        return ivalue
+
+    return _parse
+
+
 def _build_parser(mixin_names):
     parser = argparse.ArgumentParser(
         prog='python -m microbench',
@@ -70,9 +85,15 @@ def _build_parser(mixin_names):
         help='Include all available mixins. Overrides --mixin.',
     )
     parser.add_argument(
+        '--no-mixin',
+        action='store_true',
+        dest='no_mixins',
+        help='Disable all mixins including defaults. Overrides --mixin.',
+    )
+    parser.add_argument(
         '--iterations',
         '-n',
-        type=int,
+        type=_int_at_least(1),
         default=1,
         metavar='N',
         help='Run the command N times, recording each duration. Defaults to 1.',
@@ -80,7 +101,7 @@ def _build_parser(mixin_names):
     parser.add_argument(
         '--warmup',
         '-w',
-        type=int,
+        type=_int_at_least(0),
         default=0,
         metavar='N',
         help='Run N unrecorded warm-up calls before timing begins. Defaults to 0.',
@@ -145,6 +166,8 @@ def main(argv=None):
 
     if args.all_mixins:
         mixin_names = sorted(mixin_map)
+    elif args.no_mixins:
+        mixin_names = []
     elif args.mixins is not None:
         mixin_names = args.mixins
     else:

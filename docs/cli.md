@@ -21,6 +21,7 @@ python -m microbench [options] -- COMMAND [ARGS...]
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
 | `--mixin MIXIN` / `-m MIXIN` | Mixin to include. Replaces defaults when specified. Can be repeated. |
 | `--all` / `-a` | Include all available mixins. |
+| `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
 | `--stdout[=suppress]` | Capture stdout into the record. Output is still shown on the terminal unless `=suppress` is given. |
@@ -47,11 +48,15 @@ included automatically, capturing hostname, operating system, and all
 `SLURM_*` environment variables. This covers the most common cluster
 metadata with no configuration.
 
-Specifying `--mixin` replaces the defaults entirely:
+Specifying `--mixin` replaces the defaults entirely. Use `--no-mixin` to
+disable all mixins and record only timing and command fields:
 
 ```bash
 # Only Python version — no host info or SLURM
 python -m microbench --mixin MBPythonVersion -- ./job.sh
+
+# No mixins at all — timing and command only
+python -m microbench --no-mixin -- ./job.sh
 ```
 
 Available mixins (those marked `cli_compatible`):
@@ -109,8 +114,20 @@ per-record overhead or reduce timing noise:
 python -m microbench --iterations 10 --warmup 2 -- ./run_simulation.sh
 ```
 
-`run_durations` will contain 10 entries. The 2 warmup runs are not timed and
-do not appear in the record.
+With 10 iterations and 2 warmup runs, the record contains:
+
+- `run_durations` — list of 10 wall-clock durations in seconds
+- `returncode` — list of 10 exit codes (one per timed iteration)
+- `stdout` / `stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
+
+Warmup runs are excluded from all three lists. The process exits with
+`max(returncode)` so any failing iteration propagates to the shell.
+
+To detect failed iterations when analysing results with pandas:
+
+```python
+results['any_failed'] = results['returncode'].apply(lambda rc: max(rc) != 0)
+```
 
 ## Extra metadata
 

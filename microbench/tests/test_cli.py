@@ -407,3 +407,44 @@ def test_cli_capture_invalid_value():
     with pytest.raises(SystemExit) as exc:
         main(['--stdout=invalid', '--', 'cmd'])
     assert exc.value.code != 0
+
+
+def test_cli_iterations_zero_exits_error():
+    """--iterations 0 is rejected."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--iterations', '0', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_iterations_negative_exits_error():
+    """--iterations -1 is rejected."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--iterations', '-1', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_warmup_negative_exits_error():
+    """--warmup -1 is rejected."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--warmup', '-1', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_no_mixin_omits_all_metadata():
+    """--no-mixin produces a record with no mixin fields."""
+    _, record, _ = _run_main(['--no-mixin', '--', 'true'])
+
+    assert 'hostname' not in record
+    assert 'slurm' not in record
+    assert 'python_version' not in record
+    # Core fields still present
+    assert 'command' in record
+    assert 'returncode' in record
+    assert 'run_durations' in record
+
+
+def test_cli_no_mixin_overrides_mixin():
+    """--no-mixin takes precedence over --mixin."""
+    _, record, _ = _run_main(['--no-mixin', '--mixin', 'MBHostInfo', '--', 'true'])
+
+    assert 'hostname' not in record
