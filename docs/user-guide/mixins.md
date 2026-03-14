@@ -29,6 +29,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
 | `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
+| `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
 | `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
@@ -178,59 +179,50 @@ results['slurm'].apply(lambda s: s.get('job_id'))
     pattern — it captures every `SLURM_*` variable automatically with no
     configuration.
 
-## Package versions
+## Code provenance
 
-### `MBGlobalPackages`
+### `MBGitInfo`
 
-Captures the version of every module imported in the caller's global
-namespace:
+Captures the current git repo, commit hash, branch name, and dirty flag
+(whether there are uncommitted changes in the working tree). Requires
+`git` ≥ 2.11 on `PATH`.
 
 ```python
-from microbench import MicroBench, MBGlobalPackages
-import numpy, pandas
+from microbench import MicroBench, MBGitInfo
 
-class Bench(MicroBench, MBGlobalPackages):
+class Bench(MicroBench, MBGitInfo):
     pass
 ```
 
-The `package_versions` field will contain `{"numpy": "1.26.0", "pandas": "2.1.0", ...}`.
+Each record will contain:
 
-### `MBInstalledPackages`
-
-Captures every package available for import (from `importlib.metadata`).
-Useful for full reproducibility audits. Can be slow on environments with
-many packages.
-
-Set `capture_paths = True` to also record installation paths:
-
-```python
-class Bench(MicroBench, MBInstalledPackages):
-    capture_paths = True
+```json
+{
+  "git_info": {
+    "repo": "/home/user/project",
+    "commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    "branch": "main",
+    "dirty": false
+  }
+}
 ```
 
-### `MBCondaPackages`
+`dirty` is `True` if there are any staged or unstaged changes to tracked
+files. `branch` is an empty string in detached HEAD state.
 
-Captures all packages in the active conda environment using the `conda` CLI.
-
-```python
-class Bench(MicroBench, MBCondaPackages):
-    include_builds = True    # include build string (default: True)
-    include_channels = False  # include channel name (default: False)
-```
-
-### `capture_versions`
-
-To capture specific package versions without a mixin, list them on the
-class:
+By default the repository is located from the running script's directory
+(`sys.argv[0]`), which works correctly even when a script is launched by
+absolute path from a different working directory (e.g. cluster job
+submission). Falls back to the shell's working directory in interactive
+Python sessions. Set `git_repo` to target a specific directory explicitly:
 
 ```python
-import numpy, pandas
-
-class Bench(MicroBench):
-    capture_versions = (numpy, pandas)
+class Bench(MicroBench, MBGitInfo):
+    git_repo = '/path/to/repo'
 ```
 
-## Code provenance
+Use `capture_optional = True` to silently skip git capture on machines
+without git or when running outside a repository.
 
 ### `MBFileHash`
 
@@ -306,6 +298,58 @@ Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
         hash_files = ['sometimes_missing.dat']
         capture_optional = True
     ```
+
+## Package versions
+
+### `MBGlobalPackages`
+
+Captures the version of every module imported in the caller's global
+namespace:
+
+```python
+from microbench import MicroBench, MBGlobalPackages
+import numpy, pandas
+
+class Bench(MicroBench, MBGlobalPackages):
+    pass
+```
+
+The `package_versions` field will contain `{"numpy": "1.26.0", "pandas": "2.1.0", ...}`.
+
+### `MBInstalledPackages`
+
+Captures every package available for import (from `importlib.metadata`).
+Useful for full reproducibility audits. Can be slow on environments with
+many packages.
+
+Set `capture_paths = True` to also record installation paths:
+
+```python
+class Bench(MicroBench, MBInstalledPackages):
+    capture_paths = True
+```
+
+### `MBCondaPackages`
+
+Captures all packages in the active conda environment using the `conda` CLI.
+
+```python
+class Bench(MicroBench, MBCondaPackages):
+    include_builds = True    # include build string (default: True)
+    include_channels = False  # include channel name (default: False)
+```
+
+### `capture_versions`
+
+To capture specific package versions without a mixin, list them on the
+class:
+
+```python
+import numpy, pandas
+
+class Bench(MicroBench):
+    capture_versions = (numpy, pandas)
+```
 
 ## NVIDIA GPU — `MBNvidiaSmi`
 

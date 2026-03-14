@@ -19,6 +19,7 @@ from microbench import (
     JSONEncodeWarning,
     MBFileHash,
     MBFunctionCall,
+    MBGitInfo,
     MBHostInfo,
     MBInstalledPackages,
     MBPeakMemory,
@@ -760,6 +761,158 @@ def test_redis_output_multiple_results():
         results = bench.get_results()
         assert len(results) == 2
         assert list(results['function_name']) == ['func_a', 'func_b']
+
+
+# ---------------------------------------------------------------------------
+# MBGitInfo
+# ---------------------------------------------------------------------------
+
+_GIT_TOPLEVEL = b'/home/user/project\n'
+_GIT_STATUS_CLEAN = (
+    '# branch.oid abc123def456abc123def456abc123def456abc1\n# branch.head main\n'
+)
+_GIT_STATUS_DIRTY = _GIT_STATUS_CLEAN + ' M modified_file.py\n'
+_GIT_STATUS_DETACHED = (
+    '# branch.oid abc123def456abc123def456abc123def456abc1\n# branch.head (detached)\n'
+)
+
+
+def _git_mock(status_output):
+    """Return a subprocess.check_output side_effect that handles both git calls."""
+
+    def side_effect(cmd, **kwargs):
+        if 'rev-parse' in cmd:
+            return _GIT_TOPLEVEL
+        return status_output.encode()
+
+    return side_effect
+
+
+def test_mb_git_info():
+    """MBGitInfo captures repo, commit, branch, and dirty=False from a clean repo."""
+
+    class Bench(MicroBench, MBGitInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_CLEAN)):
+        noop()
+
+    git_info = bench.get_results()['git_info'][0]
+    assert git_info['repo'] == '/home/user/project'
+    assert git_info['commit'] == 'abc123def456abc123def456abc123def456abc1'
+    assert git_info['branch'] == 'main'
+    assert git_info['dirty'] is False
+
+
+def test_mb_git_info_dirty():
+    """MBGitInfo sets dirty=True when the working tree has uncommitted changes."""
+
+    class Bench(MicroBench, MBGitInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_DIRTY)):
+        noop()
+
+    assert bench.get_results()['git_info'][0]['dirty'] is True
+
+
+def test_mb_git_info_detached_head():
+    """MBGitInfo stores an empty string for branch in detached HEAD state."""
+
+    class Bench(MicroBench, MBGitInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_DETACHED)):
+        noop()
+
+    assert bench.get_results()['git_info'][0]['branch'] == ''
+
+
+def test_mb_git_info_no_git_raises():
+    """MBGitInfo propagates FileNotFoundError when git is not on PATH."""
+
+    class Bench(MicroBench, MBGitInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch(
+        'subprocess.check_output', side_effect=FileNotFoundError('git not found')
+    ):
+        with pytest.raises(FileNotFoundError):
+            noop()
+
+
+def test_mb_git_info_default_uses_script_dir():
+    """MBGitInfo defaults to the directory of sys.argv[0], not CWD."""
+    captured_kwargs = []
+
+    def side_effect(cmd, **kwargs):
+        captured_kwargs.append(kwargs)
+        return _GIT_TOPLEVEL if 'rev-parse' in cmd else _GIT_STATUS_CLEAN.encode()
+
+    class Bench(MicroBench, MBGitInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    script = '/some/project/script.py'
+    expected_cwd = os.path.dirname(os.path.abspath(script))
+
+    with patch.object(sys, 'argv', [script]):
+        with patch('subprocess.check_output', side_effect=side_effect):
+            noop()
+
+    assert all(kw.get('cwd') == expected_cwd for kw in captured_kwargs)
+
+
+def test_mb_git_info_custom_path():
+    """MBGitInfo passes git_repo as cwd to subprocess."""
+    captured_kwargs = []
+
+    def side_effect(cmd, **kwargs):
+        captured_kwargs.append(kwargs)
+        return _GIT_TOPLEVEL if 'rev-parse' in cmd else _GIT_STATUS_CLEAN.encode()
+
+    class Bench(MicroBench, MBGitInfo):
+        git_repo = '/some/repo'
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('subprocess.check_output', side_effect=side_effect):
+        noop()
+
+    assert all(kw.get('cwd') == '/some/repo' for kw in captured_kwargs)
 
 
 # ---------------------------------------------------------------------------

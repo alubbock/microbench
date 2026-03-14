@@ -47,6 +47,11 @@ All notable changes to microbench are documented here.
   jobs on heterogeneous cluster nodes where optional dependencies may not
   be present on every node.
 
+- **`MBGitInfo` mixin**: captures the repository root path, current commit
+  hash, branch name, and dirty flag (uncommitted changes present) via
+  `git` ≥ 2.11 on PATH. Stored in `git_info`. Set `git_repo` to inspect
+  a specific repository directory.
+
 - **`MBPeakMemory` mixin**: captures peak Python memory allocation during the
   benchmarked function as `peak_memory_bytes` (bytes), using
   `tracemalloc` from the standard library. No extra dependencies required.
