@@ -13,6 +13,7 @@ import argparse
 import os
 import subprocess
 import sys
+import threading
 
 
 def _get_mixin_map():
@@ -217,29 +218,75 @@ def main(argv=None):
     bench._subprocess_stdout = []
     bench._subprocess_stderr = []
 
-    popen_kwargs = {}
-    if args.stdout in _CAPTURE_CHOICES:
-        popen_kwargs['stdout'] = subprocess.PIPE
-    if args.stderr in _CAPTURE_CHOICES:
-        popen_kwargs['stderr'] = subprocess.PIPE
-
     # Hold references to the real streams before any patching in tests.
     _real_stdout = sys.__stdout__
     _real_stderr = sys.__stderr__
 
     def run():
-        result = subprocess.run(cmd, **popen_kwargs)
-        bench._subprocess_returncodes.append(result.returncode)
-        if args.stdout in _CAPTURE_CHOICES:
-            out = result.stdout.decode(errors='replace') if result.stdout else ''
-            bench._subprocess_stdout.append(out)
-            if args.stdout == 'capture':
-                _real_stdout.write(out)
-        if args.stderr in _CAPTURE_CHOICES:
-            err = result.stderr.decode(errors='replace') if result.stderr else ''
-            bench._subprocess_stderr.append(err)
-            if args.stderr == 'capture':
-                _real_stderr.write(err)
+        capture_stdout = args.stdout in _CAPTURE_CHOICES
+        capture_stderr = args.stderr in _CAPTURE_CHOICES
+
+        if not capture_stdout and not capture_stderr:
+            result = subprocess.run(cmd)
+            bench._subprocess_returncodes.append(result.returncode)
+            return
+
+        # Use Popen with per-pipe reader threads so output is forwarded to
+        # the terminal in real time rather than buffered until the process exits.
+        stdout_chunks = []
+        stderr_chunks = []
+
+        def _reader(pipe, chunks, real_stream, passthrough):
+            for line in pipe:
+                chunk = line.decode(errors='replace')
+                chunks.append(chunk)
+                if passthrough:
+                    real_stream.write(chunk)
+                    real_stream.flush()
+
+        popen_kwargs = {}
+        if capture_stdout:
+            popen_kwargs['stdout'] = subprocess.PIPE
+        if capture_stderr:
+            popen_kwargs['stderr'] = subprocess.PIPE
+
+        with subprocess.Popen(cmd, **popen_kwargs) as proc:
+            threads = []
+            if capture_stdout:
+                t = threading.Thread(
+                    target=_reader,
+                    args=(
+                        proc.stdout,
+                        stdout_chunks,
+                        _real_stdout,
+                        args.stdout == 'capture',
+                    ),
+                    daemon=True,
+                )
+                t.start()
+                threads.append(t)
+            if capture_stderr:
+                t = threading.Thread(
+                    target=_reader,
+                    args=(
+                        proc.stderr,
+                        stderr_chunks,
+                        _real_stderr,
+                        args.stderr == 'capture',
+                    ),
+                    daemon=True,
+                )
+                t.start()
+                threads.append(t)
+            proc.wait()
+            for t in threads:
+                t.join()
+
+        bench._subprocess_returncodes.append(proc.returncode)
+        if capture_stdout:
+            bench._subprocess_stdout.append(''.join(stdout_chunks))
+        if capture_stderr:
+            bench._subprocess_stderr.append(''.join(stderr_chunks))
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()
