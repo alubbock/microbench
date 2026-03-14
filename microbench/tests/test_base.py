@@ -1,6 +1,7 @@
 import datetime
 import io
 import os
+import sys
 import tempfile
 import threading
 import time
@@ -16,6 +17,7 @@ from microbench import (
     FileOutput,
     JSONEncoder,
     JSONEncodeWarning,
+    MBFileHash,
     MBFunctionCall,
     MBHostInfo,
     MBInstalledPackages,
@@ -758,3 +760,164 @@ def test_redis_output_multiple_results():
         results = bench.get_results()
         assert len(results) == 2
         assert list(results['function_name']) == ['func_a', 'func_b']
+
+
+# ---------------------------------------------------------------------------
+# MBFileHash
+# ---------------------------------------------------------------------------
+
+
+def test_mb_file_hash_specific_file(tmp_path):
+    """MBFileHash records the SHA-256 digest of a specified file."""
+    import hashlib
+
+    content = b'hello microbench'
+    target = tmp_path / 'data.txt'
+    target.write_bytes(content)
+
+    expected = hashlib.sha256(content).hexdigest()
+
+    class Bench(MicroBench, MBFileHash):
+        hash_files = [str(target)]
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == {str(target): expected}
+
+
+def test_mb_file_hash_multiple_files(tmp_path):
+    """MBFileHash records digests for all specified files."""
+    import hashlib
+
+    files = {}
+    for name in ('a.txt', 'b.txt'):
+        p = tmp_path / name
+        p.write_bytes(name.encode())
+        files[str(p)] = hashlib.sha256(name.encode()).hexdigest()
+
+    class Bench(MicroBench, MBFileHash):
+        hash_files = list(files.keys())
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == files
+
+
+def test_mb_file_hash_custom_algorithm(tmp_path):
+    """MBFileHash respects the hash_algorithm class attribute."""
+    import hashlib
+
+    content = b'test data'
+    target = tmp_path / 'script.py'
+    target.write_bytes(content)
+
+    expected = hashlib.md5(content).hexdigest()
+
+    class Bench(MicroBench, MBFileHash):
+        hash_files = [str(target)]
+        hash_algorithm = 'md5'
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == {str(target): expected}
+
+
+def test_mb_file_hash_default_uses_argv(tmp_path):
+    """MBFileHash defaults to sys.argv[0] when hash_files is not set."""
+    import hashlib
+
+    content = b'print("hello")'
+    script = tmp_path / 'run.py'
+    script.write_bytes(content)
+
+    expected = hashlib.sha256(content).hexdigest()
+
+    class Bench(MicroBench, MBFileHash):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.object(sys, 'argv', [str(script)]):
+        noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == {str(script): expected}
+
+
+def test_mb_file_hash_no_argv_empty(tmp_path):
+    """MBFileHash records an empty dict when sys.argv is empty."""
+
+    class Bench(MicroBench, MBFileHash):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.object(sys, 'argv', []):
+        noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == {}
+
+
+def test_mb_file_hash_interactive_argv_empty_string(tmp_path):
+    """MBFileHash records an empty dict in interactive Python (argv[0] == '')."""
+
+    class Bench(MicroBench, MBFileHash):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch.object(sys, 'argv', ['']):
+        noop()
+
+    results = bench.get_results()
+    assert results['file_hashes'][0] == {}
+
+
+def test_mb_file_hash_missing_file_raises(tmp_path):
+    """MBFileHash raises FileNotFoundError for a path that does not exist."""
+
+    class Bench(MicroBench, MBFileHash):
+        hash_files = [str(tmp_path / 'nonexistent.py')]
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with pytest.raises(FileNotFoundError):
+        noop()

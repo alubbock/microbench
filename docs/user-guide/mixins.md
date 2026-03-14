@@ -34,6 +34,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
 | `MBNvidiaSmi` | `nvidia_<attr>` per GPU (see below) | `nvidia-smi` on PATH |
 | `MBLineProfiler` | `line_profiler` (base64-encoded profile, see below) | line_profiler |
+| `MBFileHash` | `file_hashes` — SHA-256 checksum of each specified file | — |
 
 ## Function calls and return values
 
@@ -228,6 +229,65 @@ import numpy, pandas
 class Bench(MicroBench):
     capture_versions = (numpy, pandas)
 ```
+
+## Code provenance
+
+### `MBFileHash`
+
+Records a cryptographic checksum of one or more files alongside benchmark
+results. This ties a result to the exact version of the script that produced
+it — useful when benchmarks evolve over time and you need to know which code
+generated which numbers.
+
+```python
+from microbench import MicroBench, MBFileHash
+
+class Bench(MicroBench, MBFileHash):
+    pass
+
+bench = Bench()
+```
+
+By default, `MBFileHash` hashes `sys.argv[0]` — the script that was run. To
+hash specific files instead, set `hash_files`:
+
+```python
+class Bench(MicroBench, MBFileHash):
+    hash_files = ['run_experiment.py', 'config.yaml']
+```
+
+Each record will contain a `file_hashes` dict mapping each path to its
+hex digest:
+
+```json
+{
+  "file_hashes": {
+    "run_experiment.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "config.yaml": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+  }
+}
+```
+
+The default algorithm is SHA-256. Use `hash_algorithm` to select a different
+algorithm from Python's [`hashlib`](https://docs.python.org/3/library/hashlib.html):
+
+```python
+class Bench(MicroBench, MBFileHash):
+    hash_files = ['large_model_weights.bin']
+    hash_algorithm = 'md5'   # faster for large files
+```
+
+Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
+`'md5'`, `'sha1'`, `'blake2b'`, etc.
+
+!!! tip
+    Pair `MBFileHash` with `capture_optional = True` if the script path
+    may not always be available (e.g. interactive Python sessions):
+
+    ```python
+    class Bench(MicroBench, MBFileHash):
+        capture_optional = True
+    ```
 
 ## NVIDIA GPU — `MBNvidiaSmi`
 
