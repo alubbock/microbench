@@ -941,11 +941,11 @@ executables where adding a Python decorator is not practical.</p>
 </tr>
 <tr>
 <td><code>--stdout[=suppress]</code></td>
-<td>Capture stdout into the record. Output is still shown on the terminal unless <code>=suppress</code> is given.</td>
+<td>Capture stdout into the record and stream it to the terminal in real time. Use <code>=suppress</code> to capture without printing.</td>
 </tr>
 <tr>
 <td><code>--stderr[=suppress]</code></td>
-<td>Capture stderr into the record. Output is still shown on the terminal unless <code>=suppress</code> is given.</td>
+<td>Capture stderr into the record and stream it to the terminal in real time. Use <code>=suppress</code> to capture without printing.</td>
 </tr>
 <tr>
 <td><code>--field KEY=VALUE</code> / <code>-f KEY=VALUE</code></td>
@@ -1040,16 +1040,27 @@ per-record overhead or reduce timing noise:</p>
 </ul>
 <p>Warmup runs are excluded from all three lists. The process exits with
 <code>max(returncode)</code> so any failing iteration propagates to the shell.</p>
+<div class="admonition note">
+<p class="admonition-title">Subprocess-side buffering</p>
+<p>When stdout or stderr is captured via a pipe, many programs switch from
+line-buffered to block-buffered mode because they detect they are not
+writing to a TTY. Output will still stream to the terminal in real time
+from microbench's perspective, but the subprocess itself may batch writes
+into larger chunks. Use <code>stdbuf -oL</code> (Linux) or the program's own
+unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--stdout<span class="w"> </span>--<span class="w"> </span>stdbuf<span class="w"> </span>-oL<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+</div>
 <p>To detect failed iterations when analysing results with pandas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="extra-metadata">Extra metadata</h2>
 <p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
 </code></pre></div>
 <p>All <code>--field</code> values are stored as strings.</p>
 
