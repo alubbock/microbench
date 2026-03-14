@@ -1,6 +1,8 @@
+import atexit as _atexit
 import datetime
 import io
 import os
+import signal as _signal
 import sys
 import tempfile
 import threading
@@ -1488,3 +1490,241 @@ def test_record_mblineprofiler_raises():
     with pytest.raises(NotImplementedError, match='MBLineProfiler'):
         with bench.record('block'):
             pass
+
+
+# ---------------------------------------------------------------------------
+# bench.record_on_exit()
+# ---------------------------------------------------------------------------
+
+
+def _invoke_record_on_exit(bench):
+    """Directly call the registered exit handler and return its results."""
+    bench._record_on_exit_handler()
+    return bench.get_results()
+
+
+def test_record_on_exit_standard_fields():
+    """record_on_exit() produces a record with all standard timing fields."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('simulation')
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+    row = results.iloc[0]
+    assert row['function_name'] == 'simulation'
+    assert len(row['run_durations']) == 1
+    assert row['run_durations'][0] >= 0
+    assert 'start_time' in results.columns
+    assert 'finish_time' in results.columns
+    assert 'mb_run_id' in results.columns
+    assert 'mb_version' in results.columns
+
+
+def test_record_on_exit_default_name():
+    """record_on_exit() with no name sets function_name to '<process>'."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit()
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert results.iloc[0]['function_name'] == '<process>'
+
+
+def test_record_on_exit_static_fields():
+    """Static fields from MicroBench() constructor appear in the record."""
+    bench = MicroBench(experiment='run-1', trial=7)
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert results.iloc[0]['experiment'] == 'run-1'
+    assert results.iloc[0]['trial'] == 7
+
+
+def test_record_on_exit_mixin_fields():
+    """Mixin capture methods run in the exit handler."""
+
+    class Bench(MicroBench, MBHostInfo):
+        pass
+
+    bench = Bench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert 'hostname' in results.columns
+    assert 'operating_system' in results.columns
+
+
+def test_record_on_exit_exception_capture():
+    """Unhandled exceptions are captured via sys.excepthook."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        # Simulate Python calling sys.excepthook for an unhandled exception.
+        exc = RuntimeError('something broke')
+        sys.excepthook(type(exc), exc, None)
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+    exc_field = results.iloc[0]['exception']
+    assert exc_field['type'] == 'RuntimeError'
+    assert exc_field['message'] == 'something broke'
+
+
+def test_record_on_exit_no_exception_field_on_clean_exit():
+    """No 'exception' field when the process exits cleanly."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert 'exception' not in results.columns
+
+
+def test_record_on_exit_sigterm_writes_record():
+    """The SIGTERM handler writes the record with exit_signal='SIGTERM'."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    orig_sigterm = _signal.getsignal(_signal.SIGTERM)
+    try:
+        bench.record_on_exit('sim', handle_sigterm=True)
+        handler = _signal.getsignal(_signal.SIGTERM)
+        assert callable(handler)
+        # Invoke the handler but prevent it from re-killing the process.
+        with patch('os.kill'), patch('signal.signal'):
+            handler(_signal.SIGTERM, None)
+        results = bench.get_results()
+    finally:
+        sys.excepthook = orig_excepthook
+        _signal.signal(_signal.SIGTERM, orig_sigterm)
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+    assert results.iloc[0]['exit_signal'] == 'SIGTERM'
+
+
+def test_record_on_exit_handle_sigterm_false():
+    """handle_sigterm=False leaves the SIGTERM handler unchanged."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    orig_sigterm = _signal.getsignal(_signal.SIGTERM)
+    try:
+        bench.record_on_exit('sim', handle_sigterm=False)
+        assert _signal.getsignal(_signal.SIGTERM) is orig_sigterm
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+
+def test_record_on_exit_double_fire_prevention():
+    """Calling the exit handler twice writes only one record."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        bench._record_on_exit_handler()
+        bench._record_on_exit_handler()
+        results = bench.get_results()
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+
+
+def test_record_on_exit_re_registration_replaces_first():
+    """A second record_on_exit() call replaces the first registration."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('first')
+        first_handler = bench._record_on_exit_handler
+        bench.record_on_exit('second')
+        second_handler = bench._record_on_exit_handler
+
+        # Old handler should be deregistered; calling it is now a no-op
+        # because it is no longer in the atexit list — but it would still
+        # run if called directly. The key check is that they are distinct.
+        assert first_handler is not second_handler
+
+        second_handler()
+        results = bench.get_results()
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert len(results) == 1
+    assert results.iloc[0]['function_name'] == 'second'
+
+
+def test_record_on_exit_non_main_thread_warns():
+    """record_on_exit() warns when called from a non-main thread."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    orig_sigterm = _signal.getsignal(_signal.SIGTERM)
+    warning_holder = []
+
+    def run():
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            bench.record_on_exit('sim', handle_sigterm=True)
+            warning_holder.extend(w)
+
+    t = threading.Thread(target=run)
+    t.start()
+    t.join()
+    try:
+        assert any(issubclass(w.category, RuntimeWarning) for w in warning_holder)
+        assert _signal.getsignal(_signal.SIGTERM) is orig_sigterm
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+
+def test_record_on_exit_output_fallback_to_stderr(capsys):
+    """When output_result raises, the record is written to stderr."""
+
+    class BrokenOutput(Output):
+        def write(self, bm_json_str):
+            raise OSError('disk full')
+
+    bench = MicroBench(outputs=[BrokenOutput()])
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        bench._record_on_exit_handler()
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    captured = capsys.readouterr()
+    import json as _json
+
+    record = _json.loads(captured.err.strip())
+    assert record['function_name'] == 'sim'

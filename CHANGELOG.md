@@ -39,6 +39,22 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`bench.record_on_exit(name, handle_sigterm=True)`**: registers a
+  process-exit handler that writes one benchmark record when the script
+  terminates. Captures wall-clock duration from the call site to exit plus
+  all mixin fields. Designed for SLURM jobs and batch scripts where
+  restructuring code around a decorator is impractical. Key behaviours:
+  - By default installs a SIGTERM handler (main thread only) that writes
+    the record, chains to any existing SIGTERM handler, then re-delivers
+    SIGTERM so the process exits with the conventional code 143 (128 + 15).
+  - Wraps `sys.excepthook` to capture unhandled exceptions into an
+    `exception` field before the process exits.
+  - Adds an `exit_signal` field when the exit was triggered by SIGTERM.
+  - Falls back to writing the record to `sys.stderr` if the primary output
+    sink raises (e.g. filesystem unmounted at exit time).
+  - Calling a second time on the same instance replaces the first
+    registration and resets the start time.
+
 - **`bench.record(name)` context manager**: times an arbitrary code block
   and writes one record, without requiring the code to be in a named
   function. All mixins, static fields, and output sinks behave identically

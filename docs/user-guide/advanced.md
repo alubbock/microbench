@@ -1,5 +1,66 @@
 # Advanced usage
 
+## `bench.record_on_exit()` — reliability and signal handling
+
+`bench.record_on_exit()` is designed to work reliably in long-running batch
+jobs. This section covers the implementation details that matter for
+production use.
+
+### What is and isn't caught
+
+| Exit path | Record written? |
+|---|---|
+| Normal script completion | ✓ |
+| `sys.exit()` | ✓ |
+| Unhandled exception | ✓ (with `exception` field) |
+| `KeyboardInterrupt` (Ctrl-C) | ✓ (with `exception` field) |
+| SIGTERM (default `handle_sigterm=True`) | ✓ (with `exit_signal='SIGTERM'`) |
+| SIGKILL | ✗ — unkillable by design |
+| `os._exit()` | ✗ — bypasses atexit |
+
+### SIGTERM and signal chaining
+
+When `handle_sigterm=True`, microbench installs a SIGTERM handler that:
+
+1. Writes the record
+2. Chains to any previously installed SIGTERM handler (e.g. `MonitorThread`)
+3. Restores the default OS signal disposition (`SIG_DFL`) and re-delivers
+   SIGTERM to the process
+
+Step 3 is important for correct job accounting. When Python intercepts a
+signal, the process does not automatically exit with the signal's conventional
+exit code. By restoring the default disposition and then re-sending the signal,
+the process terminates as if Python had never handled it — with exit code 143.
+This number follows the Unix convention of 128 + signal number: SIGTERM is
+signal 15, so 128 + 15 = 143. SLURM and other schedulers use this exit code
+to distinguish a walltime kill from a normal non-zero exit.
+
+Signal handlers can only be registered from the main thread. If
+`record_on_exit()` is called from a non-main thread, microbench warns and
+proceeds without the SIGTERM handler; the record will still be written on
+normal exit.
+
+### Capture failures at exit time
+
+Mixin captures run inside the exit handler. Slow or unavailable captures
+(e.g. `MBCondaPackages` when conda is not installed) can delay exit, which
+matters when operating inside a SLURM grace period. Use
+`capture_optional = True` on the benchmark class so individual capture
+failures are recorded in `mb_capture_errors` rather than aborting the
+handler:
+
+```python
+class MyBench(MicroBench, MBHostInfo, MBCondaPackages):
+    capture_optional = True
+```
+
+### Output sink unavailability
+
+If the primary output sink raises (e.g. a shared filesystem that has been
+unmounted before the atexit handler fires), microbench falls back to
+writing the raw JSON record to `sys.stderr` so the record is not silently
+lost.
+
 ## Exception capture
 
 When a benchmarked block raises an exception — whether via `bench.record()`
