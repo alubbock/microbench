@@ -29,7 +29,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
 | `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
-| `MBGitInfo` | `git_info` dict with `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
+| `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
 | `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
@@ -183,9 +183,9 @@ results['slurm'].apply(lambda s: s.get('job_id'))
 
 ### `MBGitInfo`
 
-Captures the current git commit hash, branch name, and dirty flag (whether
-there are uncommitted changes in the working tree). Requires `git` ≥ 2.11
-on `PATH`.
+Captures the current git repo, commit hash, branch name, and dirty flag
+(whether there are uncommitted changes in the working tree). Requires
+`git` ≥ 2.11 on `PATH`.
 
 ```python
 from microbench import MicroBench, MBGitInfo
@@ -214,11 +214,11 @@ By default the repository is located from the running script's directory
 (`sys.argv[0]`), which works correctly even when a script is launched by
 absolute path from a different working directory (e.g. cluster job
 submission). Falls back to the shell's working directory in interactive
-Python sessions. Set `git_path` to target a specific directory explicitly:
+Python sessions. Set `git_repo` to target a specific directory explicitly:
 
 ```python
 class Bench(MicroBench, MBGitInfo):
-    git_path = '/path/to/repo'
+    git_repo = '/path/to/repo'
 ```
 
 Use `capture_optional = True` to silently skip git capture on machines

@@ -559,18 +559,19 @@ class MBGitInfo:
     """Capture git repository information.
 
     Requires ``git`` ≥ 2.11 to be available on ``PATH``. Records the
-    current commit hash, branch name, and whether the working tree has
-    uncommitted changes. Results are stored in the ``git_info`` field.
+    current repo directory, commit hash, branch name, and whether the
+    working tree has uncommitted changes. Results are stored in the
+    ``git_info`` field.
 
     By default inspects the repository containing the running script
     (``sys.argv[0]``), falling back to the shell's working directory
     when the script path is unavailable (e.g. interactive Python). Set
-    ``git_path`` explicitly to target a specific directory, which is
+    ``git_repo`` explicitly to target a specific directory, which is
     useful when the script and the repository root are in different
     locations.
 
     Attributes:
-        git_path (str, optional): Directory to inspect. Defaults to the
+        git_repo (str, optional): Directory to inspect. Defaults to the
             directory of the running script, or the shell's working
             directory if unavailable.
 
@@ -587,8 +588,8 @@ class MBGitInfo:
     """
 
     def capture_git_info(self, bm_data):
-        if hasattr(self, 'git_path'):
-            cwd = self.git_path
+        if hasattr(self, 'git_repo'):
+            cwd = self.git_repo
         else:
             argv0 = sys.argv[0] if sys.argv else ''
             if argv0 and not argv0.startswith('-'):

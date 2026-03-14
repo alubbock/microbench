@@ -890,7 +890,7 @@ def test_mb_git_info_default_uses_script_dir():
 
 
 def test_mb_git_info_custom_path():
-    """MBGitInfo passes git_path as cwd to subprocess."""
+    """MBGitInfo passes git_repo as cwd to subprocess."""
     captured_kwargs = []
 
     def side_effect(cmd, **kwargs):
@@ -898,7 +898,7 @@ def test_mb_git_info_custom_path():
         return _GIT_TOPLEVEL if 'rev-parse' in cmd else _GIT_STATUS_CLEAN.encode()
 
     class Bench(MicroBench, MBGitInfo):
-        git_path = '/some/repo'
+        git_repo = '/some/repo'
 
     bench = Bench()
 

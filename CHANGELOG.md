@@ -49,7 +49,7 @@ All notable changes to microbench are documented here.
 
 - **`MBGitInfo` mixin**: captures the current git commit hash, branch name,
   and dirty flag (uncommitted changes present) via `git` ≥ 2.11 on PATH.
-  Stored in `git_info`. Set `git_path` to inspect a specific repository
+  Stored in `git_info`. Set `git_repo` to inspect a specific repository
   directory.
 
 - **`MBPeakMemory` mixin**: captures peak Python memory allocation during the
