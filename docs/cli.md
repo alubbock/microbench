@@ -26,6 +26,7 @@ python -m microbench [options] -- COMMAND [ARGS...]
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
 | `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
+| `--monitor-interval SECONDS` | Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires `psutil`. See [Subprocess monitoring](#subprocess-monitoring) below. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
 Use `--` to separate microbench options from the command being benchmarked.
@@ -40,6 +41,7 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 | `command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
 | `returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
 | `function_name` | Basename of the executable, e.g. `"run_sim.sh"`. |
+| `subprocess_monitor` | *(present only with `--monitor-interval`)* List of per-iteration sample lists. See [Subprocess monitoring](#subprocess-monitoring). |
 
 ## Default mixins
 
@@ -155,3 +157,63 @@ python -m microbench \
 ```
 
 All `--field` values are stored as strings.
+
+## Subprocess monitoring
+
+Use `--monitor-interval SECONDS` to periodically sample the child process
+while it runs. This requires the [`psutil`](https://psutil.readthedocs.io/)
+package (`pip install psutil`).
+
+```bash
+python -m microbench \
+    --outfile results.jsonl \
+    --monitor-interval 5 \
+    -- ./run_simulation.sh --steps 10000
+```
+
+The record gains a `subprocess_monitor` field: a list of per-iteration
+sample lists (one inner list per `--iterations` call, warmup excluded).
+Each sample is a dict with three keys:
+
+| Key | Description |
+|---|---|
+| `timestamp` | ISO 8601 UTC timestamp of the sample. |
+| `cpu_percent` | CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines). The first sample is always `0.0` — this is a psutil limitation where two successive calls are needed to compute a ratio. |
+| `rss_bytes` | Resident set size (physical RAM) of the child process in bytes. |
+
+Example record (single iteration, two samples):
+
+```json
+{
+  "subprocess_monitor": [
+    [
+      {"timestamp": "2025-01-01T12:00:05Z", "cpu_percent": 0.0,  "rss_bytes": 52428800},
+      {"timestamp": "2025-01-01T12:00:10Z", "cpu_percent": 87.3, "rss_bytes": 61865984}
+    ]
+  ]
+}
+```
+
+Only the direct child process is tracked. If the child spawns its own
+subprocesses, their CPU and memory usage are not included.
+
+If the process exits before the first sample interval fires (e.g. a very
+short-lived command with a long `--monitor-interval`), the inner list will
+be empty and `subprocess_monitor` is omitted from the record.
+
+Analyse with pandas:
+
+```python
+import pandas, json
+
+results = pandas.read_json('results.jsonl', lines=True)
+
+# Flatten all samples for the first iteration across all records
+samples = pandas.DataFrame([
+    s
+    for row in results['subprocess_monitor']
+    for s in row[0]          # row[0] = first iteration
+])
+samples['rss_mb'] = samples['rss_bytes'] / 1024 / 1024
+print(samples[['timestamp', 'cpu_percent', 'rss_mb']])
+```

@@ -452,3 +452,232 @@ def test_cli_no_mixin_overrides_mixin():
     _, record, _ = _run_main(['--no-mixin', '--mixin', 'MBHostInfo', '--', 'true'])
 
     assert 'hostname' not in record
+
+
+# ---------------------------------------------------------------------------
+# --monitor-interval tests
+# ---------------------------------------------------------------------------
+
+
+def _make_mock_popen_for_monitor(returncode=0, pid=12345):
+    """Popen mock that exposes a .pid and no pipes (no stdout/stderr capture)."""
+    mock_proc = MagicMock()
+    mock_proc.__enter__.return_value = mock_proc
+    mock_proc.__exit__.return_value = False
+    mock_proc.returncode = returncode
+    mock_proc.pid = pid
+    mock_proc.stdout = None
+    mock_proc.stderr = None
+    return mock_proc
+
+
+def _run_main_with_monitor(argv, mock_pid=12345, mock_returncode=0, fake_samples=None):
+    """
+    Run main() with --monitor-interval, mocking both Popen and the monitor thread.
+
+    fake_samples: list of sample dicts the thread will report (default: one sample).
+    """
+    if fake_samples is None:
+        fake_samples = [{'timestamp': 'T0', 'cpu_percent': 12.5, 'rss_bytes': 1048576}]
+
+    mock_proc = _make_mock_popen_for_monitor(returncode=mock_returncode, pid=mock_pid)
+
+    # Patch _SubprocessMonitorThread so no real psutil calls happen.
+    with patch('microbench.__main__._SubprocessMonitorThread') as MockThread:
+        mock_thread = MagicMock()
+        mock_thread.samples = fake_samples
+        MockThread.return_value = mock_thread
+
+        buf = io.StringIO()
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit):
+                    main(argv)
+
+    return json.loads(buf.getvalue()), MockThread, mock_thread
+
+
+def test_cli_monitor_interval_absent_by_default():
+    """subprocess_monitor is absent when --monitor-interval is not given."""
+    _, record, _ = _run_main(['--no-mixin', '--', 'true'])
+
+    assert 'subprocess_monitor' not in record
+
+
+def test_cli_monitor_interval_creates_field():
+    """--monitor-interval produces a subprocess_monitor field with samples."""
+    record, MockThread, mock_thread = _run_main_with_monitor(
+        ['--no-mixin', '--monitor-interval', '5', '--', 'sleep', '10']
+    )
+
+    assert 'subprocess_monitor' in record
+    assert len(record['subprocess_monitor']) == 1  # one iteration
+    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 12.5
+    assert record['subprocess_monitor'][0][0]['rss_bytes'] == 1048576
+
+
+def test_cli_monitor_interval_thread_constructed_correctly():
+    """Monitor thread is created with the subprocess PID and requested interval."""
+    _, MockThread, _ = _run_main_with_monitor(
+        ['--no-mixin', '--monitor-interval', '30', '--', 'cmd'],
+        mock_pid=99999,
+    )
+
+    MockThread.assert_called_once_with(99999, 30)
+
+
+def test_cli_monitor_interval_thread_lifecycle():
+    """Monitor thread is started, stopped, and joined for each iteration."""
+    _, _, mock_thread = _run_main_with_monitor(
+        ['--no-mixin', '--monitor-interval', '5', '--', 'cmd']
+    )
+
+    mock_thread.start.assert_called_once()
+    mock_thread.stop.assert_called_once()
+    mock_thread.join.assert_called_once()
+
+
+def test_cli_monitor_interval_empty_samples():
+    """subprocess_monitor field is absent when no samples were collected."""
+    # A very fast process may exit before the first sample interval fires.
+    record, _, _ = _run_main_with_monitor(
+        ['--no-mixin', '--monitor-interval', '60', '--', 'true'],
+        fake_samples=[],
+    )
+
+    # Empty per-iteration lists → outer list is [[]], which is falsy per-element
+    # but the field should still be absent (no data to report).
+    assert 'subprocess_monitor' not in record
+
+
+def test_cli_monitor_interval_multiple_iterations():
+    """With --iterations N, subprocess_monitor has N inner lists."""
+    mock_proc = _make_mock_popen_for_monitor(pid=42)
+
+    samples_per_iter = [
+        [{'timestamp': 'T0', 'cpu_percent': 10.0, 'rss_bytes': 100}],
+        [{'timestamp': 'T1', 'cpu_percent': 20.0, 'rss_bytes': 200}],
+        [{'timestamp': 'T2', 'cpu_percent': 30.0, 'rss_bytes': 300}],
+    ]
+    call_count = {'n': 0}
+
+    def make_thread(pid, interval):
+        idx = call_count['n']
+        call_count['n'] += 1
+        t = MagicMock()
+        t.samples = samples_per_iter[idx]
+        return t
+
+    buf = io.StringIO()
+    with patch('microbench.__main__._SubprocessMonitorThread', side_effect=make_thread):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit):
+                    main(
+                        [
+                            '--no-mixin',
+                            '--monitor-interval',
+                            '5',
+                            '--iterations',
+                            '3',
+                            '--',
+                            'cmd',
+                        ]
+                    )
+
+    record = json.loads(buf.getvalue())
+    assert len(record['subprocess_monitor']) == 3
+    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 10.0
+    assert record['subprocess_monitor'][1][0]['cpu_percent'] == 20.0
+    assert record['subprocess_monitor'][2][0]['cpu_percent'] == 30.0
+
+
+def test_cli_monitor_interval_warmup_excluded():
+    """Warmup iterations not monitored; subprocess_monitor length == --iterations."""
+    mock_proc = _make_mock_popen_for_monitor(pid=7)
+    call_count = {'n': 0}
+    # 2 warmup + 2 timed = 4 Popen calls; but only 2 monitor threads should start.
+    sample = [{'timestamp': 'T', 'cpu_percent': 5.0, 'rss_bytes': 50}]
+
+    def make_thread(pid, interval):
+        call_count['n'] += 1
+        t = MagicMock()
+        t.samples = sample
+        return t
+
+    buf = io.StringIO()
+    with patch('microbench.__main__._SubprocessMonitorThread', side_effect=make_thread):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit):
+                    main(
+                        [
+                            '--no-mixin',
+                            '--monitor-interval',
+                            '5',
+                            '--warmup',
+                            '2',
+                            '--iterations',
+                            '2',
+                            '--',
+                            'cmd',
+                        ]
+                    )
+
+    record = json.loads(buf.getvalue())
+    assert len(record['subprocess_monitor']) == 2
+    assert call_count['n'] == 2  # only timed iterations got a monitor thread
+
+
+def test_cli_monitor_interval_minimum_one():
+    """--monitor-interval 0 is rejected."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--monitor-interval', '0', '--', 'cmd'])
+    assert exc.value.code != 0
+
+
+def test_cli_monitor_interval_negative_rejected():
+    """--monitor-interval -1 is rejected."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--monitor-interval', '-1', '--', 'cmd'])
+    assert exc.value.code != 0
+
+
+def test_cli_monitor_interval_requires_psutil():
+    """--monitor-interval exits with an error when psutil is not installed."""
+    with patch.dict('sys.modules', {'psutil': None}):
+        with pytest.raises(SystemExit) as exc:
+            main(['--monitor-interval', '5', '--', 'cmd'])
+    assert exc.value.code != 0
+
+
+def test_cli_monitor_interval_with_stdout_capture():
+    """--monitor-interval and --stdout can be combined."""
+    mock_proc = _make_mock_popen_for_monitor(pid=55)
+    mock_proc.stdout = iter([b'hello\n'])
+    mock_proc.stderr = None
+    fake_samples = [{'timestamp': 'T', 'cpu_percent': 8.0, 'rss_bytes': 2048}]
+
+    buf = io.StringIO()
+    with patch('microbench.__main__._SubprocessMonitorThread') as MockThread:
+        mock_thread = MagicMock()
+        mock_thread.samples = fake_samples
+        MockThread.return_value = mock_thread
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', io.StringIO()):
+                    with pytest.raises(SystemExit):
+                        main(
+                            [
+                                '--no-mixin',
+                                '--monitor-interval',
+                                '5',
+                                '--stdout',
+                                '--',
+                                'cmd',
+                            ]
+                        )
+
+    record = json.loads(buf.getvalue())
+    assert record['stdout'] == ['hello\n']
+    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 8.0

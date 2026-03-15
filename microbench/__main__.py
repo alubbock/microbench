@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import threading
+from datetime import datetime, timezone
 
 
 def _get_mixin_map():
@@ -31,6 +32,46 @@ def _get_mixin_map():
 _DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo', 'MBLoadedModules')
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
+
+
+class _SubprocessMonitorThread(threading.Thread):
+    """Background thread that samples CPU and RSS of a child process."""
+
+    def __init__(self, pid, interval):
+        super().__init__(daemon=True)
+        self._pid = pid
+        self._interval = interval
+        self._stop = threading.Event()
+        self.samples = []
+
+    def stop(self):
+        self._stop.set()
+
+    def run(self):
+        try:
+            import psutil
+        except ImportError:
+            return
+        try:
+            proc = psutil.Process(self._pid)
+            # Prime the CPU counter with a short blocking interval so the
+            # immediate first sample has a meaningful cpu_percent value.
+            proc.cpu_percent(interval=0.1)
+            while True:
+                try:
+                    self.samples.append(
+                        {
+                            'timestamp': datetime.now(timezone.utc),
+                            'cpu_percent': proc.cpu_percent(interval=None),
+                            'rss_bytes': proc.memory_info().rss,
+                        }
+                    )
+                except psutil.NoSuchProcess:
+                    break
+                if self._stop.wait(self._interval):
+                    break
+        except psutil.NoSuchProcess:
+            pass
 
 
 def _int_at_least(minimum):
@@ -132,6 +173,17 @@ def _build_parser(mixin_names):
         ),
     )
     parser.add_argument(
+        '--monitor-interval',
+        type=_int_at_least(1),
+        default=None,
+        metavar='SECONDS',
+        help=(
+            'Sample child process CPU usage and RSS every SECONDS seconds, '
+            'recording results in subprocess_monitor. Requires psutil. '
+            'Monitoring is disabled when this flag is omitted.'
+        ),
+    )
+    parser.add_argument(
         '--field',
         '-f',
         action='append',
@@ -182,6 +234,12 @@ def main(argv=None):
         k, v = field.split('=', 1)
         extra_fields[k] = v
 
+    if args.monitor_interval is not None:
+        try:
+            import psutil  # noqa: F401
+        except ImportError:
+            parser.error('--monitor-interval requires the "psutil" package.')
+
     from microbench import FileOutput, MicroBench
 
     class _MBSubprocessResult:
@@ -191,6 +249,8 @@ def main(argv=None):
             self._subprocess_returncodes = []
             self._subprocess_stdout = []
             self._subprocess_stderr = []
+            self._subprocess_monitor = []
+            self._subprocess_timed_phase = True
 
         def capturepost_subprocess_result(self, bm_data):
             bm_data['command'] = self._subprocess_command
@@ -199,6 +259,8 @@ def main(argv=None):
                 bm_data['stdout'] = self._subprocess_stdout
             if self._subprocess_stderr:
                 bm_data['stderr'] = self._subprocess_stderr
+            if any(self._subprocess_monitor):
+                bm_data['subprocess_monitor'] = self._subprocess_monitor
 
     BenchClass = type(
         'CLIBench',
@@ -217,6 +279,8 @@ def main(argv=None):
     bench._subprocess_returncodes = []
     bench._subprocess_stdout = []
     bench._subprocess_stderr = []
+    bench._subprocess_monitor = []
+    bench._subprocess_timed_phase = False  # becomes True after warmup
 
     # Hold references to the real streams before any patching in tests.
     _real_stdout = sys.__stdout__
@@ -225,14 +289,15 @@ def main(argv=None):
     def run():
         capture_stdout = args.stdout in _CAPTURE_CHOICES
         capture_stderr = args.stderr in _CAPTURE_CHOICES
+        monitor_interval = args.monitor_interval
 
-        if not capture_stdout and not capture_stderr:
+        if not capture_stdout and not capture_stderr and monitor_interval is None:
             result = subprocess.run(cmd)
             bench._subprocess_returncodes.append(result.returncode)
             return
 
-        # Use Popen with per-pipe reader threads so output is forwarded to
-        # the terminal in real time rather than buffered until the process exits.
+        # Use Popen so we have the PID (needed for monitoring) and can read
+        # stdout/stderr pipes in real time when capture is requested.
         stdout_chunks = []
         stderr_chunks = []
 
@@ -278,7 +343,19 @@ def main(argv=None):
                 )
                 t.start()
                 threads.append(t)
+
+            monitor_thread = None
+            if monitor_interval is not None and bench._subprocess_timed_phase:
+                monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
+                monitor_thread.start()
+
             proc.wait()
+
+            if monitor_thread is not None:
+                monitor_thread.stop()
+                monitor_thread.join()
+                bench._subprocess_monitor.append(monitor_thread.samples)
+
             for t in threads:
                 t.join()
 
