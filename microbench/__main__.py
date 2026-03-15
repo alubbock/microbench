@@ -5,33 +5,69 @@ Run an external command and record benchmark metadata:
     python -m microbench [options] -- COMMAND [ARGS...]
 
 Results are written in JSONL format to stdout (default) or a file with
---outfile. By default MBHostInfo and MBSlurmInfo are included; use
---mixin to override.
+--outfile. By default host-info, slurm-info, and loaded-modules are
+included; use --mixin to override, --show-mixins to list all available.
 """
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import threading
 from datetime import datetime, timezone
 
 
+def _mb_name_to_cli(name):
+    """Convert 'MBFooBar' -> 'foo-bar' (strip MB prefix, CamelCase to kebab-case)."""
+    if name.startswith('MB'):
+        name = name[2:]
+    return re.sub(r'(?<=[a-z0-9])([A-Z])', r'-\1', name).lower()
+
+
 def _get_mixin_map():
-    """Return {name: class} for all CLI-compatible mixins."""
+    """Return {cli_name: class} for all CLI-compatible mixins."""
     import microbench as _mb
 
     return {
-        name: getattr(_mb, name)
+        _mb_name_to_cli(name): getattr(_mb, name)
         for name in _mb.__all__
         if isinstance(getattr(_mb, name, None), type)
         and getattr(getattr(_mb, name), 'cli_compatible', False)
     }
 
 
-_DEFAULT_MIXINS = ('MBHostInfo', 'MBSlurmInfo', 'MBLoadedModules')
+_DEFAULT_MIXINS = ('host-info', 'slurm-info', 'loaded-modules')
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
+
+
+def _make_mixin_type(mixin_map):
+    """Return an argparse type function that normalises and validates mixin names."""
+
+    def _parse(value):
+        canonical = _mb_name_to_cli(value) if value.startswith('MB') else value
+        if canonical not in mixin_map:
+            valid = ', '.join(sorted(mixin_map))
+            raise argparse.ArgumentTypeError(
+                f'unknown mixin {value!r}. Available: {valid}'
+            )
+        return canonical
+
+    return _parse
+
+
+def _show_mixins(mixin_map):
+    """Print a table of available CLI-compatible mixins and their descriptions."""
+    default_set = set(_DEFAULT_MIXINS)
+    width = max(len(name) for name in mixin_map)
+    print('Available mixins (* = included by default):\n')
+    for name in sorted(mixin_map):
+        cls = mixin_map[name]
+        doc = (cls.__doc__ or '').strip()
+        summary = doc.splitlines()[0] if doc else ''
+        marker = '*' if name in default_set else ' '
+        print(f'  {marker} {name:<{width}}  {summary}')
 
 
 class _SubprocessMonitorThread(threading.Thread):
@@ -89,13 +125,14 @@ def _int_at_least(minimum):
     return _parse
 
 
-def _build_parser(mixin_names):
+def _build_parser(mixin_map):
     parser = argparse.ArgumentParser(
         prog='python -m microbench',
         description=(
             'Run an external command and record benchmark metadata to JSONL.\n\n'
-            'By default captures MBHostInfo and MBSlurmInfo. '
-            'Specifying --mixin replaces the defaults. '
+            'By default captures host-info, slurm-info, and loaded-modules. '
+            'Specifying --mixin replaces the defaults; use --show-mixins to '
+            'list all available mixins. '
             'Metadata capture failures are recorded in mb_capture_errors '
             'rather than aborting the run.'
         ),
@@ -113,11 +150,17 @@ def _build_parser(mixin_names):
         nargs='+',
         dest='mixins',
         metavar='MIXIN',
-        choices=sorted(mixin_names),
+        type=_make_mixin_type(mixin_map),
         help=(
             'One or more mixins to include. Replaces defaults when specified. '
-            'Available: %(choices)s.'
+            'Use --show-mixins to list available options. '
+            'MB-prefixed names (e.g. MBHostInfo) are also accepted.'
         ),
+    )
+    parser.add_argument(
+        '--show-mixins',
+        action='store_true',
+        help='List available mixins with descriptions and exit.',
     )
     parser.add_argument(
         '--all',
@@ -204,6 +247,10 @@ def main(argv=None):
     parser = _build_parser(mixin_map)
     args = parser.parse_args(argv)
 
+    if args.show_mixins:
+        _show_mixins(mixin_map)
+        sys.exit(0)
+
     cmd = args.command
     if cmd and cmd[0] == '--':
         cmd = cmd[1:]
@@ -222,7 +269,7 @@ def main(argv=None):
     elif args.no_mixins:
         mixin_names = []
     elif args.mixins is not None:
-        mixin_names = args.mixins
+        mixin_names = list(dict.fromkeys(args.mixins))
     else:
         mixin_names = list(_DEFAULT_MIXINS)
     mixins = [mixin_map[name] for name in mixin_names]
