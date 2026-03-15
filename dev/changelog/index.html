@@ -1073,8 +1073,8 @@
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
   Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
-  alongside the standard timing fields. Use <code>--mixin</code> to select metadata
-  to capture (defaults to <code>MBHostInfo</code> and <code>MBSlurmInfo</code>); use
+  alongside the standard timing fields. Use <code>--mixin MIXIN [MIXIN ...]</code> to
+  select metadata to capture (defaults to <code>MBHostInfo</code> and <code>MBSlurmInfo</code>); use
   <code>--field KEY=VALUE</code> to attach extra labels; use <code>--iterations N</code> and
   <code>--warmup N</code> for repeat timing; use <code>--stdout[=suppress]</code> and
   <code>--stderr[=suppress]</code> to capture subprocess output into the record
