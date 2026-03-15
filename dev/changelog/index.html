@@ -1014,10 +1014,22 @@
   <code>--field KEY=VALUE</code> to attach extra labels; use <code>--iterations N</code> and
   <code>--warmup N</code> for repeat timing; use <code>--stdout[=suppress]</code> and
   <code>--stderr[=suppress]</code> to capture subprocess output into the record
-  (output is re-printed to the terminal unless <code>=suppress</code> is given).
-  Capture failures are non-fatal by default (<code>capture_optional = True</code>),
-  making the CLI safe across heterogeneous cluster nodes. The process exits
-  with the highest returncode seen across all timed iterations.</p>
+  (output is re-printed to the terminal unless <code>=suppress</code> is given);
+  use <code>--monitor-interval SECONDS</code> to sample child process CPU and memory
+  over time (see below). Capture failures are non-fatal by default
+  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
+  cluster nodes. The process exits with the highest returncode seen across
+  all timed iterations.</p>
+</li>
+<li>
+<p><strong>CLI subprocess monitoring</strong> (<code>--monitor-interval SECONDS</code>): periodically
+  sample the child process's CPU usage and resident memory (RSS) while it
+  runs and record the time series in <code>subprocess_monitor</code>. Requires
+  <code>psutil</code>. Each element of <code>subprocess_monitor</code> is a list of
+  <code>{"timestamp", "cpu_percent", "rss_bytes"}</code> dicts for one timed
+  iteration; warmup iterations are excluded. Works on Linux, macOS, and
+  Windows. If the process exits before the first sample fires, the field is
+  omitted rather than written as empty.</p>
 </li>
 <li>
 <p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on

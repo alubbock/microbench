@@ -458,6 +458,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#subprocess-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -905,6 +916,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#subprocess-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -976,6 +998,10 @@ executables where adding a Python decorator is not practical.</p>
 <td>Capture stderr into the record and stream it to the terminal in real time. Use <code>=suppress</code> to capture without printing.</td>
 </tr>
 <tr>
+<td><code>--monitor-interval SECONDS</code></td>
+<td>Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires <code>psutil</code>. See <a href="#subprocess-monitoring">Subprocess monitoring</a> below.</td>
+</tr>
+<tr>
 <td><code>--field KEY=VALUE</code> / <code>-f KEY=VALUE</code></td>
 <td>Extra metadata field. Can be repeated.</td>
 </tr>
@@ -1004,6 +1030,10 @@ executables where adding a Python decorator is not practical.</p>
 <tr>
 <td><code>function_name</code></td>
 <td>Basename of the executable, e.g. <code>"run_sim.sh"</code>.</td>
+</tr>
+<tr>
+<td><code>subprocess_monitor</code></td>
+<td><em>(present only with <code>--monitor-interval</code>)</em> List of per-iteration sample lists. See <a href="#subprocess-monitoring">Subprocess monitoring</a>.</td>
 </tr>
 </tbody>
 </table>
@@ -1091,6 +1121,69 @@ unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
 </code></pre></div>
 <p>All <code>--field</code> values are stored as strings.</p>
+<h2 id="subprocess-monitoring">Subprocess monitoring</h2>
+<p>Use <code>--monitor-interval SECONDS</code> to periodically sample the child process
+while it runs. This requires the <a href="https://psutil.readthedocs.io/"><code>psutil</code></a>
+package (<code>pip install psutil</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
+</code></pre></div>
+<p>The record gains a <code>subprocess_monitor</code> field: a list of per-iteration
+sample lists (one inner list per <code>--iterations</code> call, warmup excluded).
+Each sample is a dict with three keys:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>timestamp</code></td>
+<td>ISO 8601 UTC timestamp of the sample.</td>
+</tr>
+<tr>
+<td><code>cpu_percent</code></td>
+<td>CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines). The first sample is always <code>0.0</code> — this is a psutil limitation where two successive calls are needed to compute a ratio.</td>
+</tr>
+<tr>
+<td><code>rss_bytes</code></td>
+<td>Resident set size (physical RAM) of the child process in bytes.</td>
+</tr>
+</tbody>
+</table>
+<p>Example record (single iteration, two samples):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">  </span><span class="nt">&quot;subprocess_monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="p">[</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>Only the direct child process is tracked. If the child spawns its own
+subprocesses, their CPU and memory usage are not included.</p>
+<p>If the process exits before the first sample interval fires (e.g. a very
+short-lived command with a long <code>--monitor-interval</code>), the inner list will
+be empty and <code>subprocess_monitor</code> is omitted from the record.</p>
+<p>Analyse with pandas:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">samples</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">s</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;subprocess_monitor&#39;</span><span class="p">]</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>          <span class="c1"># row[0] = first iteration</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="p">])</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_mb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_bytes&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">samples</span><span class="p">[[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;rss_mb&#39;</span><span class="p">]])</span>
+</code></pre></div>
 
 
 
