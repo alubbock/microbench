@@ -169,6 +169,127 @@ class MBLoadedModules:
         bm_data['loaded_modules'] = modules
 
 
+def _read_cgroup_v2():
+    """Read CPU quota and memory limit from a cgroup v2 hierarchy."""
+    cgroup_path = None
+    with open('/proc/self/cgroup') as f:
+        for line in f:
+            parts = line.strip().split(':', 2)
+            if len(parts) == 3 and parts[0] == '0':
+                cgroup_path = parts[2]
+                break
+    if not cgroup_path:
+        return {}
+
+    base = os.path.join('/sys/fs/cgroup', cgroup_path.lstrip('/'))
+    cpu_cores = None
+    memory_bytes = None
+
+    cpu_max = os.path.join(base, 'cpu.max')
+    if os.path.exists(cpu_max):
+        with open(cpu_max) as f:
+            parts = f.read().split()
+        if len(parts) == 2 and parts[0] != 'max':
+            cpu_cores = int(parts[0]) / int(parts[1])
+
+    mem_max = os.path.join(base, 'memory.max')
+    if os.path.exists(mem_max):
+        with open(mem_max) as f:
+            content = f.read().strip()
+        if content != 'max':
+            memory_bytes = int(content)
+
+    return {'cpu_cores': cpu_cores, 'memory_bytes': memory_bytes, 'cgroup_version': 2}
+
+
+def _read_cgroup_v1():
+    """Read CPU quota and memory limit from a cgroup v1 hierarchy."""
+    cpu_path = None
+    memory_path = None
+    with open('/proc/self/cgroup') as f:
+        for line in f:
+            parts = line.strip().split(':', 2)
+            if len(parts) != 3:
+                continue
+            _, controllers, path = parts
+            controllers_list = controllers.split(',')
+            if 'cpu' in controllers_list and cpu_path is None:
+                cpu_path = path
+            if 'memory' in controllers_list and memory_path is None:
+                memory_path = path
+
+    cpu_cores = None
+    memory_bytes = None
+
+    if cpu_path is not None:
+        quota_path = '/sys/fs/cgroup/cpu' + cpu_path + '/cpu.cfs_quota_us'
+        period_path = '/sys/fs/cgroup/cpu' + cpu_path + '/cpu.cfs_period_us'
+        if os.path.exists(quota_path) and os.path.exists(period_path):
+            with open(quota_path) as f:
+                quota = int(f.read().strip())
+            with open(period_path) as f:
+                period = int(f.read().strip())
+            if quota != -1:
+                cpu_cores = quota / period
+
+    if memory_path is not None:
+        limit_path = '/sys/fs/cgroup/memory' + memory_path + '/memory.limit_in_bytes'
+        if os.path.exists(limit_path):
+            with open(limit_path) as f:
+                limit = int(f.read().strip())
+            if limit < 2**62:
+                memory_bytes = limit
+
+    return {'cpu_cores': cpu_cores, 'memory_bytes': memory_bytes, 'cgroup_version': 1}
+
+
+class MBCgroupLimits:
+    """Capture CPU quota and memory limit from the Linux cgroup filesystem.
+
+    Works for SLURM jobs and Kubernetes pods (cgroup v1 and v2). Results
+    are stored in the ``cgroup_limits`` field as a dict containing:
+
+    - ``cpu_cores``: effective CPU parallelism as a float (quota ÷ period),
+      or ``None`` if unlimited or unavailable.
+    - ``memory_bytes``: memory limit in bytes as an int, or ``None`` if
+      unlimited or unavailable.
+    - ``cgroup_version``: ``1`` or ``2``.
+
+    On non-Linux systems or when the cgroup filesystem is unavailable,
+    ``cgroup_limits`` is an empty dict.
+
+    Note:
+        ``cpu_cores`` is derived from the cgroup CPU quota and period, so it
+        represents effective CPU parallelism, not a physical core count. A
+        SLURM job launched with ``--cpus-per-task=4`` will typically report
+        ``cpu_cores: 4.0``.
+
+    Example output::
+
+        {
+            "cgroup_limits": {
+                "cpu_cores": 4.0,
+                "memory_bytes": 17179869184,
+                "cgroup_version": 2
+            }
+        }
+    """
+
+    cli_compatible = True
+
+    def capture_cgroup_limits(self, bm_data):
+        if sys.platform != 'linux':
+            bm_data['cgroup_limits'] = {}
+            return
+        try:
+            if os.path.exists('/sys/fs/cgroup/cgroup.controllers'):
+                bm_data['cgroup_limits'] = _read_cgroup_v2()
+            else:
+                bm_data['cgroup_limits'] = _read_cgroup_v1()
+        except (OSError, ValueError, ZeroDivisionError):
+            bm_data['cgroup_limits'] = {}
+
+
 class MBGitInfo:
     """Capture git repository information.
 

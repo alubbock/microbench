@@ -30,6 +30,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
+| `MBCgroupLimits` | `cgroup_limits` dict with `cpu_cores`, `memory_bytes`, `cgroup_version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
 | `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
@@ -138,7 +139,7 @@ process(list(range(1_000_000, 0, -1)))
     sampling of memory, CPU, and other metrics *while the function runs*,
     see [Periodic monitoring](monitoring.md).
 
-## HPC / SLURM
+## HPC and containers
 
 ### `MBSlurmInfo`
 
@@ -217,6 +218,53 @@ string as the version. Hierarchical module names such as
 This mixin reads the `LOADEDMODULES` environment variable, which is the
 standard set by both Lmod and Environment Modules. No subprocess is
 required and there are no extra dependencies.
+
+### `MBCgroupLimits`
+
+Captures the CPU quota and memory limit enforced by the Linux control groups
+(cgroups). Works for SLURM jobs and Kubernetes pods, on both cgroup v1 and
+cgroup v2 systems, with no external dependencies. Unlike `MBHostCpuCores` and
+`MBHostRamTotal` (which report the physical node's total resources),
+`MBCgroupLimits` reports what the scheduler actually allocated to this job or
+container — the number that determines your benchmark's resource budget.
+
+```python
+from microbench import MicroBench, MBSlurmInfo, MBCgroupLimits
+
+class Bench(MicroBench, MBSlurmInfo, MBCgroupLimits):
+    pass
+
+bench = Bench()
+```
+
+Each record will contain:
+
+```json
+{
+  "cgroup_limits": {
+    "cpu_cores": 4.0,
+    "memory_bytes": 17179869184,
+    "cgroup_version": 2
+  }
+}
+```
+
+**`cpu_cores`** is derived from the cgroup CPU quota and period
+(`quota_us / period_us`), so it represents effective CPU parallelism rather than
+a physical core count. A SLURM job launched with `--cpus-per-task=4` will
+typically report `cpu_cores: 4.0`.
+
+**`memory_bytes`** is the hard memory limit in bytes. A job allocated `--mem=16G`
+will typically report `memory_bytes: 17179869184`.
+
+Both fields are `null` when no limit is set (the scheduler granted unlimited
+access to that resource). `cgroup_limits` is an empty dict on non-Linux
+platforms or when the cgroup filesystem is unavailable.
+
+!!! tip
+    Pair with `MBSlurmInfo` for full HPC context — `MBSlurmInfo` captures
+    scheduler metadata (job ID, node list, etc.) while `MBCgroupLimits` captures
+    the kernel-enforced resource limits.
 
 ## Code provenance
 
