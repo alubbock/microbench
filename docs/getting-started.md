@@ -20,10 +20,18 @@ my_function(42)
 ```
 
 By default results are captured into an in-memory buffer. Read them back as
-a pandas DataFrame:
+a list of dicts:
 
 ```python
-results = bench.get_results()
+results = bench.get_results()          # list of dicts — no extra dependencies
+results = bench.get_results(format='df')  # pandas DataFrame
+```
+
+Or print a quick stats summary without any dependencies:
+
+```python
+bench.summary()
+# n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan
 ```
 
 Every record contains these fields automatically:
@@ -114,18 +122,27 @@ results = pandas.read_json('/home/user/results.jsonl', lines=True)
 Or via `get_results()`, which works regardless of the output destination:
 
 ```python
-results = bench.get_results()
+results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
 ## Analysing results
 
-Load results into a pandas DataFrame and use its full range of aggregation
-and filtering capabilities:
+For a quick stats overview with no extra dependencies:
 
 ```python
-import pandas
+bench.summary()
+# n=3  min=0.049512  mean=0.049821  median=0.049823  max=0.050128  stdev=0.000312
 
-results = pandas.read_json('/home/user/my-benchmarks.jsonl', lines=True)
+# or pass any list of result dicts:
+from microbench import summary
+summary(bench.get_results())
+```
+
+Load into a pandas DataFrame for full aggregation and filtering:
+
+```python
+results = bench.get_results(format='df')
 
 # run_durations is a list of per-iteration times; sum for total call time
 results['total_duration'] = results['run_durations'].apply(sum)
@@ -135,6 +152,16 @@ results.groupby('python_version')['total_duration'].mean()
 
 # Correlate records from the same process run
 results.groupby('mb_run_id')['total_duration'].describe()
+```
+
+Use `flat=True` to flatten nested mixin fields (e.g. `slurm`, `git_info`,
+`cgroup_limits`) into dot-notation columns — useful when loading into pandas
+or a spreadsheet:
+
+```python
+results = bench.get_results(flat=True)          # list of flat dicts
+results = bench.get_results(format='df', flat=True)  # flat DataFrame
+# 'slurm' dict becomes columns: slurm.job_id, slurm.cpus_on_node, ...
 ```
 
 See the [pandas documentation](https://pandas.pydata.org/docs/) for more.

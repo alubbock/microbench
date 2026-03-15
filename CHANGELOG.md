@@ -6,6 +6,12 @@ All notable changes to microbench are documented here.
 
 ### Breaking changes
 
+- **`get_results()` now returns a list of dicts by default**: The default
+  `format='dict'` returns a list of plain Python dicts and requires no
+  dependencies. Pass `format='df'` to get a pandas DataFrame (previous
+  behaviour). Update existing callers: `bench.get_results()` →
+  `bench.get_results(format='df')`.
+
 - **`telemetry` renamed to `monitor`** (#51): The background sampling thread
   has been renamed throughout the API to better reflect its intent (continuous
   monitoring, not data transmission).
@@ -38,6 +44,40 @@ All notable changes to microbench are documented here.
   ```
 
 ### New features
+
+- **`get_results(format=..., flat=...)`**: `get_results` now accepts two
+  keyword arguments.
+  - `format='dict'` (default) — returns a list of dicts; no pandas required.
+  - `format='df'` — returns a pandas DataFrame (previous default behaviour).
+  - `flat=True` — flattens nested dict fields (e.g. `slurm`, `cgroup_limits`,
+    `git_info`) into dot-notation keys (`slurm.job_id`). Works for both
+    formats without requiring pandas.
+
+- **`summary(results)` / `bench.summary()`**: prints min / mean / median /
+  max / stdev of `run_durations` across all results. No dependencies required
+  beyond the Python standard library. `bench.summary()` is a one-liner
+  convenience that calls `bench.get_results()` internally. The module-level
+  `summary(results)` accepts any list of dicts and can be composed with other
+  results-processing steps.
+
+  ```python
+  from microbench import MicroBench, summary
+
+  bench = MicroBench()
+
+  @bench
+  def my_function():
+      ...
+
+  for _ in range(10):
+      my_function()
+
+  bench.summary()
+  # n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008
+
+  # or with explicit results list:
+  summary(bench.get_results())
+  ```
 
 - **`MBCgroupLimits`**: captures the CPU quota and memory limit enforced by
   the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup

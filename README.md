@@ -54,10 +54,19 @@ def my_function(n):
     return sum(range(n))
 
 my_function(1_000_000)
+
+# list of dicts — no extra dependencies:
 results = bench.get_results()
+
+# pandas DataFrame:
+results = bench.get_results(format='df')
+
+# quick stats printout — no dependencies:
+bench.summary()
 ```
 
-Each call produces one record. `results` is a pandas DataFrame:
+Each call produces one record. `results` from `get_results(format='df')` is
+a pandas DataFrame:
 
 ```
    mb_run_id                             mb_version  function_name  run_durations  experiment

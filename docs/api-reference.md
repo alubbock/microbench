@@ -4,6 +4,8 @@
 
 ::: microbench.MicroBench
 
+::: microbench.summary
+
 ## Output sinks
 
 ::: microbench.Output

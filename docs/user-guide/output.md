@@ -21,17 +21,39 @@ file with `O_APPEND`, which guarantees atomic appends on POSIX filesystems.
 Multiple processes can safely write to the same file simultaneously — a
 common pattern when running benchmark jobs across cluster nodes.
 
-Read results back with pandas:
+Read results back via `get_results()`:
 
 ```python
+results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results(format='df')  # pandas DataFrame
+
+# or read directly with pandas:
 import pandas
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 ```
 
-Or via `get_results()`:
+Pass `flat=True` to flatten nested mixin fields (e.g. `slurm`, `git_info`,
+`cgroup_limits`) into dot-notation keys:
 
 ```python
-results = bench.get_results()
+results = bench.get_results(flat=True)
+# {'function_name': 'noop', 'slurm.job_id': '12345', 'slurm.cpus_on_node': '8', ...}
+```
+
+## Quick summary
+
+Print min/mean/median/max/stdev of `run_durations` with no extra dependencies:
+
+```python
+bench.summary()
+# n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008
+```
+
+The module-level `summary()` accepts any list of result dicts:
+
+```python
+from microbench import summary
+summary(bench.get_results())
 ```
 
 ## In-memory buffer
@@ -49,7 +71,8 @@ def my_function():
 
 my_function()
 
-results = bench.get_results()
+results = bench.get_results()              # list of dicts
+results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
 ## Multiple output sinks
@@ -67,7 +90,8 @@ bench = MicroBench(outputs=[
 ])
 ```
 
-`get_results()` reads from the first sink that supports it.
+`get_results()` reads from the first sink that supports it. The `format` and
+`flat` arguments work the same as with `FileOutput`.
 
 ## Redis output
 
@@ -88,7 +112,8 @@ def my_function():
 
 my_function()
 
-results = bench.get_results()
+results = bench.get_results()              # list of dicts
+results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
 Results are appended to a Redis list using `RPUSH` and read back with

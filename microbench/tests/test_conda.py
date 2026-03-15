@@ -27,7 +27,7 @@ def _run_conda_bench(**cls_attrs):
     ):
         noop()
 
-    return bench.get_results()
+    return bench.get_results(format='df')
 
 
 def test_conda_no_channel_doubling():

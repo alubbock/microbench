@@ -38,7 +38,7 @@ def test_mb_run_id_and_version():
     noop()
     noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
 
     # mb_run_id is a valid UUID and consistent across calls
     uuid_re = re.compile(
@@ -67,8 +67,8 @@ def test_mb_run_id_shared_across_instances():
     func_a()
     func_b()
 
-    run_id_a = bench_a.get_results()['mb_run_id'][0]
-    run_id_b = bench_b.get_results()['mb_run_id'][0]
+    run_id_a = bench_a.get_results(format='df')['mb_run_id'][0]
+    run_id_b = bench_b.get_results(format='df')['mb_run_id'][0]
     assert run_id_a == run_id_b
 
 
@@ -91,7 +91,7 @@ def test_function():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = benchmark.get_results()
+    results = benchmark.get_results(format='df')
     assert (results['function_name'] == 'my_function').all()
     assert results['package_versions'][0]['pandas'] == pandas.__version__
     runtimes = results['finish_time'] - results['start_time']
@@ -116,7 +116,7 @@ def test_multi_iterations():
     # call the function
     my_function()
 
-    results = benchmark.get_results()
+    results = benchmark.get_results(format='df')
     assert (results['function_name'] == 'my_function').all()
     runtimes = results['finish_time'] - results['start_time']
     assert (runtimes >= datetime.timedelta(0)).all()
@@ -146,7 +146,7 @@ def test_capture_optional_records_errors():
 
     noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     errors = results['mb_capture_errors'][0]
     assert len(errors) == 1
     assert errors[0]['method'] == 'capture_will_fail'
@@ -168,7 +168,7 @@ def test_capture_optional_no_errors_no_field():
 
     noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'mb_capture_errors' not in results.columns
 
 
@@ -206,7 +206,7 @@ def test_capture_optional_capturepost():
 
     noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     errors = results['mb_capture_errors'][0]
     assert any(e['method'] == 'capturepost_will_fail' for e in errors)
 
@@ -226,7 +226,7 @@ def test_warmup():
     # 3 warmup + 2 recorded iterations = 5 total calls
     assert call_count == 5
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     # Only one record (one decorated call), with 2 run_durations
     assert len(results) == 1
     assert len(results['run_durations'][0]) == 2
@@ -254,7 +254,7 @@ def test_local_timezone():
 
     noop()
 
-    results = benchmark.get_results()
+    results = benchmark.get_results(format='df')
     expected_offset = datetime.datetime.now().astimezone().utcoffset()
     assert results['start_time'][0].utcoffset() == expected_offset
     assert results['finish_time'][0].utcoffset() == expected_offset
@@ -279,7 +279,7 @@ def test_monitor():
     assert not monitor_bench._monitor_thread.is_alive()
 
     # Check some monitor data was captured
-    results = monitor_bench.get_results()
+    results = monitor_bench.get_results(format='df')
     assert len(results['monitor']) > 0
 
 
@@ -341,7 +341,7 @@ def test_monitor_multiple_samples():
 
     slow_function()
 
-    results = monitor_bench.get_results()
+    results = monitor_bench.get_results(format='df')
     assert len(results['monitor'][0]) >= 2, 'Expected at least 2 monitor samples'
 
 
@@ -363,7 +363,7 @@ def test_functioncall_args_not_double_encoded():
 
     dummy(42, {'key': 'value'}, kw_str='hello')
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     args = results['args'][0]
     kwargs = results['kwargs'][0]
 
@@ -385,7 +385,7 @@ def test_record_standard_fields():
     with bench.record('my_block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     row = results.iloc[0]
     assert row['function_name'] == 'my_block'
@@ -403,7 +403,7 @@ def test_record_no_name_defaults():
     with bench.record():
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['function_name'] == '<record>'
 
 
@@ -414,7 +414,7 @@ def test_record_static_fields():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['experiment'] == 'run-1'
     assert results.iloc[0]['trial'] == 3
 
@@ -430,7 +430,7 @@ def test_record_mixin_fields():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'hostname' in results.columns
     assert 'operating_system' in results.columns
 
@@ -444,7 +444,7 @@ def test_record_multiple_records():
     with bench.record('second'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 2
     assert list(results['function_name']) == ['first', 'second']
 
@@ -457,7 +457,7 @@ def test_record_exception_captured_and_reraised():
         with bench.record('block'):
             raise ValueError('oops')
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     exc = results.iloc[0]['exception']
     assert exc['type'] == 'ValueError'
@@ -471,7 +471,7 @@ def test_record_no_exception_field_on_success():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'exception' not in results.columns
 
 
@@ -488,7 +488,7 @@ def test_record_coexists_with_decorator():
 
     decorated()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 2
     assert set(results['function_name']) == {'ctx', 'decorated'}
 
@@ -509,7 +509,7 @@ def test_decorator_exception_captured_and_reraised():
     with pytest.raises(RuntimeError, match='boom'):
         failing()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     exc = results.iloc[0]['exception']
     assert exc['type'] == 'RuntimeError'
@@ -526,7 +526,7 @@ def test_decorator_no_exception_field_on_success():
 
     ok()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'exception' not in results.columns
 
 
@@ -546,7 +546,7 @@ def test_decorator_exception_stops_iterations():
     with pytest.raises(ValueError):
         sometimes_fails()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert call_count == 2
     assert len(results.iloc[0]['run_durations']) == 2
 
@@ -566,7 +566,7 @@ def test_decorator_return_value_mixin_skipped_on_exception():
     with pytest.raises(TypeError):
         failing()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'return_value' not in results.columns
 
 
@@ -586,7 +586,7 @@ def test_record_mbfunctioncall_produces_empty_args():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['args'] == []
     assert results.iloc[0]['kwargs'] == {}
 
@@ -602,7 +602,7 @@ def test_record_mbreturnvalue_ignored():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'return_value' not in results.columns
 
 
@@ -614,7 +614,7 @@ def test_record_mbreturnvalue_ignored():
 def _invoke_record_on_exit(bench):
     """Directly call the registered exit handler and return its results."""
     bench._record_on_exit_handler()
-    return bench.get_results()
+    return bench.get_results(format='df')
 
 
 def test_record_on_exit_standard_fields():
@@ -733,7 +733,7 @@ def test_record_on_exit_sigterm_writes_record():
         # Invoke the handler but prevent it from re-killing the process.
         with patch('os.kill'), patch('signal.signal'):
             handler(_signal.SIGTERM, None)
-        results = bench.get_results()
+        results = bench.get_results(format='df')
     finally:
         sys.excepthook = orig_excepthook
         _signal.signal(_signal.SIGTERM, orig_sigterm)
@@ -764,7 +764,7 @@ def test_record_on_exit_double_fire_prevention():
         bench.record_on_exit('sim')
         bench._record_on_exit_handler()
         bench._record_on_exit_handler()
-        results = bench.get_results()
+        results = bench.get_results(format='df')
     finally:
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
@@ -788,7 +788,7 @@ def test_record_on_exit_re_registration_replaces_first():
         assert first_handler is not second_handler
 
         second_handler()
-        results = bench.get_results()
+        results = bench.get_results(format='df')
     finally:
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
@@ -860,7 +860,7 @@ async def test_async_decorator_standard_fields():
 
     await async_noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     assert results.iloc[0]['function_name'] == 'async_noop'
     assert 'start_time' in results.columns
@@ -880,7 +880,7 @@ async def test_async_decorator_iterations():
 
     await async_noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results.iloc[0]['run_durations']) == 3
 
 
@@ -900,7 +900,7 @@ async def test_async_decorator_warmup():
 
     # 2 warmup + 3 recorded = 5 total
     assert call_count == 5
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results.iloc[0]['run_durations']) == 3
 
 
@@ -916,7 +916,7 @@ async def test_async_decorator_exception():
     with pytest.raises(ValueError, match='async boom'):
         await async_fail()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     exc = results.iloc[0]['exception']
     assert exc['type'] == 'ValueError'
@@ -939,7 +939,7 @@ async def test_async_decorator_return_value():
     result = await async_compute()
 
     assert result == 42
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['return_value'] == 42
 
 
@@ -958,7 +958,7 @@ async def test_async_decorator_functioncall():
 
     await async_fn(1, y=2)
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['args'] == [1]
     assert results.iloc[0]['kwargs'] == {'y': 2}
 
@@ -971,7 +971,7 @@ async def test_async_arecord_standard_fields():
     async with bench.arecord('my_block'):
         await asyncio.sleep(0)
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     row = results.iloc[0]
     assert row['function_name'] == 'my_block'
@@ -988,7 +988,7 @@ async def test_async_arecord_no_name_defaults():
     async with bench.arecord():
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results.iloc[0]['function_name'] == '<record>'
 
 
@@ -1001,7 +1001,7 @@ async def test_async_arecord_exception():
         async with bench.arecord('block'):
             raise RuntimeError('async oops')
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     exc = results.iloc[0]['exception']
     assert exc['type'] == 'RuntimeError'
@@ -1041,7 +1041,7 @@ async def test_async_monitor_thread():
     await async_noop()
 
     assert not monitor_bench._monitor_thread.is_alive()
-    results = monitor_bench.get_results()
+    results = monitor_bench.get_results(format='df')
     assert len(results['monitor'][0]) > 0
 
 
@@ -1060,7 +1060,7 @@ async def test_monitor_with_arecord():
         await asyncio.sleep(0)
 
     assert not bench._monitor_thread.is_alive()
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 1
     assert len(results.iloc[0]['monitor']) > 0
 
@@ -1148,7 +1148,7 @@ def test_time_with_record():
         with bench.time('transform'):
             pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'parse'
@@ -1170,7 +1170,7 @@ def test_time_with_decorator():
 
     pipeline()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'step_a'
@@ -1191,7 +1191,7 @@ async def test_time_with_async_decorator():
 
     await async_pipeline()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'fetch'
@@ -1209,7 +1209,7 @@ async def test_time_with_arecord():
         with bench.time('save'):
             pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'load'
@@ -1248,7 +1248,7 @@ def test_time_noop_outside_benchmark():
         pass
 
     # Nothing written
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 0
 
 
@@ -1259,7 +1259,7 @@ def test_time_absent_when_not_used():
     with bench.record('block'):
         pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'mb_timings' not in results.columns
 
 
@@ -1274,7 +1274,7 @@ def test_time_multiple_iterations():
 
     pipeline()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 3
     assert all(t['name'] == 'step' for t in timings)
@@ -1289,7 +1289,7 @@ def test_time_exception_closes_segment():
             with bench.time('risky'):
                 raise ValueError('fail')
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 1
     assert timings[0]['name'] == 'risky'
@@ -1306,7 +1306,7 @@ def test_time_ordering_preserved():
             with bench.time(n):
                 pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert [t['name'] for t in timings] == names
 
@@ -1320,7 +1320,7 @@ def test_time_same_name_multiple_times():
             with bench.time('repeat'):
                 pass
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     timings = results.iloc[0]['mb_timings']
     assert len(timings) == 3
     assert all(t['name'] == 'repeat' for t in timings)
@@ -1343,7 +1343,7 @@ async def test_time_concurrent_arecord():
 
     await asyncio.gather(task_a(), task_b())
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert len(results) == 2
     by_name = {row['function_name']: row for _, row in results.iterrows()}
 

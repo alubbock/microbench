@@ -29,7 +29,7 @@ def test_nvidia():
 
     test()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'nvidia_gpu_name' in results.columns
     assert 'nvidia_memory.total' in results.columns
 
@@ -49,7 +49,7 @@ def test_nvidia_custom_attributes():
     with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_SMI_OUTPUT):
         noop()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert 'nvidia_gpu_name' in results.columns
 
 
