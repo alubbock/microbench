@@ -20,6 +20,7 @@ python -m microbench [options] -- COMMAND [ARGS...]
 |---|---|
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
 | `--mixin MIXIN [MIXIN ...]` / `-m MIXIN [MIXIN ...]` | One or more mixins to include. Replaces defaults when specified. |
+| `--show-mixins` | List all available mixins with descriptions and exit. |
 | `--all` / `-a` | Include all available mixins. |
 | `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
@@ -45,27 +46,31 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 
 ## Default mixins
 
-When no `--mixin` is specified, `MBHostInfo`, `MBSlurmInfo`, and
-`MBLoadedModules` are included automatically, capturing hostname,
+When no `--mixin` is specified, `host-info`, `slurm-info`, and
+`loaded-modules` are included automatically, capturing hostname,
 operating system, all `SLURM_*` environment variables, and the loaded
 Lmod/Environment Modules software stack. All three degrade gracefully
 to empty dicts outside of their respective environments.
+
+Mixin names use a short kebab-case form without the `MB` prefix
+(e.g. `host-info` instead of `MBHostInfo`). MB-prefixed names are also
+accepted for convenience. Run `--show-mixins` to list all available
+mixins with descriptions:
+
+```bash
+python -m microbench --show-mixins
+```
 
 Specifying `--mixin` replaces the defaults entirely. Use `--no-mixin` to
 disable all mixins and record only timing and command fields:
 
 ```bash
 # Only Python version — no host info or SLURM
-python -m microbench --mixin MBPythonVersion -- ./job.sh
+python -m microbench --mixin python-version -- ./job.sh
 
 # No mixins at all — timing and command only
 python -m microbench --no-mixin -- ./job.sh
 ```
-
-Available mixins (those marked `cli_compatible`):
-`MBCondaPackages`, `MBFileHash`, `MBGitInfo`, `MBHostCpuCores`,
-`MBHostInfo`, `MBHostRamTotal`, `MBInstalledPackages`, `MBLoadedModules`,
-`MBNvidiaSmi`, `MBPythonVersion`, `MBSlurmInfo`.
 
 See [Mixins](user-guide/mixins.md) for details on each.
 
@@ -87,7 +92,7 @@ A typical SLURM job script:
 
 python -m microbench \
     --outfile /scratch/$USER/results.jsonl \
-    --mixin MBHostInfo MBSlurmInfo MBHostCpuCores \
+    --mixin host-info slurm-info host-cpu-cores \
     --field experiment=baseline \
     -- ./run_simulation.sh --steps 10000
 ```

@@ -169,17 +169,20 @@ All notable changes to microbench are documented here.
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
   Records `command`, `returncode` (list, one per timed iteration),
-  alongside the standard timing fields. Use `--mixin MIXIN [MIXIN ...]` to
-  select metadata to capture (defaults to `MBHostInfo` and `MBSlurmInfo`); use
-  `--field KEY=VALUE` to attach extra labels; use `--iterations N` and
-  `--warmup N` for repeat timing; use `--stdout[=suppress]` and
-  `--stderr[=suppress]` to capture subprocess output into the record
-  (output is re-printed to the terminal unless `=suppress` is given);
-  use `--monitor-interval SECONDS` to sample child process CPU and memory
-  over time (see below). Capture failures are non-fatal by default
-  (`capture_optional = True`), making the CLI safe across heterogeneous
-  cluster nodes. The process exits with the highest returncode seen across
-  all timed iterations.
+  alongside the standard timing fields. Mixins are specified by short
+  kebab-case names without the `MB` prefix (e.g. `host-info`,
+  `python-version`); original MB-prefixed names are also accepted. Use
+  `--mixin MIXIN [MIXIN ...]` to select metadata to capture (defaults to
+  `host-info`, `slurm-info`, and `loaded-modules`); use `--show-mixins` to
+  list all available mixins with descriptions; use `--field KEY=VALUE` to
+  attach extra labels; use `--iterations N` and `--warmup N` for repeat
+  timing; use `--stdout[=suppress]` and `--stderr[=suppress]` to capture
+  subprocess output into the record (output is re-printed to the terminal
+  unless `=suppress` is given); use `--monitor-interval SECONDS` to sample
+  child process CPU and memory over time (see below). Capture failures are
+  non-fatal by default (`capture_optional = True`), making the CLI safe
+  across heterogeneous cluster nodes. The process exits with the highest
+  returncode seen across all timed iterations.
 
 - **CLI subprocess monitoring** (`--monitor-interval SECONDS`): periodically
   sample the child process's CPU usage and resident memory (RSS) while it

@@ -128,6 +128,18 @@ def test_cli_no_command_exits_with_error():
     assert exc.value.code != 0
 
 
+def test_cli_show_mixins():
+    """--show-mixins lists available mixins and exits cleanly."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit) as exc:
+            main(['--show-mixins'])
+    assert exc.value.code == 0
+    output = buf.getvalue()
+    assert 'host-info' in output
+    assert 'python-version' in output
+
+
 def test_cli_capture_optional_on_by_default():
     """Capture failures are recorded in mb_capture_errors, not raised."""
 
