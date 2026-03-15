@@ -54,9 +54,10 @@ class _SubprocessMonitorThread(threading.Thread):
             return
         try:
             proc = psutil.Process(self._pid)
-            # First call primes the CPU percentage counter; result is always 0.0.
-            proc.cpu_percent(interval=None)
-            while not self._stop.wait(self._interval):
+            # Prime the CPU counter with a short blocking interval so the
+            # immediate first sample has a meaningful cpu_percent value.
+            proc.cpu_percent(interval=0.1)
+            while True:
                 try:
                     self.samples.append(
                         {
@@ -66,6 +67,8 @@ class _SubprocessMonitorThread(threading.Thread):
                         }
                     )
                 except psutil.NoSuchProcess:
+                    break
+                if self._stop.wait(self._interval):
                     break
         except psutil.NoSuchProcess:
             pass
