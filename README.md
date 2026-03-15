@@ -15,7 +15,7 @@ result, the metadata shows exactly what was running.
 - **Command-line interface** — wrap any shell command, script, or compiled
   executable with `python -m microbench -- COMMAND` and capture host
   metadata alongside timing without writing Python code; ideal for SLURM
-  jobs
+  jobs; use `--monitor-interval` to record CPU and memory usage over time
 - **Extensible via _mixins_** — capture Python version, hostname, CPU/RAM
   specs, conda/pip package versions, NVIDIA GPU info, line-level profiles,
   peak memory usage, and more by adding mixin classes

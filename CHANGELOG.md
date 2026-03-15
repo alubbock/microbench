@@ -112,10 +112,21 @@ All notable changes to microbench are documented here.
   `--field KEY=VALUE` to attach extra labels; use `--iterations N` and
   `--warmup N` for repeat timing; use `--stdout[=suppress]` and
   `--stderr[=suppress]` to capture subprocess output into the record
-  (output is re-printed to the terminal unless `=suppress` is given).
-  Capture failures are non-fatal by default (`capture_optional = True`),
-  making the CLI safe across heterogeneous cluster nodes. The process exits
-  with the highest returncode seen across all timed iterations.
+  (output is re-printed to the terminal unless `=suppress` is given);
+  use `--monitor-interval SECONDS` to sample child process CPU and memory
+  over time (see below). Capture failures are non-fatal by default
+  (`capture_optional = True`), making the CLI safe across heterogeneous
+  cluster nodes. The process exits with the highest returncode seen across
+  all timed iterations.
+
+- **CLI subprocess monitoring** (`--monitor-interval SECONDS`): periodically
+  sample the child process's CPU usage and resident memory (RSS) while it
+  runs and record the time series in `subprocess_monitor`. Requires
+  `psutil`. Each element of `subprocess_monitor` is a list of
+  `{"timestamp", "cpu_percent", "rss_bytes"}` dicts for one timed
+  iteration; warmup iterations are excluded. Works on Linux, macOS, and
+  Windows. If the process exits before the first sample fires, the field is
+  omitted rather than written as empty.
 
 - **`capture_optional` class attribute**: set `capture_optional = True` on
   a benchmark class to catch exceptions from `capture_` and `capturepost_`
