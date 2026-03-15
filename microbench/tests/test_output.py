@@ -18,7 +18,9 @@ from microbench import (
     MicroBench,
     Output,
     RedisOutput,
+    summary,
 )
+from microbench._output import _flatten_dict
 
 
 def test_env_vars_not_iterable():
@@ -92,14 +94,26 @@ def test_outfile_string_path():
 
 
 def test_get_results_without_pandas():
-    """get_results raises ImportError when pandas is unavailable."""
+    """get_results(format='df') raises ImportError when pandas is unavailable."""
     import microbench._output
 
     bench = MicroBench()
 
+    @bench
+    def noop():
+        pass
+
+    noop()
+
     with patch.object(microbench._output, 'pandas', None):
+        # Default format='dict' works without pandas
+        results = bench.get_results()
+        assert isinstance(results, list)
+        assert results[0]['function_name'] == 'noop'
+
+        # format='df' raises ImportError
         with pytest.raises(ImportError, match='pandas'):
-            bench.get_results()
+            bench.get_results(format='df')
 
 
 def test_multi_sink_output():
@@ -125,7 +139,7 @@ def test_multi_sink_output():
     noop()
 
     assert len(sink_a.records) == 2
-    results = sink_b.get_results()
+    results = sink_b.get_results(format='df')
     assert len(results) == 2
     assert (results['function_name'] == 'noop').all()
 
@@ -181,7 +195,7 @@ def test_redis_output_get_results():
 
         noop()
 
-        results = bench.get_results()
+        results = bench.get_results(format='df')
         assert results['function_name'][0] == 'noop'
         assert 'start_time' in results.columns
         assert 'finish_time' in results.columns
@@ -202,7 +216,7 @@ def test_redis_output_get_results_without_pandas():
 
         with patch.object(microbench._output, 'pandas', None):
             with pytest.raises(ImportError, match='pandas'):
-                bench.get_results()
+                bench.get_results(format='df')
 
 
 def test_redis_output_multiple_results():
@@ -224,7 +238,7 @@ def test_redis_output_multiple_results():
         func_a()
         func_b()
 
-        results = bench.get_results()
+        results = bench.get_results(format='df')
         assert len(results) == 2
         assert list(results['function_name']) == ['func_a', 'func_b']
 
@@ -248,7 +262,7 @@ def test_unjsonencodable_arg_kwarg_retval():
         assert len(w) == 3
         assert all(issubclass(w_.category, JSONEncodeWarning) for w_ in w)
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results['args'][0] == [_UNENCODABLE_PLACEHOLDER_VALUE]
     assert results['kwargs'][0] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
     assert results['return_value'][0] == _UNENCODABLE_PLACEHOLDER_VALUE
@@ -286,7 +300,7 @@ def test_custom_jsonencoder():
 
     dummy()
 
-    results = bench.get_results()
+    results = bench.get_results(format='df')
     assert results['return_value'][0] == str(obj)
 
 
@@ -305,3 +319,174 @@ def test_jsonencoder_timedelta_and_timezone():
     tz = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
     tz_str = encoder.default(tz)
     assert '05:30' in tz_str
+
+
+# ---------------------------------------------------------------------------
+# get_results format and flat tests
+# ---------------------------------------------------------------------------
+
+
+def test_get_results_default_returns_list_of_dicts():
+    """get_results() default returns a list of dicts without requiring pandas."""
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    noop()
+
+    results = bench.get_results()
+    assert isinstance(results, list)
+    assert len(results) == 2
+    assert all(isinstance(r, dict) for r in results)
+    assert results[0]['function_name'] == 'noop'
+
+
+def test_get_results_format_df_returns_dataframe():
+    """get_results(format='df') returns a pandas DataFrame."""
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    results = bench.get_results(format='df')
+    assert hasattr(results, 'columns')  # DataFrame duck-type check
+    assert results['function_name'][0] == 'noop'
+
+
+def test_get_results_invalid_format_raises():
+    """get_results() raises ValueError for an unrecognised format."""
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    with pytest.raises(ValueError, match='format'):
+        bench.get_results(format='csv')
+
+
+def test_flatten_dict_basic():
+    """_flatten_dict flattens nested dicts with dot-notation keys."""
+    d = {'a': {'b': 1, 'c': {'d': 2}}, 'e': 3}
+    assert _flatten_dict(d) == {'a.b': 1, 'a.c.d': 2, 'e': 3}
+
+
+def test_flatten_dict_non_dict_values_unchanged():
+    """_flatten_dict leaves non-dict values (lists, scalars) intact."""
+    d = {'a': [1, 2, 3], 'b': {'c': 'hello'}}
+    assert _flatten_dict(d) == {'a': [1, 2, 3], 'b.c': 'hello'}
+
+
+def test_get_results_flat_dict():
+    """get_results(flat=True) flattens nested fields into dot-notation keys."""
+    import unittest.mock
+
+    from microbench import MBSlurmInfo
+
+    class Bench(MicroBench, MBSlurmInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with unittest.mock.patch.dict(
+        os.environ, {'SLURM_JOB_ID': '42', 'SLURM_CPUS_ON_NODE': '8'}
+    ):
+        noop()
+
+    results = bench.get_results(flat=True)
+    assert isinstance(results, list)
+    # MBSlurmInfo strips SLURM_ prefix and lowercases; nested dict should be flattened
+    assert 'slurm.job_id' in results[0]
+    assert results[0]['slurm.job_id'] == '42'
+    assert 'slurm' not in results[0]
+
+
+def test_get_results_flat_df():
+    """get_results(format='df', flat=True) returns a flattened DataFrame."""
+    import unittest.mock
+
+    from microbench import MBSlurmInfo
+
+    class Bench(MicroBench, MBSlurmInfo):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with unittest.mock.patch.dict(os.environ, {'SLURM_JOB_ID': '99'}):
+        noop()
+
+    results = bench.get_results(format='df', flat=True)
+    assert 'slurm.job_id' in results.columns
+    assert results['slurm.job_id'][0] == '99'
+
+
+# ---------------------------------------------------------------------------
+# summary tests
+# ---------------------------------------------------------------------------
+
+
+def test_summary_function_prints(capsys):
+    """summary() prints min/mean/median/max/stdev of run_durations."""
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    noop()
+
+    summary(bench.get_results())
+    out = capsys.readouterr().out
+    assert 'n=2' in out
+    assert 'min=' in out
+    assert 'mean=' in out
+    assert 'median=' in out
+    assert 'max=' in out
+    assert 'stdev=' in out
+
+
+def test_summary_function_no_results(capsys):
+    """summary() prints a message when there are no run_durations."""
+    summary([{'function_name': 'noop'}])
+    out = capsys.readouterr().out
+    assert 'No run_durations' in out
+
+
+def test_summary_single_result_no_stdev(capsys):
+    """summary() prints nan for stdev when there is only one duration."""
+    summary([{'run_durations': [0.5]}])
+    out = capsys.readouterr().out
+    assert 'n=1' in out
+    assert 'stdev=nan' in out
+
+
+def test_bench_summary_method(capsys):
+    """bench.summary() is a convenience wrapper around summary()."""
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    bench.summary()
+    out = capsys.readouterr().out
+    assert 'n=1' in out

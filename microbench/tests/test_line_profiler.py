@@ -41,7 +41,7 @@ def test_line_profiler():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = lpbench.get_results()
+    results = lpbench.get_results(format='df')
     lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
     assert lp.__class__.__name__ == 'LineStats'
     MBLineProfiler.print_line_profile(results['line_profiler'][0])

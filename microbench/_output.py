@@ -1,9 +1,28 @@
 import io
+import json
 
 try:
     import pandas
 except ImportError:
     pandas = None
+
+
+def _flatten_dict(d, sep='.', _prefix=''):
+    """Recursively flatten a nested dict using dot-notation keys.
+
+    Example::
+
+        >>> _flatten_dict({'a': {'b': 1}, 'c': 2})
+        {'a.b': 1, 'c': 2}
+    """
+    out = {}
+    for k, v in d.items():
+        key = f'{_prefix}{sep}{k}' if _prefix else k
+        if isinstance(v, dict):
+            out.update(_flatten_dict(v, sep=sep, _prefix=key))
+        else:
+            out[key] = v
+    return out
 
 
 class Output:
@@ -28,12 +47,20 @@ class Output:
         """
         raise NotImplementedError
 
-    def get_results(self):
-        """Return all stored results as a pandas DataFrame.
+    def get_results(self, format='dict', flat=False):
+        """Return all stored results.
+
+        Args:
+            format (str): ``'dict'`` (default) returns a list of dicts;
+                ``'df'`` returns a pandas DataFrame (requires pandas).
+            flat (bool): If *True*, flatten nested dict fields into
+                dot-notation keys (e.g. ``slurm.job_id``). Works for
+                both formats and does not require pandas.
 
         Raises:
             NotImplementedError: If this sink does not support reading results.
-            ImportError: If pandas is not installed.
+            ImportError: If *format* is ``'df'`` and pandas is not installed.
+            ValueError: If *format* is not ``'dict'`` or ``'df'``.
         """
         raise NotImplementedError(
             f'{type(self).__name__} does not support get_results()'
@@ -69,12 +96,32 @@ class FileOutput(Output):
         else:
             self.outfile.write(bm_str)
 
-    def get_results(self):
-        if not pandas:
+    def get_results(self, format='dict', flat=False):
+        if format not in ('dict', 'df'):
+            raise ValueError(f"format must be 'dict' or 'df', got {format!r}")
+        if format == 'df' and not pandas:
             raise ImportError('This functionality requires the "pandas" package')
+
         if hasattr(self.outfile, 'seek'):
             self.outfile.seek(0)
-        return pandas.read_json(self.outfile, lines=True)
+            content = self.outfile.read()
+        else:
+            with open(self.outfile) as f:
+                content = f.read()
+
+        if format == 'df' and not flat:
+            return pandas.read_json(io.StringIO(content), lines=True)
+
+        lines = [line for line in content.splitlines() if line.strip()]
+        records = [json.loads(line) for line in lines]
+
+        if flat:
+            records = [_flatten_dict(r) for r in records]
+
+        if format == 'dict':
+            return records
+        else:  # format == 'df' and flat
+            return pandas.DataFrame(records)
 
 
 class RedisOutput(Output):
@@ -105,9 +152,25 @@ class RedisOutput(Output):
     def write(self, bm_json_str):
         self.rclient.rpush(self.redis_key, bm_json_str)
 
-    def get_results(self):
-        if not pandas:
+    def get_results(self, format='dict', flat=False):
+        if format not in ('dict', 'df'):
+            raise ValueError(f"format must be 'dict' or 'df', got {format!r}")
+        if format == 'df' and not pandas:
             raise ImportError('This functionality requires the "pandas" package')
+
         redis_data = self.rclient.lrange(self.redis_key, 0, -1)
-        json_data = '\n'.join(r.decode('utf8') for r in redis_data)
-        return pandas.read_json(io.StringIO(json_data), lines=True)
+        lines = [r.decode('utf8') for r in redis_data]
+
+        if format == 'df' and not flat:
+            json_data = '\n'.join(lines)
+            return pandas.read_json(io.StringIO(json_data), lines=True)
+
+        records = [json.loads(line) for line in lines]
+
+        if flat:
+            records = [_flatten_dict(r) for r in records]
+
+        if format == 'dict':
+            return records
+        else:  # format == 'df' and flat
+            return pandas.DataFrame(records)

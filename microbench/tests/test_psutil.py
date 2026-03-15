@@ -17,7 +17,7 @@ def test_psutil():
 
     test_func()
 
-    results = mybench.get_results()
+    results = mybench.get_results(format='df')
     # psutil.cpu_count(logical=True) can return None on some platforms
     # (e.g. macOS with psutil 7.x), so check that at least one is set
     logical = results['cpu_cores_logical'][0]

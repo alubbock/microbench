@@ -5,6 +5,7 @@ import inspect
 import json
 import os
 import signal
+import statistics as _statistics
 import sys
 import threading
 import time
@@ -67,6 +68,7 @@ _active_bm_data: contextvars.ContextVar = contextvars.ContextVar(
 __all__ = [
     # Core
     'MicroBench',
+    'summary',
     # Output sinks
     'Output',
     'FileOutput',
@@ -93,6 +95,47 @@ __all__ = [
     'JSONEncoder',
     'JSONEncodeWarning',
 ]
+
+
+def summary(results):
+    """Print summary statistics for ``run_durations`` across a list of results.
+
+    Requires no dependencies beyond the Python standard library.
+
+    Args:
+        results (list[dict]): Result dicts as returned by
+            :meth:`MicroBench.get_results` (default ``format='dict'``).
+
+    Example::
+
+        bench = MicroBench()
+
+        @bench
+        def my_function():
+            ...
+
+        my_function()
+        summary(bench.get_results())
+        # n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan
+    """
+    durations = []
+    for r in results:
+        durations.extend(r.get('run_durations', []))
+
+    n = len(durations)
+    if n == 0:
+        print('No run_durations found in results.')
+        return
+
+    stdev = _statistics.stdev(durations) if n > 1 else float('nan')
+    print(
+        f'n={n}  '
+        f'min={min(durations):.6f}  '
+        f'mean={_statistics.mean(durations):.6f}  '
+        f'median={_statistics.median(durations):.6f}  '
+        f'max={max(durations):.6f}  '
+        f'stdev={stdev:.6f}'
+    )
 
 
 class MicroBench:
@@ -281,17 +324,41 @@ class MicroBench:
         for output in self._outputs:
             output.write(bm_str)
 
-    def get_results(self):
-        """Return results from the first output sink that supports it."""
+    def get_results(self, format='dict', flat=False):
+        """Return results from the first output sink that supports it.
+
+        Args:
+            format (str): ``'dict'`` (default) returns a list of dicts;
+                ``'df'`` returns a pandas DataFrame (requires pandas).
+            flat (bool): If *True*, flatten nested dict fields into
+                dot-notation keys (e.g. ``slurm.job_id``). Works for
+                both formats and does not require pandas.
+
+        Returns:
+            list[dict] or pandas.DataFrame
+
+        Raises:
+            RuntimeError: If no configured sink supports reading results.
+            ImportError: If *format* is ``'df'`` and pandas is not installed.
+            ValueError: If *format* is not ``'dict'`` or ``'df'``.
+        """
         for output in self._outputs:
             try:
-                return output.get_results()
+                return output.get_results(format=format, flat=flat)
             except NotImplementedError:
                 continue
         raise RuntimeError(
             'None of the configured output sinks support get_results(). '
             'Use FileOutput or RedisOutput.'
         )
+
+    def summary(self):
+        """Print summary statistics for ``run_durations`` across all results.
+
+        Requires no dependencies beyond the Python standard library.
+        Reads results via :meth:`get_results`.
+        """
+        summary(self.get_results())
 
     def __call__(self, func):
         if inspect.iscoroutinefunction(func):
