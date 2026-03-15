@@ -1073,17 +1073,20 @@
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
   Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
-  alongside the standard timing fields. Use <code>--mixin MIXIN [MIXIN ...]</code> to
-  select metadata to capture (defaults to <code>MBHostInfo</code> and <code>MBSlurmInfo</code>); use
-  <code>--field KEY=VALUE</code> to attach extra labels; use <code>--iterations N</code> and
-  <code>--warmup N</code> for repeat timing; use <code>--stdout[=suppress]</code> and
-  <code>--stderr[=suppress]</code> to capture subprocess output into the record
-  (output is re-printed to the terminal unless <code>=suppress</code> is given);
-  use <code>--monitor-interval SECONDS</code> to sample child process CPU and memory
-  over time (see below). Capture failures are non-fatal by default
-  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
-  cluster nodes. The process exits with the highest returncode seen across
-  all timed iterations.</p>
+  alongside the standard timing fields. Mixins are specified by short
+  kebab-case names without the <code>MB</code> prefix (e.g. <code>host-info</code>,
+  <code>python-version</code>); original MB-prefixed names are also accepted. Use
+  <code>--mixin MIXIN [MIXIN ...]</code> to select metadata to capture (defaults to
+  <code>host-info</code>, <code>slurm-info</code>, and <code>loaded-modules</code>); use <code>--show-mixins</code> to
+  list all available mixins with descriptions; use <code>--field KEY=VALUE</code> to
+  attach extra labels; use <code>--iterations N</code> and <code>--warmup N</code> for repeat
+  timing; use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture
+  subprocess output into the record (output is re-printed to the terminal
+  unless <code>=suppress</code> is given); use <code>--monitor-interval SECONDS</code> to sample
+  child process CPU and memory over time (see below). Capture failures are
+  non-fatal by default (<code>capture_optional = True</code>), making the CLI safe
+  across heterogeneous cluster nodes. The process exits with the highest
+  returncode seen across all timed iterations.</p>
 </li>
 <li>
 <p><strong>CLI subprocess monitoring</strong> (<code>--monitor-interval SECONDS</code>): periodically
