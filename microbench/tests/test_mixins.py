@@ -610,12 +610,18 @@ def test_record_mblineprofiler_raises():
 # ---------------------------------------------------------------------------
 
 
+def _norm(path):
+    """Normalise path separators to '/' so cgroup mocks work on Windows too."""
+    return path.replace('\\', '/')
+
+
 def _make_cgroup_open(file_map):
     """Return a side_effect for builtins.open that serves canned file contents."""
 
     def _open(path, *args, **kwargs):
-        if path in file_map:
-            return mock_open(read_data=file_map[path])()
+        norm = _norm(path)
+        if norm in file_map:
+            return mock_open(read_data=file_map[norm])()
         raise FileNotFoundError(f'No mock for {path!r}')
 
     return _open
@@ -666,7 +672,7 @@ def test_cgroup_limits_v2_limited():
     with (
         patch('sys.platform', 'linux'),
         patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
-        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(_norm(p), False)),
     ):
         noop()
 
@@ -703,7 +709,7 @@ def test_cgroup_limits_v2_unlimited():
     with (
         patch('sys.platform', 'linux'),
         patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
-        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(_norm(p), False)),
     ):
         noop()
 
@@ -742,7 +748,7 @@ def test_cgroup_limits_v1_limited():
     with (
         patch('sys.platform', 'linux'),
         patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
-        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(_norm(p), False)),
     ):
         noop()
 
@@ -781,7 +787,7 @@ def test_cgroup_limits_v1_unlimited_cpu():
     with (
         patch('sys.platform', 'linux'),
         patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
-        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(_norm(p), False)),
     ):
         noop()
 
