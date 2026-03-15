@@ -32,6 +32,7 @@ except ImportError:
 from ._encoding import _UNENCODABLE_PLACEHOLDER_VALUE, JSONEncoder, JSONEncodeWarning
 from ._output import FileOutput, Output, RedisOutput
 from .mixins import (
+    MBCgroupLimits,
     MBCondaPackages,
     MBFileHash,
     MBFunctionCall,
@@ -80,6 +81,7 @@ __all__ = [
     'MBPeakMemory',
     'MBSlurmInfo',
     'MBLoadedModules',
+    'MBCgroupLimits',
     'MBGitInfo',
     'MBFileHash',
     'MBGlobalPackages',

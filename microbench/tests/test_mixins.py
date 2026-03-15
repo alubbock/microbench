@@ -1,11 +1,12 @@
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 import pandas
 import pytest
 
 from microbench import (
+    MBCgroupLimits,
     MBFileHash,
     MBGitInfo,
     MBInstalledPackages,
@@ -602,3 +603,211 @@ def test_record_mblineprofiler_raises():
     with pytest.raises(NotImplementedError, match='MBLineProfiler'):
         with bench.record('block'):
             pass
+
+
+# ---------------------------------------------------------------------------
+# MBCgroupLimits
+# ---------------------------------------------------------------------------
+
+
+def _make_cgroup_open(file_map):
+    """Return a side_effect for builtins.open that serves canned file contents."""
+
+    def _open(path, *args, **kwargs):
+        if path in file_map:
+            return mock_open(read_data=file_map[path])()
+        raise FileNotFoundError(f'No mock for {path!r}')
+
+    return _open
+
+
+def test_cgroup_limits_non_linux():
+    """Returns {} on non-Linux platforms."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with patch('sys.platform', 'win32'):
+        noop()
+
+    assert bench.get_results()['cgroup_limits'][0] == {}
+
+
+def test_cgroup_limits_v2_limited():
+    """cgroup v2: both CPU and memory limits set returns correct float and int."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    cgroup_path = '/system.slice/job_123'
+    file_map = {
+        '/proc/self/cgroup': f'0::{cgroup_path}\n',
+        f'/sys/fs/cgroup{cgroup_path}/cpu.max': '400000 100000\n',
+        f'/sys/fs/cgroup{cgroup_path}/memory.max': '17179869184\n',
+    }
+    exists_map = {
+        '/sys/fs/cgroup/cgroup.controllers': True,
+        f'/sys/fs/cgroup{cgroup_path}/cpu.max': True,
+        f'/sys/fs/cgroup{cgroup_path}/memory.max': True,
+    }
+
+    with (
+        patch('sys.platform', 'linux'),
+        patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+    ):
+        noop()
+
+    result = bench.get_results()['cgroup_limits'][0]
+    assert result['cpu_cores'] == 4.0
+    assert result['memory_bytes'] == 17179869184
+    assert result['cgroup_version'] == 2
+
+
+def test_cgroup_limits_v2_unlimited():
+    """cgroup v2: 'max' for both limits stores None for each field."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    cgroup_path = '/system.slice/job_456'
+    file_map = {
+        '/proc/self/cgroup': f'0::{cgroup_path}\n',
+        f'/sys/fs/cgroup{cgroup_path}/cpu.max': 'max 100000\n',
+        f'/sys/fs/cgroup{cgroup_path}/memory.max': 'max\n',
+    }
+    exists_map = {
+        '/sys/fs/cgroup/cgroup.controllers': True,
+        f'/sys/fs/cgroup{cgroup_path}/cpu.max': True,
+        f'/sys/fs/cgroup{cgroup_path}/memory.max': True,
+    }
+
+    with (
+        patch('sys.platform', 'linux'),
+        patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+    ):
+        noop()
+
+    result = bench.get_results()['cgroup_limits'][0]
+    assert result['cpu_cores'] is None
+    assert result['memory_bytes'] is None
+    assert result['cgroup_version'] == 2
+
+
+def test_cgroup_limits_v1_limited():
+    """cgroup v1: CPU quota and memory limit set returns correct values."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    job_path = '/slurm/uid_1000/job_99'
+    file_map = {
+        '/proc/self/cgroup': (f'9:cpuacct,cpu:{job_path}\n10:memory:{job_path}\n'),
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_quota_us': '200000\n',
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_period_us': '100000\n',
+        f'/sys/fs/cgroup/memory{job_path}/memory.limit_in_bytes': '8589934592\n',
+    }
+    exists_map = {
+        '/sys/fs/cgroup/cgroup.controllers': False,
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_quota_us': True,
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_period_us': True,
+        f'/sys/fs/cgroup/memory{job_path}/memory.limit_in_bytes': True,
+    }
+
+    with (
+        patch('sys.platform', 'linux'),
+        patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+    ):
+        noop()
+
+    result = bench.get_results()['cgroup_limits'][0]
+    assert result['cpu_cores'] == 2.0
+    assert result['memory_bytes'] == 8589934592
+    assert result['cgroup_version'] == 1
+
+
+def test_cgroup_limits_v1_unlimited_cpu():
+    """cgroup v1: quota -1 means unlimited CPU; cpu_cores is None."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    job_path = '/slurm/uid_1000/job_100'
+    file_map = {
+        '/proc/self/cgroup': f'9:cpuacct,cpu:{job_path}\n10:memory:{job_path}\n',
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_quota_us': '-1\n',
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_period_us': '100000\n',
+        f'/sys/fs/cgroup/memory{job_path}/memory.limit_in_bytes': '4294967296\n',
+    }
+    exists_map = {
+        '/sys/fs/cgroup/cgroup.controllers': False,
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_quota_us': True,
+        f'/sys/fs/cgroup/cpu{job_path}/cpu.cfs_period_us': True,
+        f'/sys/fs/cgroup/memory{job_path}/memory.limit_in_bytes': True,
+    }
+
+    with (
+        patch('sys.platform', 'linux'),
+        patch('builtins.open', side_effect=_make_cgroup_open(file_map)),
+        patch('os.path.exists', side_effect=lambda p: exists_map.get(p, False)),
+    ):
+        noop()
+
+    result = bench.get_results()['cgroup_limits'][0]
+    assert result['cpu_cores'] is None
+    assert result['memory_bytes'] == 4294967296
+    assert result['cgroup_version'] == 1
+
+
+def test_cgroup_limits_unavailable():
+    """Returns {} when the cgroup filesystem is not present."""
+
+    class Bench(MicroBench, MBCgroupLimits):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    with (
+        patch('sys.platform', 'linux'),
+        patch('os.path.exists', return_value=False),
+        patch('builtins.open', side_effect=FileNotFoundError('/proc/self/cgroup')),
+    ):
+        noop()
+
+    assert bench.get_results()['cgroup_limits'][0] == {}

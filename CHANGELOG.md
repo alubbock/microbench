@@ -39,6 +39,28 @@ All notable changes to microbench are documented here.
 
 ### New features
 
+- **`MBCgroupLimits`**: captures the CPU quota and memory limit enforced by
+  the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
+  v1 and v2). Fields in `cgroup_limits`: `cpu_cores` (float — quota ÷ period,
+  or `null` if unlimited), `memory_bytes` (int or `null` if unlimited),
+  `cgroup_version` (1 or 2). Returns `{}` on non-Linux systems or when the
+  cgroup filesystem is unavailable.
+
+  ```python
+  class Bench(MicroBench, MBSlurmInfo, MBCgroupLimits):
+      pass
+  ```
+
+  ```json
+  {
+    "cgroup_limits": {
+      "cpu_cores": 4.0,
+      "memory_bytes": 17179869184,
+      "cgroup_version": 2
+    }
+  }
+  ```
+
 - **`bench.time(name)` sub-timing API**: label phases inside a single benchmark
   record with named timing sections. Sub-timings accumulate in `mb_timings` as
   `[{"name": ..., "duration": ...}, ...]` in call order. Compatible with
