@@ -235,10 +235,8 @@ def test_cli_returncode_is_max_across_iterations():
 
 
 def test_cli_multiple_mixins():
-    """Multiple --mixin flags all take effect."""
-    _, record, _ = _run_main(
-        ['--mixin', 'MBHostInfo', '--mixin', 'MBPythonVersion', '--', 'true']
-    )
+    """Multiple space-separated mixins all take effect."""
+    _, record, _ = _run_main(['--mixin', 'MBHostInfo', 'MBPythonVersion', '--', 'true'])
 
     assert 'hostname' in record
     assert 'python_version' in record

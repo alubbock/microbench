@@ -110,13 +110,13 @@ def _build_parser(mixin_names):
     parser.add_argument(
         '--mixin',
         '-m',
-        action='append',
+        nargs='+',
         dest='mixins',
         metavar='MIXIN',
         choices=sorted(mixin_names),
         help=(
-            'Mixin to include. Replaces defaults when specified. '
-            'Can be repeated. Available: %(choices)s.'
+            'One or more mixins to include. Replaces defaults when specified. '
+            'Available: %(choices)s.'
         ),
     )
     parser.add_argument(

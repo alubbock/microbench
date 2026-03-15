@@ -169,8 +169,8 @@ All notable changes to microbench are documented here.
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
   Records `command`, `returncode` (list, one per timed iteration),
-  alongside the standard timing fields. Use `--mixin` to select metadata
-  to capture (defaults to `MBHostInfo` and `MBSlurmInfo`); use
+  alongside the standard timing fields. Use `--mixin MIXIN [MIXIN ...]` to
+  select metadata to capture (defaults to `MBHostInfo` and `MBSlurmInfo`); use
   `--field KEY=VALUE` to attach extra labels; use `--iterations N` and
   `--warmup N` for repeat timing; use `--stdout[=suppress]` and
   `--stderr[=suppress]` to capture subprocess output into the record

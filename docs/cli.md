@@ -19,7 +19,7 @@ python -m microbench [options] -- COMMAND [ARGS...]
 | Option | Description |
 |---|---|
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
-| `--mixin MIXIN` / `-m MIXIN` | Mixin to include. Replaces defaults when specified. Can be repeated. |
+| `--mixin MIXIN [MIXIN ...]` / `-m MIXIN [MIXIN ...]` | One or more mixins to include. Replaces defaults when specified. |
 | `--all` / `-a` | Include all available mixins. |
 | `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
@@ -87,9 +87,7 @@ A typical SLURM job script:
 
 python -m microbench \
     --outfile /scratch/$USER/results.jsonl \
-    --mixin MBHostInfo \
-    --mixin MBSlurmInfo \
-    --mixin MBHostCpuCores \
+    --mixin MBHostInfo MBSlurmInfo MBHostCpuCores \
     --field experiment=baseline \
     -- ./run_simulation.sh --steps 10000
 ```
