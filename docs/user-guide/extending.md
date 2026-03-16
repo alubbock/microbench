@@ -49,7 +49,7 @@ To expose configurable attributes as CLI flags, add a `cli_args` list of
 `__main__.py` are needed:
 
 ```python
-from microbench.mixins import CLIArg, _UNSET
+from microbench import CLIArg
 
 class MBOutputDir:
     """Record the output directory for this run."""

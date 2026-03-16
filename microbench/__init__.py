@@ -31,8 +31,8 @@ except ImportError:
         __version__ = 'unknown'
 
 from ._encoding import _UNENCODABLE_PLACEHOLDER_VALUE, JSONEncoder, JSONEncodeWarning
-from ._output import FileOutput, Output, RedisOutput
-from .mixins import (
+from ._mixins import (
+    CLIArg,
     MBCgroupLimits,
     MBCondaPackages,
     MBFileHash,
@@ -51,6 +51,7 @@ from .mixins import (
     MBWorkingDir,
     _MonitorThread,
 )
+from ._output import FileOutput, Output, RedisOutput
 
 # Generated once at import time; shared by all MicroBench instances in this
 # process, allowing records from independent bench suites to be correlated.
@@ -73,6 +74,8 @@ __all__ = [
     'Output',
     'FileOutput',
     'RedisOutput',
+    # Mixin authoring
+    'CLIArg',
     # Mixins
     'MBFunctionCall',
     'MBReturnValue',

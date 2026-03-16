@@ -468,7 +468,7 @@ def main(argv=None):
     )
 
     # Apply mixin-specific CLI arguments, using cli_defaults where not supplied.
-    from microbench.mixins import _UNSET
+    from microbench._mixins import _UNSET
 
     for name in mixin_names:
         for arg in getattr(mixin_map[name], 'cli_args', []):
