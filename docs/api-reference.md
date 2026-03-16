@@ -20,13 +20,7 @@
 
 ::: microbench.MBReturnValue
 
-::: microbench.MBPythonVersion
-
 ::: microbench.MBHostInfo
-
-::: microbench.MBHostCpuCores
-
-::: microbench.MBHostRamTotal
 
 ::: microbench.MBSlurmInfo
 

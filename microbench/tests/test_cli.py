@@ -157,7 +157,7 @@ def test_cli_show_mixins():
     assert exc.value.code == 0
     output = buf.getvalue()
     assert 'host-info' in output
-    assert 'python-version' in output
+    assert 'python-info' in output
     assert '--hash-file' in output  # mixin-specific arg shown under file-hash
     assert '--git-repo' in output  # mixin-specific arg shown under git-info
 
@@ -272,10 +272,10 @@ def test_cli_returncode_is_max_across_iterations():
 
 def test_cli_multiple_mixins():
     """Multiple space-separated mixins all take effect."""
-    _, record, _ = _run_main(['--mixin', 'MBHostInfo', 'MBPythonVersion', '--', 'true'])
+    _, record, _ = _run_main(['--mixin', 'MBHostInfo', 'MBPythonInfo', '--', 'true'])
 
     assert 'hostname' in record['host']
-    assert 'python_version' in record
+    assert 'version' in record['python']
 
 
 def test_cli_all_overrides_mixin():

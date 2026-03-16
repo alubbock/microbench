@@ -1,8 +1,7 @@
-import warnings
 from unittest.mock import patch
 
 import microbench.mixins
-from microbench import MBHostCpuCores, MBHostInfo, MBHostRamTotal, MicroBench
+from microbench import MBHostInfo, MicroBench
 
 
 def test_mbhostinfo_with_psutil():
@@ -53,45 +52,3 @@ def test_mbhostinfo_without_psutil():
     assert 'cpu_cores_logical' not in host
     assert 'cpu_cores_physical' not in host
     assert 'ram_total' not in host
-
-
-def test_mbhostcpucores_deprecated():
-    """MBHostCpuCores emits DeprecationWarning and still records the fields."""
-
-    class MyBench(MicroBench, MBHostCpuCores):
-        pass
-
-    mybench = MyBench()
-
-    @mybench
-    def test_func():
-        pass
-
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        test_func()
-
-    assert any(issubclass(warning.category, DeprecationWarning) for warning in w)
-    host = mybench.get_results()[0]['host']
-    assert 'cpu_cores_logical' in host
-    assert 'cpu_cores_physical' in host
-
-
-def test_mbhostramtotal_deprecated():
-    """MBHostRamTotal emits DeprecationWarning and still records ram_total."""
-
-    class MyBench(MicroBench, MBHostRamTotal):
-        pass
-
-    mybench = MyBench()
-
-    @mybench
-    def test_func():
-        pass
-
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        test_func()
-
-    assert any(issubclass(warning.category, DeprecationWarning) for warning in w)
-    assert mybench.get_results()[0]['host']['ram_total'] > 0
