@@ -47,6 +47,7 @@ from .mixins import (
     MBLoadedModules,
     MBNvidiaSmi,
     MBPeakMemory,
+    MBPythonInfo,
     MBPythonVersion,
     MBReturnValue,
     MBSlurmInfo,
@@ -68,6 +69,7 @@ _active_bm_data: contextvars.ContextVar = contextvars.ContextVar(
 
 __all__ = [
     # Core
+    'MicroBenchBase',
     'MicroBench',
     'summary',
     # Output sinks
@@ -77,6 +79,7 @@ __all__ = [
     # Mixins
     'MBFunctionCall',
     'MBReturnValue',
+    'MBPythonInfo',
     'MBPythonVersion',
     'MBHostInfo',
     'MBHostCpuCores',
@@ -140,7 +143,7 @@ def summary(results):
     )
 
 
-class MicroBench:
+class MicroBenchBase:
     def __init__(
         self,
         outfile=None,
@@ -839,3 +842,11 @@ class _TimingSection:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return self.__exit__(exc_type, exc_val, exc_tb)
+
+
+class MicroBench(MBPythonInfo, MicroBenchBase):
+    """Benchmark suite with :class:`MBPythonInfo` included by default.
+
+    Subclass this for typical usage. If you need a completely bare benchmark
+    class with no default mixins, subclass :class:`MicroBenchBase` instead.
+    """

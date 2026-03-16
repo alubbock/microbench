@@ -4,11 +4,16 @@ Mixins are classes that add metadata capture to a benchmark suite via
 multiple inheritance. Combine any number of mixins with `MicroBench`:
 
 ```python
-from microbench import MicroBench, MBPythonVersion, MBHostInfo, MBHostCpuCores
+from microbench import MicroBench, MBHostInfo, MBHostCpuCores
 
-class MyBench(MicroBench, MBPythonVersion, MBHostInfo, MBHostCpuCores):
+class MyBench(MicroBench, MBHostInfo, MBHostCpuCores):
     pass
 ```
+
+`MicroBench` already includes `MBPythonInfo` by default, so a `python` dict
+is present in every record without any extra mixin. Subclass
+`MicroBenchBase` instead if you want a completely bare benchmark class with
+no default captures.
 
 Python resolves method calls across multiple base classes using the **Method
 Resolution Order (MRO)** — a deterministic left-to-right search that ensures
@@ -23,7 +28,8 @@ combine any number of microbench mixins without conflicts, and their
 | *(none)* | `mb_run_id`, `mb_version`, `start_time`, `finish_time`, `run_durations`, `function_name`, `timestamp_tz`, `duration_counter` | — |
 | `MBFunctionCall` | `args`, `kwargs` | — |
 | `MBReturnValue` | `return_value` | — |
-| `MBPythonVersion` | `python_version`, `python_executable` | — |
+| `MBPythonInfo` | `python` dict: `version`, `prefix`, `executable` — **included in `MicroBench` by default** | — |
+| `MBPythonVersion` | `python_version`, `python_executable` — *deprecated, use `MBPythonInfo`* | — |
 | `MBHostInfo` | `hostname`, `operating_system` | — |
 | `MBHostCpuCores` | `cpu_cores_logical`, `cpu_cores_physical` | psutil |
 | `MBHostRamTotal` | `ram_total` (bytes) | psutil |
@@ -35,7 +41,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `package_versions` for every installed package | — |
-| `MBCondaPackages` | `conda_versions` for every package in the active conda environment | `conda` on PATH |
+| `MBCondaPackages` | `conda` dict with `name`, `path`, and `packages` (version dict) | `conda` on PATH or `CONDA_EXE` set |
 | `MBNvidiaSmi` | `nvidia_<attr>` per GPU (see below) | `nvidia-smi` on PATH |
 | `MBLineProfiler` | `line_profiler` (base64-encoded profile, see below) | line_profiler |
 | `MBFileHash` | `file_hashes` — SHA-256 checksum of each specified file | — |
@@ -444,7 +450,18 @@ class Bench(MicroBench, MBInstalledPackages):
 
 ### `MBCondaPackages`
 
-Captures all packages in the active conda environment using the `conda` CLI.
+Captures the active conda environment's identity and package list using the
+`conda` CLI. The active environment is determined by the `CONDA_PREFIX`
+environment variable, falling back to `sys.prefix` when it is unset.
+If `conda` is not on `PATH`, the `CONDA_EXE` environment variable is tried.
+
+Records two fields:
+
+A single `conda` dict with three keys:
+
+- `name` (`CONDA_DEFAULT_ENV`) — may be `None` if unset.
+- `path` (`CONDA_PREFIX`) — may be `None` if unset.
+- `packages` — dict mapping package name to version string.
 
 ```python
 class Bench(MicroBench, MBCondaPackages):

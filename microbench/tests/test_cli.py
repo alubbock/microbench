@@ -103,11 +103,21 @@ def test_cli_default_mixins_include_working_dir():
     assert record['working_dir'] == os.getcwd()
 
 
+def test_cli_default_mixins_include_python_info():
+    """Default configuration includes MBPythonInfo (python field)."""
+    _, record, _ = _run_main(['--', 'true'])
+
+    assert 'python' in record
+    assert 'version' in record['python']
+    assert 'prefix' in record['python']
+    assert 'executable' in record['python']
+
+
 def test_cli_explicit_mixin_replaces_defaults():
     """Specifying --mixin replaces the default mixin set."""
-    _, record, _ = _run_main(['--mixin', 'MBPythonVersion', '--', 'true'])
+    _, record, _ = _run_main(['--mixin', 'python-info', '--', 'true'])
 
-    assert 'python_version' in record
+    assert 'python' in record
     # Default mixins should not be present
     assert 'hostname' not in record
     assert 'slurm' not in record
