@@ -69,6 +69,19 @@ def _existing_dir(value):
     return value
 
 
+_NVIDIA_GPU_REGEX = re.compile(r'^[0-9A-Za-z\-:]+$')
+
+
+def _nvidia_gpu_id(value):
+    """argparse type: accept a GPU index, UUID, or PCI bus ID."""
+    if not _NVIDIA_GPU_REGEX.match(value):
+        raise argparse.ArgumentTypeError(
+            f'{value!r} is not a valid GPU ID. '
+            'Use a zero-based index, UUID, or PCI bus ID.'
+        )
+    return value
+
+
 class CLIArg:
     """Declares a CLI argument that sets a mixin attribute.
 
@@ -826,7 +839,32 @@ class MBNvidiaSmi:
 
     cli_compatible = True
     _nvidia_default_attributes = ('gpu_name', 'memory.total')
-    _nvidia_gpu_regex = re.compile(r'^[0-9A-Za-z\-:]+$')
+    _nvidia_gpu_regex = _NVIDIA_GPU_REGEX
+    cli_args = [
+        CLIArg(
+            flags=['--nvidia-attributes'],
+            dest='nvidia_attributes',
+            metavar='ATTR',
+            nargs='+',
+            help=(
+                'GPU attributes to query with nvidia-smi. '
+                'Run nvidia-smi --help-query-gpu for all names. '
+                'Default: gpu_name memory.total'
+            ),
+        ),
+        CLIArg(
+            flags=['--nvidia-gpus'],
+            dest='nvidia_gpus',
+            metavar='GPU',
+            nargs='+',
+            type=_nvidia_gpu_id,
+            help=(
+                'GPU IDs to query: zero-based indexes, UUIDs, or PCI bus IDs. '
+                'Run nvidia-smi -L to list UUIDs. '
+                'Default: all GPUs.'
+            ),
+        ),
+    ]
 
     def capture_nvidia(self, bm_data):
         nvidia_attributes = getattr(

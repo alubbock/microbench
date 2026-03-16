@@ -933,3 +933,107 @@ def test_cli_version(capsys):
         main(['--version'])
     assert exc.value.code == 0
     assert __version__ in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# Mixin CLI args: MBNvidiaSmi
+# ---------------------------------------------------------------------------
+
+_FAKE_NVIDIA_DEFAULT = b'GPU-abc123, Tesla T4, 16160 MiB\n'
+_FAKE_NVIDIA_SINGLE_ATTR = b'GPU-abc123, Tesla T4\n'
+_FAKE_NVIDIA_TWO_ATTR = b'GPU-abc123, Tesla T4, 300.00 W\n'
+
+
+def test_cli_nvidia_attributes_default():
+    """nvidia-smi uses default attributes when --nvidia-attributes is absent."""
+    with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_DEFAULT) as mock_co:
+        _, record, _ = _run_main(['--mixin', 'nvidia-smi', '--', 'true'])
+    cmd = mock_co.call_args[0][0]
+    assert '--query-gpu=uuid,gpu_name,memory.total' in cmd
+
+
+def test_cli_nvidia_attributes_custom():
+    """--nvidia-attributes changes the attributes queried from nvidia-smi."""
+    with patch(
+        'subprocess.check_output', return_value=_FAKE_NVIDIA_SINGLE_ATTR
+    ) as mock_co:
+        _, record, _ = _run_main(
+            ['--mixin', 'nvidia-smi', '--nvidia-attributes', 'gpu_name', '--', 'true']
+        )
+    cmd = mock_co.call_args[0][0]
+    assert '--query-gpu=uuid,gpu_name' in cmd
+    assert not any('memory.total' in arg for arg in cmd)
+
+
+def test_cli_nvidia_attributes_multiple():
+    """--nvidia-attributes accepts multiple space-separated attribute names."""
+    with patch(
+        'subprocess.check_output', return_value=_FAKE_NVIDIA_TWO_ATTR
+    ) as mock_co:
+        _, record, _ = _run_main(
+            [
+                '--mixin',
+                'nvidia-smi',
+                '--nvidia-attributes',
+                'gpu_name',
+                'power.draw',
+                '--',
+                'true',
+            ]
+        )
+    cmd = mock_co.call_args[0][0]
+    assert '--query-gpu=uuid,gpu_name,power.draw' in cmd
+
+
+def test_cli_nvidia_gpus_filters_devices():
+    """--nvidia-gpus passes the -i flag to nvidia-smi."""
+    with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_DEFAULT) as mock_co:
+        _, record, _ = _run_main(
+            ['--mixin', 'nvidia-smi', '--nvidia-gpus', '0', '--', 'true']
+        )
+    cmd = mock_co.call_args[0][0]
+    assert '-i' in cmd
+    assert cmd[cmd.index('-i') + 1] == '0'
+
+
+def test_cli_nvidia_gpus_multiple_devices():
+    """--nvidia-gpus with multiple IDs joins them with commas."""
+    with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_DEFAULT) as mock_co:
+        _, record, _ = _run_main(
+            ['--mixin', 'nvidia-smi', '--nvidia-gpus', '0', '1', '--', 'true']
+        )
+    cmd = mock_co.call_args[0][0]
+    assert '-i' in cmd
+    assert cmd[cmd.index('-i') + 1] == '0,1'
+
+
+def test_cli_nvidia_gpus_invalid_rejected():
+    """--nvidia-gpus rejects an ID containing whitespace."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'nvidia-smi', '--nvidia-gpus', 'invalid id', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_nvidia_attributes_without_mixin_errors():
+    """--nvidia-attributes without the nvidia-smi mixin is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'host-info', '--nvidia-attributes', 'gpu_name', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_nvidia_gpus_without_mixin_errors():
+    """--nvidia-gpus without the nvidia-smi mixin is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'host-info', '--nvidia-gpus', '0', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_show_mixins_includes_nvidia_flags():
+    """--show-mixins lists --nvidia-attributes and --nvidia-gpus under nvidia-smi."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit):
+            main(['--show-mixins'])
+    output = buf.getvalue()
+    assert '--nvidia-attributes' in output
+    assert '--nvidia-gpus' in output
