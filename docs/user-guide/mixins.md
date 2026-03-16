@@ -489,21 +489,9 @@ class Bench(MicroBench):
 
 ## NVIDIA GPU — `MBNvidiaSmi`
 
-Captures attributes for each installed GPU via `nvidia-smi`.
-
-By default captures `gpu_name` and `memory.total`. Customise with
-`nvidia_attributes`:
-
-```python
-from microbench import MicroBench, MBNvidiaSmi
-
-class GpuBench(MicroBench, MBNvidiaSmi):
-    nvidia_attributes = ('gpu_name', 'memory.total', 'pcie.link.width.max')
-    nvidia_gpus = ('GPU-abc123',)  # UUIDs preferred; omit to capture all
-```
-
-Results are stored in `nvidia` as a list of per-GPU dicts, each containing a
-`uuid` key plus one key per attribute, e.g.:
+Captures attributes for each installed GPU via `nvidia-smi`. Results are stored
+in `nvidia` as a list of per-GPU dicts, each containing a `uuid` key plus one
+key per queried attribute:
 
 ```json
 {
@@ -513,8 +501,47 @@ Results are stored in `nvidia` as a list of per-GPU dicts, each containing a
 }
 ```
 
-Run `nvidia-smi --help-query-gpu` for the full list of available attributes.
-Run `nvidia-smi -L` to list GPU UUIDs.
+### Choosing attributes
+
+By default, `gpu_name` and `memory.total` are captured. To record additional
+attributes — power draw, temperature, utilisation, etc. — set `nvidia_attributes`:
+
+```python
+from microbench import MicroBench, MBNvidiaSmi
+
+class GpuBench(MicroBench, MBNvidiaSmi):
+    nvidia_attributes = ('gpu_name', 'memory.total', 'power.draw', 'temperature.gpu')
+```
+
+Run `nvidia-smi --help-query-gpu` for the full list of available attribute names.
+
+**CLI:** `--nvidia-attributes gpu_name memory.total power.draw`
+
+### Selecting specific GPUs
+
+By default all installed GPUs are captured. To restrict to a subset, set
+`nvidia_gpus` to a list of GPU identifiers. Three formats are accepted:
+
+- **Zero-based index** — `0`, `1`, etc. Simple but can change after a reboot or
+  driver reset.
+- **UUID** — `GPU-abc123...` as reported by `nvidia-smi -L`. Stable across
+  reboots and recommended for reproducible results.
+- **PCI bus ID** — `00000000:01:00.0` format. Stable and unique when multiple
+  GPUs share the same model name.
+
+```python
+class GpuBench(MicroBench, MBNvidiaSmi):
+    nvidia_gpus = ('GPU-abc123def456',)   # single GPU by UUID
+```
+
+```python
+class GpuBench(MicroBench, MBNvidiaSmi):
+    nvidia_gpus = (0, 1)   # first two GPUs by index
+```
+
+Omit `nvidia_gpus` entirely to capture all GPUs.
+
+**CLI:** `--nvidia-gpus GPU-abc123def456` or `--nvidia-gpus 0 1`
 
 ## Line profiler — `MBLineProfiler`
 
