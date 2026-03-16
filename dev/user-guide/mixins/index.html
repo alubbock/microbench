@@ -1354,11 +1354,15 @@
 <h1 id="mixins">Mixins</h1>
 <p>Mixins are classes that add metadata capture to a benchmark suite via
 multiple inheritance. Combine any number of mixins with <code>MicroBench</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">):</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">):</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">pass</span>
 </code></pre></div>
+<p><code>MicroBench</code> already includes <code>MBPythonInfo</code> by default, so a <code>python</code> dict
+is present in every record without any extra mixin. Subclass
+<code>MicroBenchBase</code> instead if you want a completely bare benchmark class with
+no default captures.</p>
 <p>Python resolves method calls across multiple base classes using the <strong>Method
 Resolution Order (MRO)</strong> — a deterministic left-to-right search that ensures
 each class in the hierarchy is visited exactly once. This means you can
@@ -1390,8 +1394,13 @@ combine any number of microbench mixins without conflicts, and their
 <td>—</td>
 </tr>
 <tr>
+<td><code>MBPythonInfo</code></td>
+<td><code>python</code> dict: <code>version</code>, <code>prefix</code>, <code>executable</code> — <strong>included in <code>MicroBench</code> by default</strong></td>
+<td>—</td>
+</tr>
+<tr>
 <td><code>MBPythonVersion</code></td>
-<td><code>python_version</code>, <code>python_executable</code></td>
+<td><code>python_version</code>, <code>python_executable</code> — <em>deprecated, use <code>MBPythonInfo</code></em></td>
 <td>—</td>
 </tr>
 <tr>
@@ -1451,8 +1460,8 @@ combine any number of microbench mixins without conflicts, and their
 </tr>
 <tr>
 <td><code>MBCondaPackages</code></td>
-<td><code>conda_versions</code> for every package in the active conda environment</td>
-<td><code>conda</code> on PATH</td>
+<td><code>conda</code> dict with <code>name</code>, <code>path</code>, and <code>packages</code> (version dict)</td>
+<td><code>conda</code> on PATH or <code>CONDA_EXE</code> set</td>
 </tr>
 <tr>
 <td><code>MBNvidiaSmi</code></td>
@@ -1777,7 +1786,17 @@ many packages.</p>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
 <h3 id="mbcondapackages"><code>MBCondaPackages</code></h3>
-<p>Captures all packages in the active conda environment using the <code>conda</code> CLI.</p>
+<p>Captures the active conda environment's identity and package list using the
+<code>conda</code> CLI. The active environment is determined by the <code>CONDA_PREFIX</code>
+environment variable, falling back to <code>sys.prefix</code> when it is unset.
+If <code>conda</code> is not on <code>PATH</code>, the <code>CONDA_EXE</code> environment variable is tried.</p>
+<p>Records two fields:</p>
+<p>A single <code>conda</code> dict with three keys:</p>
+<ul>
+<li><code>name</code> (<code>CONDA_DEFAULT_ENV</code>) — may be <code>None</code> if unset.</li>
+<li><code>path</code> (<code>CONDA_PREFIX</code>) — may be <code>None</code> if unset.</li>
+<li><code>packages</code> — dict mapping package name to version string.</li>
+</ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>

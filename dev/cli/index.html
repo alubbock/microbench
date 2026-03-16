@@ -1028,12 +1028,14 @@
 <h1 id="command-line-interface">Command-line interface</h1>
 <p>Microbench can wrap any external command and record host metadata
 alongside timing, without writing any Python code:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 <p>This is particularly useful for SLURM jobs, shell scripts, or compiled
 executables where adding a Python decorator is not practical.</p>
+<p><code>python -m microbench</code> is equivalent and can be used when you need to
+select a specific Python interpreter explicitly.</p>
 <h2 id="usage">Usage</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python -m microbench [options] -- COMMAND [ARGS...]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench [options] -- COMMAND [ARGS...]
 </code></pre></div>
 <table>
 <thead>
@@ -1120,26 +1122,40 @@ executables where adding a Python decorator is not practical.</p>
 </tbody>
 </table>
 <h2 id="default-mixins">Default mixins</h2>
-<p>When no <code>--mixin</code> is specified, <code>host-info</code>, <code>slurm-info</code>,
+<p>When no <code>--mixin</code> is specified, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>,
 <code>loaded-modules</code>, and <code>working-dir</code> are included automatically, capturing
-hostname, operating system, all <code>SLURM_*</code> environment variables, the loaded
-Lmod/Environment Modules software stack, and the current working directory.
-All four degrade gracefully or produce stable values outside their respective
+the Python interpreter version, prefix, and executable path; hostname and
+operating system; all <code>SLURM_*</code> environment variables; the loaded
+Lmod/Environment Modules software stack; and the current working directory.
+All five degrade gracefully or produce stable values outside their respective
 environments.</p>
 <p>Mixin names use a short kebab-case form without the <code>MB</code> prefix
 (e.g. <code>host-info</code> instead of <code>MBHostInfo</code>). MB-prefixed names are also
 accepted for convenience. Run <code>--show-mixins</code> to list all available
 mixins with descriptions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--show-mixins
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>microbench<span class="w"> </span>--show-mixins
 </code></pre></div>
 <p>Specifying <code>--mixin</code> replaces the defaults entirely. Use <code>--no-mixin</code> to
 disable all mixins and record only timing and command fields:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Only Python version — no host info or SLURM</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--mixin<span class="w"> </span>python-version<span class="w"> </span>--<span class="w"> </span>./job.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Only Python info — no host info or SLURM</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>python-info<span class="w"> </span>--<span class="w"> </span>./job.sh
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># No mixins at all — timing and command only</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Python-environment mixins</p>
+<p><code>python-info</code> and <code>installed-packages</code> capture the <strong>microbench
+process's</strong> Python interpreter. In typical usage (microbench installed
+in the same environment as the benchmarked code) this is exactly what
+you want. If you need to target a different interpreter, invoke
+microbench via it: <code>python -m microbench --mixin python-info -- ./job.sh</code>.</p>
+<p><code>conda-packages</code> queries the environment identified by <code>CONDA_PREFIX</code>
+(the shell's active conda environment), not <code>sys.prefix</code>, so it
+captures the correct environment even when microbench's Python lives
+elsewhere (e.g. in base). Package versions are stored under
+<code>conda.packages</code> alongside <code>conda.name</code> and <code>conda.path</code>.</p>
+</div>
 <p>See <a href="../user-guide/mixins/">Mixins</a> for details on each.</p>
 <h2 id="mixin-options">Mixin options</h2>
 <p>Some mixins expose their own CLI flags for configuration. These are shown
@@ -1200,7 +1216,7 @@ to use across heterogeneous cluster nodes.</p>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">#SBATCH --job-name=my-sim</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1">#SBATCH --output=slurm-%j.out</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>microbench<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>host-cpu-cores<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
@@ -1219,7 +1235,7 @@ ID, node list, etc.) alongside the wall-clock time of the simulation.</p>
 <p>Use <code>--iterations</code> to run the command multiple times within a single record.
 This is useful when the command is short-lived and you want to amortise
 per-record overhead or reduce timing noise:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span>--warmup<span class="w"> </span><span class="m">2</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>microbench<span class="w"> </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span>--warmup<span class="w"> </span><span class="m">2</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 <p>With 10 iterations and 2 warmup runs, the record contains:</p>
 <ul>
@@ -1237,7 +1253,7 @@ writing to a TTY. Output will still stream to the terminal in real time
 from microbench's perspective, but the subprocess itself may batch writes
 into larger chunks. Use <code>stdbuf -oL</code> (Linux) or the program's own
 unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--stdout<span class="w"> </span>--<span class="w"> </span>stdbuf<span class="w"> </span>-oL<span class="w"> </span>./run_simulation.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>microbench<span class="w"> </span>--stdout<span class="w"> </span>--<span class="w"> </span>stdbuf<span class="w"> </span>-oL<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 </div>
 <p>To detect failed iterations when analysing results with pandas:</p>
@@ -1245,7 +1261,7 @@ unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p
 </code></pre></div>
 <h2 id="extra-metadata">Extra metadata</h2>
 <p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>microbench<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
@@ -1256,7 +1272,7 @@ unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p
 <p>Use <code>--monitor-interval SECONDS</code> to periodically sample the child process
 while it runs. This requires the <a href="https://psutil.readthedocs.io/"><code>psutil</code></a>
 package (<code>pip install psutil</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>microbench<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>

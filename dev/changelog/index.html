@@ -728,10 +728,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking changes
+        Breaking changes (vs v1.1.0)
       
     </span>
   </a>
@@ -829,10 +829,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking changes
+        Breaking changes (vs v1.1.0)
       
     </span>
   </a>
@@ -906,7 +906,7 @@
 <h1 id="changelog">Changelog</h1>
 <p>All notable changes to microbench are documented here.</p>
 <h2 id="200-unreleased">[2.0.0] - unreleased</h2>
-<h3 id="breaking-changes">Breaking changes</h3>
+<h3 id="breaking-changes-vs-v110">Breaking changes (vs v1.1.0)</h3>
 <ul>
 <li>
 <p><strong><code>get_results()</code> now returns a list of dicts by default</strong>: The default
@@ -1067,6 +1067,41 @@
   written before the exception propagates. An <code>exception</code> field is added
   containing <code>{"type": ..., "message": ...}</code>. The exception is always
   re-raised. With <code>--iterations N</code>, timing stops at the first exception.</p>
+</li>
+<li>
+<p><strong><code>microbench</code> console entry point</strong>: <code>microbench</code> is now available as a
+  shell command after installation — no need to spell out <code>python -m microbench</code>.
+  <code>python -m microbench</code> remains fully equivalent and is still the recommended
+  form when you need to select a specific Python interpreter explicitly.</p>
+</li>
+<li>
+<p><strong><code>MBPythonInfo</code> mixin</strong> replaces <code>MBPythonVersion</code>: records a <code>python</code> dict
+  with <code>version</code>, <code>prefix</code> (<code>sys.prefix</code>), and <code>executable</code> (<code>sys.executable</code>),
+  giving a complete picture of the running interpreter in one field. <code>MBPythonVersion</code>
+  is deprecated and will be removed in a future release. <code>MBPythonInfo</code> is included
+  in :class:<code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
+  <code>--no-mixin</code> suppresses it on the CLI as usual.</p>
+</li>
+<li>
+<p><strong><code>MicroBenchBase</code></strong>: the core benchmarking machinery is now exposed as
+  <code>MicroBenchBase</code> (no default mixins). <code>MicroBench</code> inherits from both
+  <code>MicroBenchBase</code> and <code>MBPythonInfo</code>. Subclass <code>MicroBenchBase</code> directly when
+  you need a completely bare benchmark class with no automatic captures.</p>
+</li>
+<li>
+<p><strong><code>MBCondaPackages</code> improvements</strong>:</p>
+</li>
+<li>Queries the environment identified by <code>CONDA_PREFIX</code> (the shell's active conda
+    environment) rather than <code>sys.prefix</code>. Falls back to <code>sys.prefix</code> when
+    <code>CONDA_PREFIX</code> is not set.</li>
+<li>Falls back to <code>CONDA_EXE</code> if <code>conda</code> is not on <code>PATH</code> (common in non-interactive
+    SLURM batch scripts where conda is activated but its <code>bin/</code> is not on <code>PATH</code>).</li>
+<li>
+<p>Replaces the separate <code>conda_versions</code> field with a unified <code>conda</code> dict
+    containing <code>name</code> (<code>CONDA_DEFAULT_ENV</code>), <code>path</code> (<code>CONDA_PREFIX</code>), and
+    <code>packages</code> (the version dict). Either of <code>name</code>/<code>path</code> may be <code>None</code> if
+    the corresponding variable is unset. With <code>get_results(flat=True)</code> these
+    expand to <code>conda.name</code>, <code>conda.path</code>, <code>conda.packages.&lt;pkg&gt;</code> etc.</p>
 </li>
 <li>
 <p><strong>Command-line interface</strong> (<code>python -m microbench</code>): wrap any external
