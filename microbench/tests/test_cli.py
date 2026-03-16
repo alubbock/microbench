@@ -475,6 +475,13 @@ def test_cli_no_mixin_overrides_mixin():
     assert 'hostname' not in record
 
 
+def test_cli_all_and_no_mixin_are_mutually_exclusive():
+    """--all and --no-mixin cannot be used together."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--all', '--no-mixin', '--', 'true'])
+    assert exc.value.code != 0
+
+
 # ---------------------------------------------------------------------------
 # --monitor-interval tests
 # ---------------------------------------------------------------------------
