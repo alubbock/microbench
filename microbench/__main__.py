@@ -66,6 +66,48 @@ def _make_mixin_type(mixin_map):
     return _parse
 
 
+def _show_dry_run(args, cmd, mixin_names, mixin_map):
+    """Print a summary of the resolved configuration and exit."""
+    lines = ['Dry run — command will not be executed.\n']
+    lines.append(f'  Command:    {" ".join(cmd)}')
+    lines.append(f'  Output:     {args.outfile or "stdout"}')
+    lines.append(f'  Mixins:     {", ".join(mixin_names) if mixin_names else "none"}')
+
+    # Mixin-specific settings that were explicitly supplied on the command line.
+    for name in mixin_names:
+        for arg in getattr(mixin_map[name], 'cli_args', []):
+            val = getattr(args, arg.dest, None)
+            if val is not None:
+                flag = arg.flags[0]
+                val_str = (
+                    ' '.join(str(v) for v in val) if isinstance(val, list) else val
+                )
+                lines.append(f'    {flag} {val_str}')
+
+    iters = str(args.iterations)
+    if args.warmup:
+        iters += f' (+{args.warmup} warmup)'
+    lines.append(f'  Iterations: {iters}')
+
+    capture = [
+        f for f, v in (('--stdout', args.stdout), ('--stderr', args.stderr)) if v
+    ]
+    if capture:
+        lines.append(f'  Capture:    {" ".join(capture)}')
+
+    if args.timeout is not None:
+        grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
+        lines.append(f'  Timeout:    {args.timeout}s (grace period: {grace}s)')
+
+    if args.monitor_interval is not None:
+        lines.append(f'  Monitor:    every {args.monitor_interval}s')
+
+    if args.fields:
+        lines.append(f'  Fields:     {", ".join(args.fields)}')
+
+    print('\n'.join(lines))
+
+
 def _show_mixins(mixin_map):
     """Print a table of available CLI-compatible mixins and their descriptions."""
     default_set = set(_DEFAULT_MIXINS)
@@ -200,6 +242,14 @@ def _build_parser(mixin_map):
         '--show-mixins',
         action='store_true',
         help='List available mixins with descriptions and exit.',
+    )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help=(
+            'Print the resolved configuration (command, mixins, settings) '
+            'and exit without running the command.'
+        ),
     )
     mixin_scope = parser.add_mutually_exclusive_group()
     mixin_scope.add_argument(
@@ -379,6 +429,10 @@ def main(argv=None):
             import psutil  # noqa: F401
         except ImportError:
             parser.error('--monitor-interval requires the "psutil" package.')
+
+    if args.dry_run:
+        _show_dry_run(args, cmd, mixin_names, mixin_map)
+        sys.exit(0)
 
     from microbench import FileOutput, MicroBench
 
