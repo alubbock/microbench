@@ -31,7 +31,7 @@ microbench [options] -- COMMAND [ARGS...]
 | `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--timeout SECONDS` | Send SIGTERM to the command after SECONDS seconds per iteration. If the process has not exited after an additional grace period (default 5 s, see `--timeout-grace-period`), send SIGKILL. Timed-out iterations are recorded with `call.timed_out = true`. |
-| `--timeout-grace-period SECONDS` | Seconds to wait after SIGTERM before sending SIGKILL. Only relevant when `--timeout` is set. Default: 5. |
+| `--timeout-grace-period SECONDS` | Seconds to wait after SIGTERM before sending SIGKILL. Requires `--timeout`. Default: 5. |
 | `--monitor-interval SECONDS` | Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires `psutil`. See [Subprocess monitoring](#subprocess-monitoring) below. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 

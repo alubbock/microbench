@@ -861,6 +861,13 @@ def test_cli_hash_algorithm(tmp_path):
     assert sha256_hex != md5_hex
 
 
+def test_cli_timeout_grace_period_requires_timeout():
+    """--timeout-grace-period without --timeout is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--timeout-grace-period', '10', '--', 'sleep', '1'])
+    assert exc.value.code != 0
+
+
 def test_cli_timeout_not_exceeded():
     """--timeout that does not fire produces a normal record with no timed_out field."""
     mock_proc = _make_mock_popen()

@@ -282,11 +282,11 @@ def _build_parser(mixin_map):
     parser.add_argument(
         '--timeout-grace-period',
         type=_positive_float,
-        default=_SIGTERM_GRACE_PERIOD,
+        default=None,
         metavar='SECONDS',
         help=(
             f'Seconds to wait after SIGTERM before sending SIGKILL. '
-            f'Only relevant when --timeout is used. Default: {_SIGTERM_GRACE_PERIOD}.'
+            f'Requires --timeout. Default: {_SIGTERM_GRACE_PERIOD}.'
         ),
     )
     parser.add_argument(
@@ -370,6 +370,9 @@ def main(argv=None):
             parser.error(f'Invalid --field: {field!r}. Use KEY=VALUE.')
         k, v = field.split('=', 1)
         extra_fields[k] = v
+
+    if args.timeout_grace_period is not None and args.timeout is None:
+        parser.error('--timeout-grace-period requires --timeout.')
 
     if args.monitor_interval is not None:
         try:
@@ -522,7 +525,8 @@ def main(argv=None):
                 timed_out = True
                 proc.terminate()
                 try:
-                    proc.wait(timeout=args.timeout_grace_period)
+                    grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
+                    proc.wait(timeout=grace)
                 except subprocess.TimeoutExpired:
                     proc.kill()
                     proc.wait()
