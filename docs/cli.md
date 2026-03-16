@@ -28,6 +28,7 @@ microbench [options] -- COMMAND [ARGS...]
 | `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
+| `--dry-run` | Print the resolved configuration and exit without running the command. |
 | `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--timeout SECONDS` | Send SIGTERM to the command after SECONDS seconds per iteration. If the process has not exited after an additional grace period (default 5 s, see `--timeout-grace-period`), send SIGKILL. Timed-out iterations are recorded with `call.timed_out = true`. |
@@ -252,6 +253,36 @@ df['any_timed_out'] = df['call.timed_out'].notna()
 ```
 
 The `call.returncode` for a SIGTERM-killed process will be `-15`; for SIGKILL, `-9`.
+
+## Dry run
+
+Use `--dry-run` to verify your configuration without actually running the command:
+
+```bash
+microbench \
+    --dry-run \
+    --outfile /scratch/$USER/results.jsonl \
+    --mixin host-info slurm-info nvidia-smi \
+    --nvidia-attributes gpu_name power.draw \
+    --iterations 10 \
+    -- ./run_simulation.sh --steps 1000
+```
+
+Example output:
+
+```
+Dry run — command will not be executed.
+
+  Command:    ./run_simulation.sh --steps 1000
+  Output:     /scratch/user/results.jsonl
+  Mixins:     host-info, nvidia-smi, slurm-info
+    --nvidia-attributes gpu_name power.draw
+  Iterations: 10
+```
+
+All argument validation still runs, so `--dry-run` will catch errors like a
+missing `--timeout` when `--timeout-grace-period` is given, or a `--hash-file`
+path that does not exist.
 
 ## Extra metadata
 

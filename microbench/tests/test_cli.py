@@ -936,6 +936,123 @@ def test_cli_version(capsys):
 
 
 # ---------------------------------------------------------------------------
+# --dry-run
+# ---------------------------------------------------------------------------
+
+
+def test_cli_dry_run_exits_zero(capsys):
+    """--dry-run exits 0 and does not write a JSONL record."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--dry-run', '--', 'sleep', '1'])
+    assert exc.value.code == 0
+
+
+def test_cli_dry_run_no_subprocess(capsys):
+    """--dry-run does not execute the command."""
+    with patch('subprocess.run') as mock_run:
+        with patch('subprocess.Popen') as mock_popen:
+            with pytest.raises(SystemExit):
+                main(['--dry-run', '--', 'sleep', '1'])
+    mock_run.assert_not_called()
+    mock_popen.assert_not_called()
+
+
+def test_cli_dry_run_shows_command(capsys):
+    """--dry-run output includes the command."""
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--', 'sleep', '1'])
+    assert 'sleep 1' in capsys.readouterr().out
+
+
+def test_cli_dry_run_shows_mixins(capsys):
+    """--dry-run output lists the active mixins."""
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--mixin', 'host-info', 'python-info', '--', 'true'])
+    out = capsys.readouterr().out
+    assert 'host-info' in out
+    assert 'python-info' in out
+
+
+def test_cli_dry_run_no_mixin(capsys):
+    """--dry-run with --no-mixin shows 'none' for mixins."""
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--no-mixin', '--', 'true'])
+    assert 'none' in capsys.readouterr().out
+
+
+def test_cli_dry_run_shows_iterations(capsys):
+    """--dry-run output includes iteration and warmup counts."""
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--iterations', '5', '--warmup', '2', '--', 'true'])
+    out = capsys.readouterr().out
+    assert '5' in out
+    assert '2' in out
+
+
+def test_cli_dry_run_shows_output_file(capsys, tmp_path):
+    """--dry-run output includes the output file path."""
+    outfile = str(tmp_path / 'results.jsonl')
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--outfile', outfile, '--', 'true'])
+    assert outfile in capsys.readouterr().out
+
+
+def test_cli_dry_run_shows_timeout(capsys):
+    """--dry-run output includes timeout settings."""
+    with pytest.raises(SystemExit):
+        main(
+            [
+                '--dry-run',
+                '--timeout',
+                '60',
+                '--timeout-grace-period',
+                '10',
+                '--',
+                'true',
+            ]
+        )
+    out = capsys.readouterr().out
+    assert '60' in out
+    assert '10' in out
+
+
+def test_cli_dry_run_shows_mixin_specific_args(capsys):
+    """--dry-run shows mixin-specific flags that were explicitly set."""
+    with patch('subprocess.check_output'):
+        with pytest.raises(SystemExit):
+            main(
+                [
+                    '--dry-run',
+                    '--mixin',
+                    'nvidia-smi',
+                    '--nvidia-attributes',
+                    'gpu_name',
+                    'power.draw',
+                    '--',
+                    'true',
+                ]
+            )
+    out = capsys.readouterr().out
+    assert '--nvidia-attributes' in out
+    assert 'gpu_name' in out
+    assert 'power.draw' in out
+
+
+def test_cli_dry_run_validates_args(capsys):
+    """--dry-run validates arguments; --timeout-grace-period requires --timeout."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--dry-run', '--timeout-grace-period', '10', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_dry_run_shows_fields(capsys):
+    """--dry-run output includes --field values."""
+    with pytest.raises(SystemExit):
+        main(['--dry-run', '--field', 'experiment=run-1', '--', 'true'])
+    assert 'experiment=run-1' in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
 # Mixin CLI args: MBNvidiaSmi
 # ---------------------------------------------------------------------------
 
