@@ -30,6 +30,8 @@ microbench [options] -- COMMAND [ARGS...]
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
 | `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
+| `--timeout SECONDS` | Send SIGTERM to the command after SECONDS seconds per iteration. If the process has not exited after an additional grace period (default 5 s, see `--timeout-grace-period`), send SIGKILL. Timed-out iterations are recorded with `call.timed_out = true`. |
+| `--timeout-grace-period SECONDS` | Seconds to wait after SIGTERM before sending SIGKILL. Requires `--timeout`. Default: 5. |
 | `--monitor-interval SECONDS` | Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires `psutil`. See [Subprocess monitoring](#subprocess-monitoring) below. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
@@ -45,6 +47,7 @@ Every record contains the standard `mb.*` and `call.*` fields plus:
 | `call.name` | Basename of the executable, e.g. `"run_sim.sh"`. |
 | `call.command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
 | `call.returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
+| `call.timed_out` | *(present only when `--timeout` fires)* `true` when at least one timed iteration was killed due to the timeout. Absent on normal completion. |
 | `call.monitor` | *(present only with `--monitor-interval`)* List of per-iteration sample lists. See [Subprocess monitoring](#subprocess-monitoring). |
 
 ## Default mixins
@@ -205,6 +208,33 @@ To detect failed iterations when analysing results with pandas (using `flat=True
 ```python
 df['any_failed'] = df['call.returncode'].apply(lambda rc: max(rc) != 0)
 ```
+
+## Timeout
+
+Use `--timeout SECONDS` to limit how long each iteration is allowed to run:
+
+```bash
+microbench --timeout 120 -- ./run_simulation.sh
+```
+
+After `SECONDS` seconds, microbench sends **SIGTERM** to the process. If the
+process has not exited after an additional grace period (default 5 s), **SIGKILL**
+is sent. The SIGTERM window gives well-behaved processes a chance to flush output
+and write partial results before being force-killed. Use `--timeout-grace-period`
+to adjust the gap between SIGTERM and SIGKILL:
+
+```bash
+microbench --timeout 120 --timeout-grace-period 30 -- ./run_simulation.sh
+```
+
+The record is always written, even for timed-out iterations. Detect timeouts in
+analysis with:
+
+```python
+df['any_timed_out'] = df['call.timed_out'].notna()
+```
+
+The `call.returncode` for a SIGTERM-killed process will be `-15`; for SIGKILL, `-9`.
 
 ## Extra metadata
 
