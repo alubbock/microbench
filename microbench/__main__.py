@@ -226,6 +226,32 @@ def _build_parser(mixin_map):
         help='Append results to FILE (JSONL format). Defaults to stdout.',
     )
     parser.add_argument(
+        '--http-output',
+        metavar='URL',
+        help=(
+            'POST each record as JSON to URL. '
+            'Can be combined with --outfile to write to both destinations.'
+        ),
+    )
+    parser.add_argument(
+        '--http-output-header',
+        metavar='KEY:VALUE',
+        action='append',
+        dest='http_output_headers',
+        help=(
+            'Extra HTTP header for --http-output (repeatable). '
+            'Use for authentication, e.g. '
+            '"Authorization:Bearer $TOKEN". '
+            'Requires --http-output.'
+        ),
+    )
+    parser.add_argument(
+        '--http-output-method',
+        metavar='METHOD',
+        default='POST',
+        help='HTTP method for --http-output. Defaults to POST. Requires --http-output.',
+    )
+    parser.add_argument(
         '--mixin',
         '-m',
         nargs='+',
@@ -424,6 +450,11 @@ def main(argv=None):
     if args.timeout_grace_period is not None and args.timeout is None:
         parser.error('--timeout-grace-period requires --timeout.')
 
+    if args.http_output_headers is not None and args.http_output is None:
+        parser.error('--http-output-header requires --http-output.')
+    if args.http_output_method != 'POST' and args.http_output is None:
+        parser.error('--http-output-method requires --http-output.')
+
     if args.monitor_interval is not None:
         try:
             import psutil  # noqa: F401
@@ -434,7 +465,7 @@ def main(argv=None):
         _show_dry_run(args, cmd, mixin_names, mixin_map)
         sys.exit(0)
 
-    from microbench import FileOutput, MicroBench
+    from microbench import FileOutput, HttpOutput, MicroBench
 
     class _MBSubprocessResult:
         def capture_subprocess_reset(self, bm_data):
@@ -484,9 +515,28 @@ def main(argv=None):
                     else arg.cli_default,
                 )
 
-    output = FileOutput(args.outfile) if args.outfile else FileOutput(sys.stdout)
+    outputs = []
+    if args.outfile:
+        outputs.append(FileOutput(args.outfile))
+    if args.http_output:
+        http_headers = {}
+        for h in args.http_output_headers or []:
+            if ':' not in h:
+                parser.error(f'--http-output-header: expected KEY:VALUE, got {h!r}')
+            k, v = h.split(':', 1)
+            http_headers[k.strip()] = v.strip()
+        outputs.append(
+            HttpOutput(
+                args.http_output,
+                headers=http_headers or None,
+                method=args.http_output_method,
+            )
+        )
+    if not outputs:
+        outputs.append(FileOutput(sys.stdout))
+
     bench = BenchClass(
-        outputs=[output],
+        outputs=outputs,
         iterations=args.iterations,
         warmup=args.warmup,
         **extra_fields,

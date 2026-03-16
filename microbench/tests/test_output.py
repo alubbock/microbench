@@ -1,6 +1,11 @@
 import datetime
+import io
+import json
 import os
+import socket
 import tempfile
+import urllib.error
+import urllib.request
 import warnings
 from unittest.mock import MagicMock, patch
 
@@ -10,6 +15,7 @@ import pytest
 from microbench import (
     _UNENCODABLE_PLACEHOLDER_VALUE,
     FileOutput,
+    HttpOutput,
     JSONEncoder,
     JSONEncodeWarning,
     MBFunctionCall,
@@ -489,3 +495,289 @@ def test_bench_summary_method(capsys):
     bench.summary()
     out = capsys.readouterr().out
     assert 'n=1' in out
+
+
+# ---------------------------------------------------------------------------
+# HttpOutput tests
+# ---------------------------------------------------------------------------
+
+_HTTP_URL = 'https://example.com/webhook'
+
+
+def _make_urlopen_mock(status=200):
+    """Return a mock for urllib.request.urlopen that returns *status*."""
+    mock_response = MagicMock()
+    mock_response.status = status
+    mock_response.__enter__ = lambda s: s
+    mock_response.__exit__ = MagicMock(return_value=False)
+    return MagicMock(return_value=mock_response)
+
+
+def _make_http_error(code):
+    """Return a urllib.error.HTTPError with the given status code."""
+    return urllib.error.HTTPError(
+        url=_HTTP_URL,
+        code=code,
+        msg=f'HTTP {code}',
+        hdrs=None,
+        fp=io.BytesIO(b''),
+    )
+
+
+def test_http_output_posts_json():
+    """write() POSTs a valid JSON body with Content-Type application/json."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{"call": {"name": "noop"}}')
+
+    mock_urlopen.assert_called_once()
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_full_url() == _HTTP_URL
+    assert req.get_header('Content-type') == 'application/json'
+    body = json.loads(req.data)
+    assert body['call']['name'] == 'noop'
+
+
+def test_http_output_posts_to_correct_url():
+    """write() sends the request to exactly the URL given at construction."""
+    target = 'https://hooks.example.org/events'
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(target)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{"x": 1}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_full_url() == target
+
+
+def test_http_output_default_method_is_post():
+    """HttpOutput uses POST by default."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_method() == 'POST'
+
+
+def test_http_output_custom_method():
+    """method='PUT' is used when specified."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL, method='PUT')
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_method() == 'PUT'
+
+
+def test_http_output_custom_headers():
+    """Extra headers= dict is merged and sent."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(
+        _HTTP_URL,
+        headers={'Authorization': 'Bearer tok', 'X-Custom': 'value'},
+    )
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('Authorization') == 'Bearer tok'
+    assert req.get_header('X-custom') == 'value'
+
+
+def test_http_output_custom_headers_override_default():
+    """A caller-supplied Content-Type wins over the default."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL, headers={'Content-type': 'text/plain'})
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('Content-type') == 'text/plain'
+
+
+def test_http_output_custom_timeout():
+    """Custom timeout= float is forwarded to urlopen."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL, timeout=60.0)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    _, kwargs = mock_urlopen.call_args
+    assert kwargs.get('timeout') == 60.0
+
+
+def test_http_output_default_timeout():
+    """Default timeout is 30.0 seconds."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    _, kwargs = mock_urlopen.call_args
+    assert kwargs.get('timeout') == 30.0
+
+
+def test_http_output_bearer_token():
+    """Authorization header with bearer token is sent correctly."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL, headers={'Authorization': 'Bearer secret-token'})
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('Authorization') == 'Bearer secret-token'
+
+
+def test_http_output_format_payload_str_encoded():
+    """format_payload returning a str is encoded to UTF-8 bytes before sending."""
+    mock_urlopen = _make_urlopen_mock()
+
+    class StrOutput(HttpOutput):
+        def format_payload(self, record):
+            return 'hello'
+
+    output = StrOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{}')
+
+    req = mock_urlopen.call_args[0][0]
+    assert req.data == b'hello'
+
+
+def test_http_output_format_payload_override():
+    """Subclass overriding format_payload shapes the body correctly."""
+    mock_urlopen = _make_urlopen_mock()
+
+    class SlackOutput(HttpOutput):
+        def format_payload(self, record):
+            name = record.get('call', {}).get('name', '?')
+            return json.dumps({'text': f'Done: {name}'}).encode()
+
+    output = SlackOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{"call": {"name": "my_func"}}')
+
+    req = mock_urlopen.call_args[0][0]
+    body = json.loads(req.data)
+    assert body == {'text': 'Done: my_func'}
+
+
+@pytest.mark.parametrize('status_code', [400, 403, 404, 422])
+def test_http_output_raises_on_4xx(status_code):
+    """Non-2xx 4xx responses raise urllib.error.HTTPError."""
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', side_effect=_make_http_error(status_code)):
+        with pytest.raises(urllib.error.HTTPError) as exc_info:
+            output.write('{}')
+    assert exc_info.value.code == status_code
+
+
+@pytest.mark.parametrize('status_code', [500, 502, 503])
+def test_http_output_raises_on_5xx(status_code):
+    """Server error 5xx responses raise urllib.error.HTTPError."""
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', side_effect=_make_http_error(status_code)):
+        with pytest.raises(urllib.error.HTTPError) as exc_info:
+            output.write('{}')
+    assert exc_info.value.code == status_code
+
+
+def test_http_output_raises_on_network_error():
+    """URLError (DNS failure / connection refused) propagates to the caller."""
+    output = HttpOutput(_HTTP_URL)
+    url_error = urllib.error.URLError(reason='[Errno -2] Name or service not known')
+
+    with patch('urllib.request.urlopen', side_effect=url_error):
+        with pytest.raises(urllib.error.URLError):
+            output.write('{}')
+
+
+def test_http_output_raises_on_timeout():
+    """socket.timeout propagates to the caller."""
+    output = HttpOutput(_HTTP_URL)
+
+    with patch('urllib.request.urlopen', side_effect=TimeoutError('timed out')):
+        with pytest.raises(socket.timeout):
+            output.write('{}')
+
+
+def test_http_output_get_results_raises():
+    """get_results() raises NotImplementedError — HTTP is write-only."""
+    output = HttpOutput(_HTTP_URL)
+    with pytest.raises(NotImplementedError):
+        output.get_results()
+
+
+def test_http_output_slack_formatter_example():
+    """Slack envelope shape produced by format_payload subclass is correct."""
+    mock_urlopen = _make_urlopen_mock()
+
+    class SlackOutput(HttpOutput):
+        def format_payload(self, record):
+            name = record.get('call', {}).get('name', '?')
+            return json.dumps({'text': f'Benchmark `{name}` finished.'}).encode()
+
+    output = SlackOutput('https://hooks.slack.com/services/T00/B00/xxx')
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        output.write('{"call": {"name": "train_model"}}')
+
+    req = mock_urlopen.call_args[0][0]
+    body = json.loads(req.data)
+    assert body['text'] == 'Benchmark `train_model` finished.'
+
+
+def test_http_output_via_microbench():
+    """MicroBench routes records through HttpOutput.write()."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL)
+
+    bench = MicroBench(outputs=[output])
+
+    @bench
+    def noop():
+        pass
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        noop()
+
+    mock_urlopen.assert_called_once()
+    req = mock_urlopen.call_args[0][0]
+    body = json.loads(req.data)
+    assert body['call']['name'] == 'noop'
+
+
+def test_http_output_multiple_writes():
+    """Each benchmark call produces a separate HTTP request."""
+    mock_urlopen = _make_urlopen_mock()
+    output = HttpOutput(_HTTP_URL)
+
+    bench = MicroBench(outputs=[output])
+
+    @bench
+    def noop():
+        pass
+
+    with patch('urllib.request.urlopen', mock_urlopen):
+        noop()
+        noop()
+        noop()
+
+    assert mock_urlopen.call_count == 3

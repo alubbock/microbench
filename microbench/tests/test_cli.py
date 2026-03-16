@@ -725,6 +725,184 @@ def test_cli_monitor_interval_with_stdout_capture():
 
 
 # ---------------------------------------------------------------------------
+# --http-output
+# ---------------------------------------------------------------------------
+
+
+def _run_main_http(argv, fake_status=200):
+    """Run main() with --http-output, mocking urlopen and subprocess."""
+    mock_response = MagicMock()
+    mock_response.__enter__ = lambda s: s
+    mock_response.__exit__ = MagicMock(return_value=False)
+
+    buf = io.StringIO()
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch(
+            'urllib.request.urlopen', return_value=mock_response
+        ) as mock_urlopen:
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit) as exc:
+                    main(argv)
+    return exc.value.code, mock_urlopen
+
+
+def test_cli_http_output_posts_record():
+    """--http-output POSTs a JSON record to the given URL."""
+    code, mock_urlopen = _run_main_http(
+        ['--no-mixin', '--http-output', 'https://example.com/hook', '--', 'true']
+    )
+    assert code == 0
+    mock_urlopen.assert_called_once()
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_full_url() == 'https://example.com/hook'
+    body = json.loads(req.data)
+    assert body['call']['name'] == 'true'
+
+
+def test_cli_http_output_no_stdout_record():
+    """--http-output without --outfile produces no stdout JSONL."""
+    buf = io.StringIO()
+    mock_response = MagicMock()
+    mock_response.__enter__ = lambda s: s
+    mock_response.__exit__ = MagicMock(return_value=False)
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch('urllib.request.urlopen', return_value=mock_response):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit):
+                    main(['--no-mixin', '--http-output', 'https://x.com', '--', 'true'])
+    assert buf.getvalue() == ''
+
+
+def test_cli_http_output_and_outfile(tmp_path):
+    """--http-output and --outfile together write to both destinations."""
+    outfile = tmp_path / 'results.jsonl'
+    mock_response = MagicMock()
+    mock_response.__enter__ = lambda s: s
+    mock_response.__exit__ = MagicMock(return_value=False)
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch(
+            'urllib.request.urlopen', return_value=mock_response
+        ) as mock_urlopen:
+            with pytest.raises(SystemExit):
+                main(
+                    [
+                        '--no-mixin',
+                        '--outfile',
+                        str(outfile),
+                        '--http-output',
+                        'https://x.com',
+                        '--',
+                        'true',
+                    ]
+                )
+    assert outfile.exists()
+    assert json.loads(outfile.read_text())['call']['name'] == 'true'
+    mock_urlopen.assert_called_once()
+
+
+def test_cli_http_output_header_sets_authorization():
+    """--http-output-header KEY:VALUE is sent as an HTTP header."""
+    _, mock_urlopen = _run_main_http(
+        [
+            '--no-mixin',
+            '--http-output',
+            'https://example.com/hook',
+            '--http-output-header',
+            'Authorization:Bearer secret',
+            '--',
+            'true',
+        ]
+    )
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('Authorization') == 'Bearer secret'
+
+
+def test_cli_http_output_header_strips_whitespace():
+    """Whitespace around KEY and VALUE in --http-output-header is stripped."""
+    _, mock_urlopen = _run_main_http(
+        [
+            '--no-mixin',
+            '--http-output',
+            'https://example.com/hook',
+            '--http-output-header',
+            'X-Custom: my value',
+            '--',
+            'true',
+        ]
+    )
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('X-custom') == 'my value'
+
+
+def test_cli_http_output_multiple_headers():
+    """Multiple --http-output-header flags are all applied."""
+    _, mock_urlopen = _run_main_http(
+        [
+            '--no-mixin',
+            '--http-output',
+            'https://example.com/hook',
+            '--http-output-header',
+            'Authorization:Bearer tok',
+            '--http-output-header',
+            'X-Tenant:acme',
+            '--',
+            'true',
+        ]
+    )
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_header('Authorization') == 'Bearer tok'
+    assert req.get_header('X-tenant') == 'acme'
+
+
+def test_cli_http_output_method():
+    """--http-output-method PUT sends a PUT request."""
+    _, mock_urlopen = _run_main_http(
+        [
+            '--no-mixin',
+            '--http-output',
+            'https://example.com/hook',
+            '--http-output-method',
+            'PUT',
+            '--',
+            'true',
+        ]
+    )
+    req = mock_urlopen.call_args[0][0]
+    assert req.get_method() == 'PUT'
+
+
+def test_cli_http_output_header_without_http_output_errors():
+    """--http-output-header without --http-output is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--no-mixin', '--http-output-header', 'X-Key:val', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_http_output_method_without_http_output_errors():
+    """--http-output-method without --http-output is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--no-mixin', '--http-output-method', 'PUT', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_http_output_header_invalid_format_errors():
+    """--http-output-header without : separator is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(
+            [
+                '--no-mixin',
+                '--http-output',
+                'https://x.com',
+                '--http-output-header',
+                'NoColonHere',
+                '--',
+                'true',
+            ]
+        )
+    assert exc.value.code != 0
+
+
+# ---------------------------------------------------------------------------
 # Mixin CLI args: MBGitInfo and MBFileHash
 # ---------------------------------------------------------------------------
 
