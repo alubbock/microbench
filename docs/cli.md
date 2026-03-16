@@ -128,6 +128,23 @@ so the CLI defaults to the working directory instead.
 `sys.argv[0]` issue applies here, so the CLI defaults to hashing the
 command being benchmarked instead.
 
+### `nvidia-smi` options
+
+| Option | Description |
+|---|---|
+| `--nvidia-attributes ATTR [ATTR ...]` | GPU attributes to query. Run `nvidia-smi --help-query-gpu` for all names. Default: `gpu_name memory.total`. |
+| `--nvidia-gpus GPU [GPU ...]` | GPU IDs to query: zero-based indexes, UUIDs, or PCI bus IDs. Run `nvidia-smi -L` to list UUIDs. Default: all GPUs. |
+
+Example — record power draw and temperature for GPUs 0 and 1:
+
+```bash
+microbench \
+    --mixin nvidia-smi \
+    --nvidia-attributes gpu_name power.draw temperature.gpu \
+    --nvidia-gpus 0 1 \
+    -- ./run_simulation.sh
+```
+
 ## Capture failures
 
 Metadata capture failures (e.g. `nvidia-smi` not installed on this node,
