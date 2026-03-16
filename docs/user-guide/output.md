@@ -119,6 +119,8 @@ results = bench.get_results(format='df')  # pandas DataFrame
 Results are appended to a Redis list using `RPUSH` and read back with
 `LRANGE`.
 
+The CLI exposes the same sink via `--redis-output KEY` (see the [CLI reference](../cli.md#redis-output)).
+
 ## Custom output sinks
 
 Subclass `Output` and implement `write` to send results anywhere:

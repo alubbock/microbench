@@ -903,6 +903,156 @@ def test_cli_http_output_header_invalid_format_errors():
 
 
 # ---------------------------------------------------------------------------
+# Redis output
+# ---------------------------------------------------------------------------
+
+
+def _run_main_redis(argv):
+    redis_store = []
+    mock_client = MagicMock()
+    mock_client.rpush.side_effect = lambda key, val: redis_store.append(val)
+    mock_redis = MagicMock()
+    mock_redis.StrictRedis.return_value = mock_client
+    buf = io.StringIO()
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch.dict('sys.modules', {'redis': mock_redis}):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit) as exc:
+                    main(argv)
+    return exc.value.code, mock_redis, mock_client, redis_store
+
+
+def test_cli_redis_output_rpushes_record():
+    """--redis-output calls StrictRedis with defaults and rpushes a JSON record."""
+    code, mock_redis, mock_client, redis_store = _run_main_redis(
+        ['--no-mixin', '--redis-output', 'bench:results', '--', 'true']
+    )
+    assert code == 0
+    mock_redis.StrictRedis.assert_called_once_with(host='localhost', port=6379, db=0)
+    mock_client.rpush.assert_called_once()
+    key, val = mock_client.rpush.call_args[0]
+    assert key == 'bench:results'
+    record = json.loads(val)
+    assert record['call']['name'] == 'true'
+
+
+def test_cli_redis_output_no_stdout_record():
+    """--redis-output without --outfile produces no stdout JSONL."""
+    _, _, _, _ = _run_main_redis(
+        ['--no-mixin', '--redis-output', 'bench:results', '--', 'true']
+    )
+    # Implicitly verified: _run_main_redis uses a buf but doesn't return it;
+    # if stdout were written the rpush mock would still be called, so we
+    # test stdout directly here.
+    buf = io.StringIO()
+    mock_client = MagicMock()
+    mock_redis = MagicMock()
+    mock_redis.StrictRedis.return_value = mock_client
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch.dict('sys.modules', {'redis': mock_redis}):
+            with patch('sys.stdout', buf):
+                with pytest.raises(SystemExit):
+                    main(
+                        ['--no-mixin', '--redis-output', 'bench:results', '--', 'true']
+                    )
+    assert buf.getvalue() == ''
+
+
+def test_cli_redis_output_and_outfile(tmp_path):
+    """--redis-output and --outfile together write to both destinations."""
+    outfile = tmp_path / 'results.jsonl'
+    mock_client = MagicMock()
+    mock_redis = MagicMock()
+    mock_redis.StrictRedis.return_value = mock_client
+    with patch('subprocess.run', return_value=MagicMock(returncode=0)):
+        with patch.dict('sys.modules', {'redis': mock_redis}):
+            with pytest.raises(SystemExit):
+                main(
+                    [
+                        '--no-mixin',
+                        '--outfile',
+                        str(outfile),
+                        '--redis-output',
+                        'bench:results',
+                        '--',
+                        'true',
+                    ]
+                )
+    assert outfile.exists()
+    assert json.loads(outfile.read_text())['call']['name'] == 'true'
+    mock_client.rpush.assert_called_once()
+
+
+def test_cli_redis_output_custom_host_port_db():
+    """--redis-host/port/db are forwarded to StrictRedis."""
+    _, mock_redis, _, _ = _run_main_redis(
+        [
+            '--no-mixin',
+            '--redis-output',
+            'bench:results',
+            '--redis-host',
+            'redis.example.com',
+            '--redis-port',
+            '6380',
+            '--redis-db',
+            '2',
+            '--',
+            'true',
+        ]
+    )
+    mock_redis.StrictRedis.assert_called_once_with(
+        host='redis.example.com', port=6380, db=2
+    )
+
+
+def test_cli_redis_output_password():
+    """--redis-password is forwarded as a password= kwarg to StrictRedis."""
+    _, mock_redis, _, _ = _run_main_redis(
+        [
+            '--no-mixin',
+            '--redis-output',
+            'bench:results',
+            '--redis-password',
+            'secret',
+            '--',
+            'true',
+        ]
+    )
+    mock_redis.StrictRedis.assert_called_once_with(
+        host='localhost', port=6379, db=0, password='secret'
+    )
+
+
+def test_cli_redis_port_without_redis_output_errors():
+    """--redis-port without --redis-output exits with a non-zero code."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--no-mixin', '--redis-port', '6380', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_redis_db_without_redis_output_errors():
+    """--redis-db without --redis-output exits with a non-zero code."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--no-mixin', '--redis-db', '1', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_redis_password_without_redis_output_errors():
+    """--redis-password without --redis-output exits with a non-zero code."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--no-mixin', '--redis-password', 'secret', '--', 'true'])
+    assert exc.value.code != 0
+
+
+def test_cli_redis_output_missing_package_errors():
+    """--redis-output gives a helpful error when the redis package is not installed."""
+    with patch.dict('sys.modules', {'redis': None}):
+        with pytest.raises(SystemExit) as exc:
+            main(['--no-mixin', '--redis-output', 'bench:results', '--', 'true'])
+    assert exc.value.code != 0
+
+
+# ---------------------------------------------------------------------------
 # Mixin CLI args: MBGitInfo and MBFileHash
 # ---------------------------------------------------------------------------
 
