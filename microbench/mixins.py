@@ -1,3 +1,4 @@
+import argparse
 import base64
 import inspect
 import os
@@ -27,6 +28,66 @@ except ImportError:
     numpy = None
 
 from ._encoding import _UNENCODABLE_PLACEHOLDER_VALUE, JSONEncodeWarning
+
+_UNSET = object()
+
+
+def _existing_file(value):
+    """argparse type: accept an existing file path, reject directories."""
+    if os.path.isdir(value):
+        raise argparse.ArgumentTypeError(f'{value!r} is a directory')
+    if not os.path.isfile(value):
+        raise argparse.ArgumentTypeError(f'file not found: {value!r}')
+    return value
+
+
+def _existing_dir(value):
+    """argparse type: accept an existing directory path."""
+    if not os.path.isdir(value):
+        raise argparse.ArgumentTypeError(f'directory not found: {value!r}')
+    return value
+
+
+class CLIArg:
+    """Declares a CLI argument that sets a mixin attribute.
+
+    Attach a list of ``CLIArg`` instances to a mixin class as ``cli_args``
+    to expose configurable attributes through ``python -m microbench``.
+    Arguments are added to the parser automatically; no changes to the CLI
+    code are needed when adding new configurable mixins.
+
+    Args:
+        flags: Flag strings for the argument, e.g. ``['--git-repo']``.
+        dest: Mixin attribute name to set, e.g. ``'git_repo'``.
+        help: Help text shown in ``--help`` and ``--show-mixins``.
+        metavar: Display name for the value in help text.
+        type: Callable to convert the raw string. Defaults to ``str``.
+        nargs: Number of arguments (e.g. ``'+'`` for one or more).
+        cli_default: Default when the flag is not given on the CLI.
+            If callable, called with the command list (``cmd``) to
+            compute the default at run time (e.g. ``lambda cmd:
+            [cmd[0]]``). Use ``_UNSET`` (the default) to fall back to
+            the mixin's own Python-API default logic instead.
+    """
+
+    def __init__(
+        self,
+        flags,
+        dest,
+        help,
+        *,
+        metavar=None,
+        type=str,
+        nargs=None,
+        cli_default=_UNSET,
+    ):
+        self.flags = flags
+        self.dest = dest
+        self.help = help
+        self.metavar = metavar
+        self.type = type
+        self.nargs = nargs
+        self.cli_default = cli_default
 
 
 class MBFunctionCall:
@@ -70,7 +131,7 @@ class MBReturnValue:
 
 
 class MBPythonVersion:
-    """Capture the Python version and location of the Python executable"""
+    """Capture the Python version and location of the Python executable."""
 
     cli_compatible = True
 
@@ -82,7 +143,7 @@ class MBPythonVersion:
 
 
 class MBHostInfo:
-    """Capture the hostname and operating system"""
+    """Capture the hostname and operating system."""
 
     cli_compatible = True
 
@@ -305,6 +366,11 @@ class MBGitInfo:
     useful when the script and the repository root are in different
     locations.
 
+    **CLI usage** (``python -m microbench``): the default is the current
+    working directory rather than the script directory, since
+    ``sys.argv[0]`` points to the microbench package itself. Use
+    ``--git-repo DIR`` to override.
+
     Attributes:
         git_repo (str, optional): Directory to inspect. Defaults to the
             directory of the running script, or the shell's working
@@ -323,6 +389,20 @@ class MBGitInfo:
     """
 
     cli_compatible = True
+    cli_args = [
+        CLIArg(
+            flags=['--git-repo'],
+            dest='git_repo',
+            metavar='DIR',
+            type=_existing_dir,
+            help=(
+                'Directory to inspect for git info. '
+                'CLI default: current working directory. '
+                'Python API default: directory of the running script.'
+            ),
+            cli_default=lambda cmd: os.getcwd(),
+        ),
+    ]
 
     def capture_git_info(self, bm_data):
         if hasattr(self, 'git_repo'):
@@ -378,6 +458,12 @@ class MBFileHash:
     instead. Files are read in 64 KB chunks, so large files are handled
     without loading them fully into memory.
 
+    **CLI usage** (``python -m microbench``): the default is the
+    benchmarked command executable (``cmd[0]``) rather than the running
+    script, since ``sys.argv[0]`` points to the microbench package
+    itself. Use ``--hash-file FILE [FILE ...]`` to override, and
+    ``--hash-algorithm`` to change the algorithm.
+
     Attributes:
         hash_files (iterable of str, optional): File paths to hash.
             Defaults to ``[sys.argv[0]]``.
@@ -396,6 +482,27 @@ class MBFileHash:
     """
 
     cli_compatible = True
+    cli_args = [
+        CLIArg(
+            flags=['--hash-file'],
+            dest='hash_files',
+            metavar='FILE',
+            nargs='+',
+            type=_existing_file,
+            help=(
+                'File(s) to hash with the file-hash mixin. '
+                'CLI default: the benchmarked command executable. '
+                'Python API default: the running script.'
+            ),
+            cli_default=lambda cmd: [cmd[0]],
+        ),
+        CLIArg(
+            flags=['--hash-algorithm'],
+            dest='hash_algorithm',
+            metavar='ALGORITHM',
+            help='Hash algorithm for the file-hash mixin (e.g. sha256, md5). Default: sha256.',  # noqa: E501
+        ),
+    ]
 
     def capture_file_hashes(self, bm_data):
         import hashlib
@@ -556,7 +663,7 @@ class _NeedsPsUtil:
 
 
 class MBHostCpuCores(_NeedsPsUtil):
-    """Capture the number of logical CPU cores"""
+    """Capture the number of logical CPU cores."""
 
     cli_compatible = True
 
@@ -567,7 +674,7 @@ class MBHostCpuCores(_NeedsPsUtil):
 
 
 class MBHostRamTotal(_NeedsPsUtil):
-    """Capture the total host RAM in bytes"""
+    """Capture the total host RAM in bytes."""
 
     cli_compatible = True
 

@@ -74,6 +74,39 @@ python -m microbench --no-mixin -- ./job.sh
 
 See [Mixins](user-guide/mixins.md) for details on each.
 
+## Mixin options
+
+Some mixins expose their own CLI flags for configuration. These are shown
+under each mixin in `--show-mixins` output and in `--help`. A mixin flag
+may only be used when its mixin is loaded; passing one without the
+corresponding mixin is an error.
+
+### `git-info` options
+
+| Option | Description |
+|---|---|
+| `--git-repo DIR` | Directory to inspect for git information. |
+
+**CLI default:** current working directory.
+
+**Python API default:** directory of the running script (`sys.argv[0]`).
+When using the CLI, `sys.argv[0]` points to the microbench package itself,
+so the CLI defaults to the working directory instead.
+
+### `file-hash` options
+
+| Option | Description |
+|---|---|
+| `--hash-file FILE [FILE ...]` | File(s) to hash. |
+| `--hash-algorithm ALGORITHM` | Hash algorithm (e.g. `sha256`, `md5`). Default: `sha256`. |
+
+**CLI default for `--hash-file`:** the benchmarked command executable
+(`cmd[0]`), e.g. `./run_simulation.sh`.
+
+**Python API default:** the running script (`sys.argv[0]`). The same
+`sys.argv[0]` issue applies here, so the CLI defaults to hashing the
+command being benchmarked instead.
+
 ## Capture failures
 
 Metadata capture failures (e.g. `nvidia-smi` not installed on this node,

@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -138,6 +139,8 @@ def test_cli_show_mixins():
     output = buf.getvalue()
     assert 'host-info' in output
     assert 'python-version' in output
+    assert '--hash-file' in output  # mixin-specific arg shown under file-hash
+    assert '--git-repo' in output  # mixin-specific arg shown under git-info
 
 
 def test_cli_capture_optional_on_by_default():
@@ -691,3 +694,123 @@ def test_cli_monitor_interval_with_stdout_capture():
     record = json.loads(buf.getvalue())
     assert record['stdout'] == ['hello\n']
     assert record['subprocess_monitor'][0][0]['cpu_percent'] == 8.0
+
+
+# ---------------------------------------------------------------------------
+# Mixin CLI args: MBGitInfo and MBFileHash
+# ---------------------------------------------------------------------------
+
+
+def test_cli_mixin_arg_without_mixin_errors():
+    """Supplying a mixin arg without the corresponding mixin loaded is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'host-info', '--hash-file', 'data.txt', '--', 'echo'])
+    assert exc.value.code != 0
+
+
+def test_cli_git_repo_without_mixin_errors():
+    """--git-repo without the git-info mixin is an error."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--git-repo', '/some/path', '--', 'echo'])
+    assert exc.value.code != 0
+
+
+def test_cli_mixin_arg_accepted_with_all_flag(tmp_path):
+    """Mixin args are accepted when --all is used (all mixins loaded)."""
+    target = tmp_path / 'f.txt'
+    target.write_bytes(b'x')
+    with patch('subprocess.check_output', side_effect=_fake_git_output):
+        _, record, _ = _run_main(['--all', '--hash-file', str(target), '--', 'true'])
+    assert str(target) in record.get('file_hashes', {})
+
+
+def test_cli_hash_file_rejects_directory(tmp_path):
+    """--hash-file rejects a directory before the subprocess runs."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'file-hash', '--hash-file', str(tmp_path), '--', 'echo'])
+    assert exc.value.code != 0
+
+
+def test_cli_hash_file_rejects_nonexistent():
+    """--hash-file rejects a path that does not exist."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'file-hash', '--hash-file', 'no_such_file.txt', '--', 'echo'])
+    assert exc.value.code != 0
+
+
+def test_cli_git_repo_rejects_nonexistent():
+    """--git-repo rejects a path that does not exist."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'git-info', '--git-repo', '/no/such/dir', '--', 'echo'])
+    assert exc.value.code != 0
+
+
+def _fake_git_output(cmd, **kwargs):
+    """Mock for subprocess.check_output that returns minimal valid git output."""
+    cwd = kwargs.get('cwd') or os.getcwd()
+    if 'rev-parse' in cmd:
+        return (cwd + '\n').encode()
+    # git status --porcelain=v2 --branch
+    return b'# branch.oid abc123\n# branch.head main\n'
+
+
+def test_cli_git_repo_explicit(tmp_path):
+    """--git-repo passes the given directory to git."""
+    with patch('subprocess.check_output', side_effect=_fake_git_output) as mock_co:
+        _, record, _ = _run_main(
+            ['--mixin', 'git-info', '--git-repo', str(tmp_path), '--', 'true']
+        )
+    assert record.get('git_info', {}).get('repo') == str(tmp_path)
+    for call in mock_co.call_args_list:
+        assert call.kwargs.get('cwd') == str(tmp_path)
+
+
+def test_cli_git_repo_default_cwd():
+    """git-info defaults to the current working directory when --git-repo is omitted."""
+    with patch('subprocess.check_output', side_effect=_fake_git_output):
+        _, record, _ = _run_main(['--mixin', 'git-info', '--', 'true'])
+    assert record.get('git_info', {}).get('repo') == os.getcwd()
+
+
+def test_cli_hash_file_explicit(tmp_path):
+    """--hash-file hashes the specified file and records it."""
+    target = tmp_path / 'data.txt'
+    target.write_bytes(b'hello')
+    _, record, _ = _run_main(
+        ['--mixin', 'file-hash', '--hash-file', str(target), '--', 'true']
+    )
+    assert str(target) in record.get('file_hashes', {})
+
+
+def test_cli_hash_file_default_cmd(tmp_path):
+    """file-hash defaults to hashing cmd[0] when --hash-file is not given."""
+    target = tmp_path / 'script.sh'
+    target.write_bytes(b'#!/bin/sh')
+    _, record, _ = _run_main(['--mixin', 'file-hash', '--', str(target)])
+    assert str(target) in record.get('file_hashes', {})
+
+
+def test_cli_hash_algorithm(tmp_path):
+    """--hash-algorithm changes the digest algorithm used by file-hash."""
+    target = tmp_path / 'data.txt'
+    target.write_bytes(b'hello')
+    _, r256, _ = _run_main(
+        ['--mixin', 'file-hash', '--hash-file', str(target), '--', 'true']
+    )
+    _, rmd5, _ = _run_main(
+        [
+            '--mixin',
+            'file-hash',
+            '--hash-file',
+            str(target),
+            '--hash-algorithm',
+            'md5',
+            '--',
+            'true',
+        ]
+    )
+    sha256_hex = r256['file_hashes'][str(target)]
+    md5_hex = rmd5['file_hashes'][str(target)]
+    assert len(sha256_hex) == 64  # sha256 produces a 64-char hex digest
+    assert len(md5_hex) == 32  # md5 produces a 32-char hex digest
+    assert sha256_hex != md5_hex
