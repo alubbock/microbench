@@ -174,14 +174,15 @@ def _build_parser(mixin_map):
         action='store_true',
         help='List available mixins with descriptions and exit.',
     )
-    parser.add_argument(
+    mixin_scope = parser.add_mutually_exclusive_group()
+    mixin_scope.add_argument(
         '--all',
         '-a',
         action='store_true',
         dest='all_mixins',
         help='Include all available mixins. Overrides --mixin.',
     )
-    parser.add_argument(
+    mixin_scope.add_argument(
         '--no-mixin',
         action='store_true',
         dest='no_mixins',
