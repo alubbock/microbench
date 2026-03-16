@@ -908,9 +908,20 @@
 <h2 id="200-unreleased">[2.0.0] - unreleased</h2>
 <h3 id="breaking-changes-vs-v110">Breaking changes (vs v1.1.0)</h3>
 <ul>
-<li><strong>Namespace restructuring of record fields</strong>: All benchmark record fields are
+<li><strong>Removed deprecated mixins</strong>: <code>MBPythonVersion</code>, <code>MBHostCpuCores</code>, and
+  <code>MBHostRamTotal</code> have been removed.</li>
+<li>Replace <code>MBPythonVersion</code> with <code>MBPythonInfo</code> (captures <code>python.version</code>,
+    <code>python.prefix</code>, <code>python.executable</code>).</li>
+<li>
+<p>Replace <code>MBHostCpuCores</code> and/or <code>MBHostRamTotal</code> with <code>MBHostInfo</code>, which
+    now captures <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, and
+    <code>host.ram_total</code> automatically when psutil is installed.</p>
+</li>
+<li>
+<p><strong>Namespace restructuring of record fields</strong>: All benchmark record fields are
   now grouped into top-level namespace dicts, making records self-documenting
-  and easier to query. The complete rename table is below.</li>
+  and easier to query. The complete rename table is below.</p>
+</li>
 </ul>
 <p><strong>Core fields</strong> move into <code>mb</code> (static config) and <code>call</code> (per-call data):</p>
 <table>

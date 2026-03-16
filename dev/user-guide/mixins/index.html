@@ -1399,11 +1399,6 @@ combine any number of microbench mixins without conflicts, and their
 <td>—</td>
 </tr>
 <tr>
-<td><code>MBPythonVersion</code></td>
-<td><code>python_version</code>, <code>python_executable</code> — <em>deprecated, use <code>MBPythonInfo</code></em></td>
-<td>—</td>
-</tr>
-<tr>
 <td><code>MBHostInfo</code></td>
 <td><code>host.hostname</code>, <code>host.os</code>; also <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes) when psutil is installed (silently omitted otherwise)</td>
 <td>psutil (optional)</td>
@@ -1522,9 +1517,8 @@ is installed) CPU core counts and total RAM.</p>
 <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><code>MBHostCpuCores</code> and <code>MBHostRamTotal</code> are deprecated. <code>MBHostInfo</code> now
-covers all three mixins. The separate classes still work but emit a
-<code>DeprecationWarning</code> at call time.</p>
+<p><code>MBHostCpuCores</code> and <code>MBHostRamTotal</code> have been removed. Use <code>MBHostInfo</code>,
+which captures all host fields including the psutil-dependent ones.</p>
 </div>
 <h2 id="job-resource-utilisation">Job resource utilisation</h2>
 <h3 id="mbpeakmemory"><code>MBPeakMemory</code></h3>
