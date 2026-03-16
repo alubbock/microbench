@@ -14,6 +14,7 @@ from microbench import (
     MBLoadedModules,
     MBPeakMemory,
     MBSlurmInfo,
+    MBWorkingDir,
     MicroBench,
 )
 from microbench import __version__ as microbench_version
@@ -156,6 +157,24 @@ def test_mb_loaded_modules_version_with_slash():
 
     modules = bench.get_results(format='df')['loaded_modules'][0]
     assert modules['GCC'] == '12.2.0-GCCcore-12.2.0'
+
+
+def test_mb_working_dir():
+    """working_dir captures the current working directory."""
+
+    class Bench(MicroBench, MBWorkingDir):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    result = bench.get_results()[0]
+    assert result['working_dir'] == os.getcwd()
 
 
 def test_capture_global_packages():

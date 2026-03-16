@@ -250,6 +250,15 @@ class MBLoadedModules:
         bm_data['loaded_modules'] = modules
 
 
+class MBWorkingDir:
+    """Capture the working directory at benchmark time."""
+
+    cli_compatible = True
+
+    def capture_working_dir(self, bm_data):
+        bm_data['working_dir'] = os.getcwd()
+
+
 def _read_cgroup_v2():
     """Read CPU quota and memory limit from a cgroup v2 hierarchy."""
     cgroup_path = None

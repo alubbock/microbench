@@ -173,7 +173,7 @@ All notable changes to microbench are documented here.
   kebab-case names without the `MB` prefix (e.g. `host-info`,
   `python-version`); original MB-prefixed names are also accepted. Use
   `--mixin MIXIN [MIXIN ...]` to select metadata to capture (defaults to
-  `host-info`, `slurm-info`, and `loaded-modules`); use `--show-mixins` to
+  `host-info`, `slurm-info`, `loaded-modules`, and `working-dir`); use `--show-mixins` to
   list all available mixins with descriptions; use `--field KEY=VALUE` to
   attach extra labels; use `--iterations N` and `--warmup N` for repeat
   timing; use `--stdout[=suppress]` and `--stderr[=suppress]` to capture
@@ -214,7 +214,12 @@ All notable changes to microbench are documented here.
   to version string (e.g. `{"gcc": "12.2.0", "openmpi": "4.1.5"}`). Reads
   the standard `LOADEDMODULES` environment variable — no subprocess, no
   extra dependencies. Empty dict when no modules are loaded. Included in
-  the CLI defaults alongside `MBHostInfo` and `MBSlurmInfo`.
+  the CLI defaults alongside `MBHostInfo`, `MBSlurmInfo`, and `MBWorkingDir`.
+
+- **`MBWorkingDir` mixin**: captures the absolute path of the working
+  directory at benchmark time into `working_dir`. No dependencies. Included
+  in the CLI defaults — useful for reproducibility when comparing results
+  across nodes or directories.
 
 - **`MBGitInfo` mixin**: captures the repository root path, current commit
   hash, branch name, and dirty flag (uncommitted changes present) via
