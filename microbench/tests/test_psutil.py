@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-import microbench.mixins
+import microbench._mixins
 from microbench import MBHostInfo, MicroBench
 
 
@@ -43,7 +43,7 @@ def test_mbhostinfo_without_psutil():
     def test_func():
         pass
 
-    with patch.object(microbench.mixins, 'psutil', None):
+    with patch.object(microbench._mixins, 'psutil', None):
         test_func()
 
     host = mybench.get_results()[0]['host']
