@@ -950,7 +950,7 @@ a list of dicts:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">bench</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan</span>
 </code></pre></div>
-<p>Every record contains these fields automatically:</p>
+<p>Every record contains these fields automatically (all nested under <code>mb</code> or <code>call</code>):</p>
 <table>
 <thead>
 <tr>
@@ -960,36 +960,40 @@ a list of dicts:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>mb_run_id</code></td>
-<td>UUID generated once when <code>microbench</code> is imported. Identical across all bench suites in the same process — use <code>groupby('mb_run_id')</code> to correlate records from different benchmarks in the same run.</td>
+<td><code>mb.run_id</code></td>
+<td>UUID generated once when <code>microbench</code> is imported. Identical across all bench suites in the same process — use <code>groupby('mb.run_id')</code> to correlate records from different benchmarks in the same run.</td>
 </tr>
 <tr>
-<td><code>mb_version</code></td>
+<td><code>mb.version</code></td>
 <td>Version of the <code>microbench</code> package that produced the record.</td>
 </tr>
 <tr>
-<td><code>start_time</code></td>
+<td><code>mb.timezone</code></td>
+<td>Timezone used for <code>call.start_time</code>/<code>call.finish_time</code>.</td>
+</tr>
+<tr>
+<td><code>mb.duration_counter</code></td>
+<td>Name of the timer function used for <code>call.durations</code>.</td>
+</tr>
+<tr>
+<td><code>call.invocation</code></td>
+<td><code>'Python'</code> for the Python API, <code>'CLI'</code> for the command-line interface.</td>
+</tr>
+<tr>
+<td><code>call.name</code></td>
+<td>Name of the decorated function (or the name passed to <code>bench.record()</code>).</td>
+</tr>
+<tr>
+<td><code>call.start_time</code></td>
 <td>ISO-8601 timestamp when the function was called (UTC by default).</td>
 </tr>
 <tr>
-<td><code>finish_time</code></td>
+<td><code>call.finish_time</code></td>
 <td>ISO-8601 timestamp when the function returned.</td>
 </tr>
 <tr>
-<td><code>run_durations</code></td>
+<td><code>call.durations</code></td>
 <td>List of per-iteration durations in seconds.</td>
-</tr>
-<tr>
-<td><code>function_name</code></td>
-<td>Name of the decorated function.</td>
-</tr>
-<tr>
-<td><code>timestamp_tz</code></td>
-<td>Timezone used for <code>start_time</code>/<code>finish_time</code>.</td>
-</tr>
-<tr>
-<td><code>duration_counter</code></td>
-<td>Name of the timer function used for <code>run_durations</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -1016,13 +1020,13 @@ a list of dicts:</p>
 <p>Mixins used:
 - <code>MBFunctionCall</code> records the supplied arguments <code>x</code> and <code>y</code>.
 - <code>MBPythonVersion</code> captures the Python version.
-- <code>MBHostInfo</code> captures <code>hostname</code> and <code>operating_system</code>.
+- <code>MBHostInfo</code> captures <code>host.hostname</code> and <code>host.os</code>.
 - <code>MBSlurmInfo</code> captures all <code>SLURM_</code> environment variables (used by the
   <a href="https://slurm.schedmd.com/overview.html">SLURM</a> cluster system).</p>
 <p>Class variables:
 - <code>outfile</code> saves results to a file (one JSON object per line).
 - <code>capture_versions</code> records the versions of specified packages.
-- <code>env_vars</code> captures environment variables as <code>env_&lt;NAME&gt;</code> fields — see <a href="../user-guide/configuration/#environment-variables">Environment variables</a> for more.</p>
+- <code>env_vars</code> captures environment variables as <code>env.&lt;NAME&gt;</code> fields — see <a href="../user-guide/configuration/#environment-variables">Environment variables</a> for more.</p>
 <p>Constructor arguments:
 - <code>iterations=3</code> runs the function three times, recording all three durations.
 - <code>duration_counter</code> overrides the timer (see <a href="../user-guide/configuration/">Configuration</a>).
@@ -1062,23 +1066,24 @@ object per line). Read them back with pandas:</p>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">summary</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">())</span>
 </code></pre></div>
 <p>Load into a pandas DataFrame for full aggregation and filtering:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># run_durations is a list of per-iteration times; sum for total call time</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># call.durations is a list of per-iteration times; sum for total call time</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;call.durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># Average call time by Python version</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;python_version&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;python.version&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="c1"># Correlate records from the same process run</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;mb_run_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;mb.run_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
 </code></pre></div>
-<p>Use <code>flat=True</code> to flatten nested mixin fields (e.g. <code>slurm</code>, <code>git_info</code>,
-<code>cgroup_limits</code>) into dot-notation columns — useful when loading into pandas
-or a spreadsheet:</p>
+<p>Use <code>flat=True</code> to flatten nested fields (e.g. <code>slurm</code>, <code>git</code>,
+<code>cgroups</code>, <code>call</code>, <code>mb</code>) into dot-notation columns — useful when loading
+into pandas or a spreadsheet:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>          <span class="c1"># list of flat dicts</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># flat DataFrame</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># &#39;slurm&#39; dict becomes columns: slurm.job_id, slurm.cpus_on_node, ...</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># &#39;call&#39; dict becomes: call.name, call.durations, call.start_time, ...</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># &#39;slurm&#39; dict becomes: slurm.job_id, slurm.cpus_on_node, ...</span>
 </code></pre></div>
 <p>See the <a href="https://pandas.pydata.org/docs/">pandas documentation</a> for more.</p>
 <h2 id="timing-code-blocks">Timing code blocks</h2>
@@ -1099,7 +1104,7 @@ section of a script:</p>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
 </code></pre></div>
 <p>Each <code>with</code> block produces one record. The <code>name</code> argument sets the
-<code>function_name</code> field. All mixins, static fields, and output sinks
+<code>call.name</code> field. All mixins, static fields, and output sinks
 behave identically to the decorator form.</p>
 <p>If the block raises an exception the record is still written, with an
 <code>exception</code> field containing the error type and message, and the

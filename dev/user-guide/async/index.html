@@ -879,7 +879,7 @@ context manager equivalent to <code>bench.record()</code>.</p>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;rows&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">fetch_data</span><span class="p">(</span><span class="s1">&#39;https://example.com/api&#39;</span><span class="p">))</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()[[</span><span class="s1">&#39;function_name&#39;</span><span class="p">,</span> <span class="s1">&#39;start_time&#39;</span><span class="p">,</span> <span class="s1">&#39;run_durations&#39;</span><span class="p">]])</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">)[[</span><span class="s1">&#39;call.name&#39;</span><span class="p">,</span> <span class="s1">&#39;call.start_time&#39;</span><span class="p">,</span> <span class="s1">&#39;call.durations&#39;</span><span class="p">]])</span>
 </code></pre></div>
 <p>The wrapper is a true <code>async def</code>, so you can <code>await</code> it, pass it to
 <code>asyncio.gather</code>, or use it inside any async framework.</p>
@@ -901,7 +901,7 @@ function:</p>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="nb">print</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">())</span>
 </code></pre></div>
 <p>This is the async counterpart of <code>bench.record()</code>. All mixins and output
-sinks work identically. The <code>function_name</code> field defaults to <code>'&lt;record&gt;'</code>
+sinks work identically. The <code>call.name</code> field defaults to <code>'&lt;record&gt;'</code>
 when no name is given.</p>
 <h2 id="timing-caveat">Timing caveat</h2>
 <p>Microbench measures <strong>elapsed wall time</strong>, not CPU time. In an async program

@@ -908,6 +908,197 @@
 <h2 id="200-unreleased">[2.0.0] - unreleased</h2>
 <h3 id="breaking-changes-vs-v110">Breaking changes (vs v1.1.0)</h3>
 <ul>
+<li><strong>Namespace restructuring of record fields</strong>: All benchmark record fields are
+  now grouped into top-level namespace dicts, making records self-documenting
+  and easier to query. The complete rename table is below.</li>
+</ul>
+<p><strong>Core fields</strong> move into <code>mb</code> (static config) and <code>call</code> (per-call data):</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mb_run_id</code></td>
+<td><code>mb.run_id</code></td>
+</tr>
+<tr>
+<td><code>mb_version</code></td>
+<td><code>mb.version</code></td>
+</tr>
+<tr>
+<td><code>timestamp_tz</code></td>
+<td><code>mb.timezone</code></td>
+</tr>
+<tr>
+<td><code>duration_counter</code></td>
+<td><code>mb.duration_counter</code></td>
+</tr>
+<tr>
+<td><code>start_time</code></td>
+<td><code>call.start_time</code></td>
+</tr>
+<tr>
+<td><code>finish_time</code></td>
+<td><code>call.finish_time</code></td>
+</tr>
+<tr>
+<td><code>run_durations</code></td>
+<td><code>call.durations</code></td>
+</tr>
+<tr>
+<td><code>function_name</code></td>
+<td><code>call.name</code></td>
+</tr>
+<tr>
+<td><code>mb_timings</code></td>
+<td><code>call.timings</code></td>
+</tr>
+<tr>
+<td><code>mb_capture_errors</code></td>
+<td><code>call.capture_errors</code></td>
+</tr>
+<tr>
+<td><code>monitor</code></td>
+<td><code>call.monitor</code></td>
+</tr>
+<tr>
+<td><code>env_*</code> (flat keys)</td>
+<td><code>env.*</code> (dict)</td>
+</tr>
+<tr>
+<td><code>package_versions</code> (from <code>capture_versions</code>)</td>
+<td><code>python.loaded_packages</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mixin fields</strong> move to typed namespaces:</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hostname</code></td>
+<td><code>host.hostname</code></td>
+</tr>
+<tr>
+<td><code>operating_system</code></td>
+<td><code>host.os</code></td>
+</tr>
+<tr>
+<td><code>cpu_cores_logical</code></td>
+<td><code>host.cpu_cores_logical</code></td>
+</tr>
+<tr>
+<td><code>cpu_cores_physical</code></td>
+<td><code>host.cpu_cores_physical</code></td>
+</tr>
+<tr>
+<td><code>ram_total</code></td>
+<td><code>host.ram_total</code></td>
+</tr>
+<tr>
+<td><code>working_dir</code></td>
+<td><code>call.working_dir</code></td>
+</tr>
+<tr>
+<td><code>peak_memory_bytes</code></td>
+<td><code>call.peak_memory_bytes</code></td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td><code>call.args</code></td>
+</tr>
+<tr>
+<td><code>kwargs</code></td>
+<td><code>call.kwargs</code></td>
+</tr>
+<tr>
+<td><code>return_value</code></td>
+<td><code>call.return_value</code></td>
+</tr>
+<tr>
+<td><code>line_profiler</code></td>
+<td><code>call.line_profiler</code></td>
+</tr>
+<tr>
+<td><code>package_versions</code> (MBGlobalPackages)</td>
+<td><code>python.loaded_packages</code></td>
+</tr>
+<tr>
+<td><code>package_versions</code> (MBInstalledPackages)</td>
+<td><code>python.installed_packages</code></td>
+</tr>
+<tr>
+<td><code>package_paths</code></td>
+<td><code>python.installed_package_paths</code></td>
+</tr>
+<tr>
+<td><code>git_info</code></td>
+<td><code>git</code></td>
+</tr>
+<tr>
+<td><code>cgroup_limits</code></td>
+<td><code>cgroups</code> (inner keys also renamed: <code>cpu_cores</code> → <code>cpu_cores_limit</code>, <code>memory_bytes</code> → <code>memory_bytes_limit</code>, <code>cgroup_version</code> → <code>version</code>)</td>
+</tr>
+<tr>
+<td><code>nvidia_&lt;attr&gt;</code> (multiple flat dicts)</td>
+<td><code>nvidia</code> (list of per-GPU dicts with <code>uuid</code> key)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CLI fields</strong> also move into <code>call</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>function_name</code> (basename)</td>
+<td><code>call.name</code></td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td><code>call.command</code></td>
+</tr>
+<tr>
+<td><code>returncode</code></td>
+<td><code>call.returncode</code></td>
+</tr>
+<tr>
+<td><code>stdout</code></td>
+<td><code>call.stdout</code></td>
+</tr>
+<tr>
+<td><code>stderr</code></td>
+<td><code>call.stderr</code></td>
+</tr>
+<tr>
+<td><code>subprocess_monitor</code></td>
+<td><code>call.monitor</code></td>
+</tr>
+</tbody>
+</table>
+<p>A new <code>call.invocation</code> field is always present: <code>'Python'</code> for the Python
+  API and <code>'CLI'</code> for the command-line interface.</p>
+<p>Unchanged namespaces: <code>slurm</code>, <code>loaded_modules</code>, <code>conda</code>, <code>file_hashes</code>,
+  <code>exception</code> (top-level), <code>exit_signal</code> (top-level).</p>
+<p><strong>Migration:</strong> Use <code>get_results(flat=True)</code> to access fields via dot-notation
+  keys (<code>call.name</code>, <code>mb.run_id</code>, <code>host.hostname</code>, etc.) in pandas or scripts
+  without rewriting nested dict access. Alternatively, update field access to
+  the new nested structure: <code>result['call']['name']</code>, <code>result['mb']['run_id']</code>,
+  <code>result['host']['hostname']</code>, etc.</p>
+<ul>
 <li>
 <p><strong><code>get_results()</code> now returns a list of dicts by default</strong>: The default
   <code>format='dict'</code> returns a list of plain Python dicts and requires no
@@ -954,13 +1145,13 @@
 <li><code>format='dict'</code> (default) — returns a list of dicts; no pandas required.</li>
 <li><code>format='df'</code> — returns a pandas DataFrame (previous default behaviour).</li>
 <li>
-<p><code>flat=True</code> — flattens nested dict fields (e.g. <code>slurm</code>, <code>cgroup_limits</code>,
-    <code>git_info</code>) into dot-notation keys (<code>slurm.job_id</code>). Works for both
+<p><code>flat=True</code> — flattens nested dict fields (e.g. <code>slurm</code>, <code>cgroups</code>,
+    <code>git</code>) into dot-notation keys (<code>slurm.job_id</code>, <code>call.name</code>). Works for both
     formats without requiring pandas.</p>
 </li>
 <li>
 <p><strong><code>summary(results)</code> / <code>bench.summary()</code></strong>: prints min / mean / median /
-  max / stdev of <code>run_durations</code> across all results. No dependencies required
+  max / stdev of <code>call.durations</code> across all results. No dependencies required
   beyond the Python standard library. <code>bench.summary()</code> is a one-liner
   convenience that calls <code>bench.get_results()</code> internally. The module-level
   <code>summary(results)</code> accepts any list of dicts and can be composed with other
@@ -987,29 +1178,29 @@
 <ul>
 <li><strong><code>MBCgroupLimits</code></strong>: captures the CPU quota and memory limit enforced by
   the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
-  v1 and v2). Fields in <code>cgroup_limits</code>: <code>cpu_cores</code> (float — quota ÷ period,
-  or <code>null</code> if unlimited), <code>memory_bytes</code> (int or <code>null</code> if unlimited),
-  <code>cgroup_version</code> (1 or 2). Returns <code>{}</code> on non-Linux systems or when the
+  v1 and v2). Fields in <code>cgroups</code>: <code>cpu_cores_limit</code> (float — quota ÷ period,
+  or <code>null</code> if unlimited), <code>memory_bytes_limit</code> (int or <code>null</code> if unlimited),
+  <code>version</code> (1 or 2). Returns <code>{}</code> on non-Linux systems or when the
   cgroup filesystem is unavailable.</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span><span class="p">):</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">pass</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;cgroup_limits&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;cgroup_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
 </code></pre></div>
 <ul>
 <li><strong><code>bench.time(name)</code> sub-timing API</strong>: label phases inside a single benchmark
-  record with named timing sections. Sub-timings accumulate in <code>mb_timings</code> as
+  record with named timing sections. Sub-timings accumulate in <code>call.timings</code> as
   <code>[{"name": ..., "duration": ...}, ...]</code> in call order. Compatible with
   <code>bench.record()</code>, <code>bench.arecord()</code>, <code>@bench</code> (sync and async), and
   <code>bench.record_on_exit()</code>. Calling outside an active benchmark is a silent
-  no-op; <code>mb_timings</code> is absent when <code>bench.time()</code> is never called.</li>
+  no-op; <code>call.timings</code> is absent when <code>bench.time()</code> is never called.</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;pipeline&#39;</span><span class="p">):</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;parse&#39;</span><span class="p">):</span>
@@ -1134,8 +1325,8 @@
 <li>
 <p><strong>CLI subprocess monitoring</strong> (<code>--monitor-interval SECONDS</code>): periodically
   sample the child process's CPU usage and resident memory (RSS) while it
-  runs and record the time series in <code>subprocess_monitor</code>. Requires
-  <code>psutil</code>. Each element of <code>subprocess_monitor</code> is a list of
+  runs and record the time series in <code>call.monitor</code>. Requires
+  <code>psutil</code>. Each element of <code>call.monitor</code> is a list of
   <code>{"timestamp", "cpu_percent", "rss_bytes"}</code> dicts for one timed
   iteration; warmup iterations are excluded. Works on Linux, macOS, and
   Windows. If the process exits before the first sample fires, the field is
@@ -1145,7 +1336,7 @@
 <p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
   a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
   methods instead of aborting the benchmark call. Failures are recorded in
-  <code>mb_capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
+  <code>call.capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
   the field is absent when all captures succeed. Designed for production
   jobs on heterogeneous cluster nodes where optional dependencies may not
   be present on every node.</p>
@@ -1160,19 +1351,19 @@
 </li>
 <li>
 <p><strong><code>MBWorkingDir</code> mixin</strong>: captures the absolute path of the working
-  directory at benchmark time into <code>working_dir</code>. No dependencies. Included
-  in the CLI defaults — useful for reproducibility when comparing results
-  across nodes or directories.</p>
+  directory at benchmark time into <code>call.working_dir</code>. No dependencies.
+  Included in the CLI defaults — useful for reproducibility when comparing
+  results across nodes or directories.</p>
 </li>
 <li>
 <p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
   hash, branch name, and dirty flag (uncommitted changes present) via
-  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git_info</code>. Set <code>git_repo</code> to inspect
+  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git</code>. Set <code>git_repo</code> to inspect
   a specific repository directory.</p>
 </li>
 <li>
 <p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
-  benchmarked function as <code>peak_memory_bytes</code> (bytes), using
+  benchmarked function as <code>call.peak_memory_bytes</code> (bytes), using
   <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
 </li>
 <li>

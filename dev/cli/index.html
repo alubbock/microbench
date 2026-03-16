@@ -1093,8 +1093,7 @@ select a specific Python interpreter explicitly.</p>
 </table>
 <p>Use <code>--</code> to separate microbench options from the command being benchmarked.</p>
 <h2 id="fields-recorded">Fields recorded</h2>
-<p>Every record contains the standard fields (<code>start_time</code>, <code>finish_time</code>,
-<code>run_durations</code>, etc.) plus:</p>
+<p>Every record contains the standard <code>mb.*</code> and <code>call.*</code> fields plus:</p>
 <table>
 <thead>
 <tr>
@@ -1104,19 +1103,23 @@ select a specific Python interpreter explicitly.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>command</code></td>
-<td>Full command as a list, e.g. <code>["./run_sim.sh", "--steps", "1000"]</code>.</td>
+<td><code>call.invocation</code></td>
+<td>Always <code>'CLI'</code> for records produced by the CLI.</td>
 </tr>
 <tr>
-<td><code>returncode</code></td>
-<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value.</td>
-</tr>
-<tr>
-<td><code>function_name</code></td>
+<td><code>call.name</code></td>
 <td>Basename of the executable, e.g. <code>"run_sim.sh"</code>.</td>
 </tr>
 <tr>
-<td><code>subprocess_monitor</code></td>
+<td><code>call.command</code></td>
+<td>Full command as a list, e.g. <code>["./run_sim.sh", "--steps", "1000"]</code>.</td>
+</tr>
+<tr>
+<td><code>call.returncode</code></td>
+<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value.</td>
+</tr>
+<tr>
+<td><code>call.monitor</code></td>
 <td><em>(present only with <code>--monitor-interval</code>)</em> List of per-iteration sample lists. See <a href="#subprocess-monitoring">Subprocess monitoring</a>.</td>
 </tr>
 </tbody>
@@ -1208,7 +1211,7 @@ command being benchmarked instead.</p>
 <h2 id="capture-failures">Capture failures</h2>
 <p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
 script not in a git repository) are caught automatically and recorded in
-<code>mb_capture_errors</code> rather than aborting the run. This makes the CLI safe
+<code>call.capture_errors</code> rather than aborting the run. This makes the CLI safe
 to use across heterogeneous cluster nodes.</p>
 <h2 id="slurm-example">SLURM example</h2>
 <p>A typical SLURM job script:</p>
@@ -1228,8 +1231,14 @@ ID, node list, etc.) alongside the wall-clock time of the simulation.</p>
 <p>Read the results with pandas:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">results</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># flatten if needed</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Or use get_results(flat=True) when reading via microbench:</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">flat</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">flat</span><span class="p">)</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
 </code></pre></div>
 <h2 id="repeated-runs">Repeated runs</h2>
 <p>Use <code>--iterations</code> to run the command multiple times within a single record.
@@ -1239,9 +1248,9 @@ per-record overhead or reduce timing noise:</p>
 </code></pre></div>
 <p>With 10 iterations and 2 warmup runs, the record contains:</p>
 <ul>
-<li><code>run_durations</code> — list of 10 wall-clock durations in seconds</li>
-<li><code>returncode</code> — list of 10 exit codes (one per timed iteration)</li>
-<li><code>stdout</code> / <code>stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
+<li><code>call.durations</code> — list of 10 wall-clock durations in seconds</li>
+<li><code>call.returncode</code> — list of 10 exit codes (one per timed iteration)</li>
+<li><code>call.stdout</code> / <code>call.stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
 </ul>
 <p>Warmup runs are excluded from all three lists. The process exits with
 <code>max(returncode)</code> so any failing iteration propagates to the shell.</p>
@@ -1256,8 +1265,8 @@ unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>microbench<span class="w"> </span>--stdout<span class="w"> </span>--<span class="w"> </span>stdbuf<span class="w"> </span>-oL<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
 </div>
-<p>To detect failed iterations when analysing results with pandas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<p>To detect failed iterations when analysing results with pandas (using <code>flat=True</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="extra-metadata">Extra metadata</h2>
 <p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
@@ -1277,7 +1286,7 @@ package (<code>pip install psutil</code>).</p>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
 </code></pre></div>
-<p>The record gains a <code>subprocess_monitor</code> field: a list of per-iteration
+<p>The record gains a <code>call.monitor</code> field: a list of per-iteration
 sample lists (one inner list per <code>--iterations</code> call, warmup excluded).
 Each sample is a dict with three keys:</p>
 <table>
@@ -1304,29 +1313,31 @@ Each sample is a dict with three keys:</p>
 </table>
 <p>Example record (single iteration, two samples):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;subprocess_monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="p">[</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p">}</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">      </span><span class="p">[</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">      </span><span class="p">]</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="p">}</span>
 </code></pre></div>
 <p>Only the direct child process is tracked. If the child spawns its own
 subprocesses, their CPU and memory usage are not included.</p>
 <p>If the process exits before the first sample interval fires (e.g. a very
 short-lived command with a long <code>--monitor-interval</code>), the inner list will
-be empty and <code>subprocess_monitor</code> is omitted from the record.</p>
-<p>Analyse with pandas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
+be empty and <code>call.monitor</code> is omitted from the record.</p>
+<p>Analyse with <code>get_results()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
 <a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="n">samples</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
 <a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">s</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s1">&#39;subprocess_monitor&#39;</span><span class="p">]</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>          <span class="c1"># row[0] = first iteration</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;monitor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># [0] = first iteration</span>
 <a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="p">])</span>
 <a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_mb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_bytes&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
 <a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">samples</span><span class="p">[[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;rss_mb&#39;</span><span class="p">]])</span>

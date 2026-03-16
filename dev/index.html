@@ -871,7 +871,7 @@ mixins.</p>
 <li><strong>Extensible via mixins</strong> — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more</li>
 <li><strong>Cluster and HPC ready</strong> — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes</li>
 <li><strong>JSONL output</strong> — one JSON object per call; load directly into pandas with <code>read_json(..., lines=True)</code>; no schema lock-in</li>
-<li><strong>Automatic run correlation</strong> — <code>mb_run_id</code> is a UUID generated once per process; all bench suites in the same run share it, enabling <code>groupby('mb_run_id')</code> across independent suites</li>
+<li><strong>Automatic run correlation</strong> — <code>mb.run_id</code> is a UUID generated once per process; all bench suites in the same run share it, enabling <code>groupby('mb.run_id')</code> across independent suites</li>
 <li><strong>Flexible output</strong> — write to a local file, an in-memory buffer, or Redis; concurrent writers safe via <code>O_APPEND</code></li>
 </ul>
 <h2 id="installation">Installation</h2>
@@ -932,22 +932,33 @@ Some mixins have optional requirements:</p>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
 </code></pre></div>
-<p>Each call produces one record. <code>results</code> is a pandas DataFrame:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   mb_run_id                             mb_version  function_name  run_durations  experiment
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  1.1.0      my_function    [0.049823]     baseline
+<p>Each call produces one record. With <code>get_results(flat=True)</code> the record looks
+like:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   mb.run_id                             mb.version  call.name   call.durations  experiment
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function  [0.049823]     baseline
 </code></pre></div>
 <p>The underlying JSON for a single record looks like:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;mb_run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;mb_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.1.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">&quot;start_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.123456+00:00&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">&quot;finish_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.172279+00:00&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nt">&quot;run_durations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.049823</span><span class="p">],</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">&quot;function_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_function&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">&quot;timestamp_tz&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="nt">&quot;duration_counter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;perf_counter&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;baseline&quot;</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="p">}</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.0.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">&quot;duration_counter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;perf_counter&quot;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">&quot;invocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Python&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_function&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&quot;start_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.123456+00:00&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&quot;finish_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.172279+00:00&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="nt">&quot;durations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.049823</span><span class="p">]</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="nt">&quot;python&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.12.4&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="nt">&quot;prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/opt/conda/envs/myenv&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="nt">&quot;executable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/opt/conda/envs/myenv/bin/python&quot;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;baseline&quot;</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="p">}</span>
 </code></pre></div>
 <p>See <a href="getting-started/">Getting started</a> for a full walkthrough.</p>
 

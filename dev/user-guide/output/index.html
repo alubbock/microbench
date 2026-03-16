@@ -930,13 +930,13 @@ common pattern when running benchmark jobs across cluster nodes.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
-<p>Pass <code>flat=True</code> to flatten nested mixin fields (e.g. <code>slurm</code>, <code>git_info</code>,
-<code>cgroup_limits</code>) into dot-notation keys:</p>
+<p>Pass <code>flat=True</code> to flatten nested fields (e.g. <code>mb</code>, <code>call</code>, <code>slurm</code>, <code>git</code>,
+<code>cgroups</code>) into dot-notation keys:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># {&#39;function_name&#39;: &#39;noop&#39;, &#39;slurm.job_id&#39;: &#39;12345&#39;, &#39;slurm.cpus_on_node&#39;: &#39;8&#39;, ...}</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># {&#39;call.name&#39;: &#39;noop&#39;, &#39;mb.run_id&#39;: &#39;...&#39;, &#39;slurm.job_id&#39;: &#39;12345&#39;, ...}</span>
 </code></pre></div>
 <h2 id="quick-summary">Quick summary</h2>
-<p>Print min/mean/median/max/stdev of <code>run_durations</code> with no extra dependencies:</p>
+<p>Print min/mean/median/max/stdev of <code>call.durations</code> with no extra dependencies:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">bench</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008</span>
 </code></pre></div>

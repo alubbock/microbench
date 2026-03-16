@@ -1380,22 +1380,22 @@ combine any number of microbench mixins without conflicts, and their
 <tbody>
 <tr>
 <td><em>(none)</em></td>
-<td><code>mb_run_id</code>, <code>mb_version</code>, <code>start_time</code>, <code>finish_time</code>, <code>run_durations</code>, <code>function_name</code>, <code>timestamp_tz</code>, <code>duration_counter</code></td>
+<td><code>mb.run_id</code>, <code>mb.version</code>, <code>mb.timezone</code>, <code>mb.duration_counter</code>, <code>call.invocation</code>, <code>call.name</code>, <code>call.start_time</code>, <code>call.finish_time</code>, <code>call.durations</code></td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBFunctionCall</code></td>
-<td><code>args</code>, <code>kwargs</code></td>
+<td><code>call.args</code>, <code>call.kwargs</code></td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBReturnValue</code></td>
-<td><code>return_value</code></td>
+<td><code>call.return_value</code></td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBPythonInfo</code></td>
-<td><code>python</code> dict: <code>version</code>, <code>prefix</code>, <code>executable</code> — <strong>included in <code>MicroBench</code> by default</strong></td>
+<td><code>python.version</code>, <code>python.prefix</code>, <code>python.executable</code> — <strong>included in <code>MicroBench</code> by default</strong></td>
 <td>—</td>
 </tr>
 <tr>
@@ -1405,22 +1405,22 @@ combine any number of microbench mixins without conflicts, and their
 </tr>
 <tr>
 <td><code>MBHostInfo</code></td>
-<td><code>hostname</code>, <code>operating_system</code></td>
+<td><code>host.hostname</code>, <code>host.os</code></td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBHostCpuCores</code></td>
-<td><code>cpu_cores_logical</code>, <code>cpu_cores_physical</code></td>
+<td><code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code></td>
 <td>psutil</td>
 </tr>
 <tr>
 <td><code>MBHostRamTotal</code></td>
-<td><code>ram_total</code> (bytes)</td>
+<td><code>host.ram_total</code> (bytes)</td>
 <td>psutil</td>
 </tr>
 <tr>
 <td><code>MBPeakMemory</code></td>
-<td><code>peak_memory_bytes</code></td>
+<td><code>call.peak_memory_bytes</code></td>
 <td>—</td>
 </tr>
 <tr>
@@ -1435,27 +1435,27 @@ combine any number of microbench mixins without conflicts, and their
 </tr>
 <tr>
 <td><code>MBWorkingDir</code></td>
-<td><code>working_dir</code> — absolute path of the working directory at benchmark time</td>
+<td><code>call.working_dir</code> — absolute path of the working directory at benchmark time</td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBCgroupLimits</code></td>
-<td><code>cgroup_limits</code> dict with <code>cpu_cores</code>, <code>memory_bytes</code>, <code>cgroup_version</code> (empty dict if not on Linux or cgroup fs unavailable)</td>
+<td><code>cgroups</code> dict with <code>cpu_cores_limit</code>, <code>memory_bytes_limit</code>, <code>version</code> (empty dict if not on Linux or cgroup fs unavailable)</td>
 <td>Linux only</td>
 </tr>
 <tr>
 <td><code>MBGitInfo</code></td>
-<td><code>git_info</code> dict with <code>repo</code>, <code>commit</code>, <code>branch</code>, <code>dirty</code></td>
+<td><code>git</code> dict with <code>repo</code>, <code>commit</code>, <code>branch</code>, <code>dirty</code></td>
 <td><code>git</code> ≥ 2.11 on PATH</td>
 </tr>
 <tr>
 <td><code>MBGlobalPackages</code></td>
-<td><code>package_versions</code> for every package in the caller's global scope</td>
+<td><code>python.loaded_packages</code> for every package in the caller's global scope</td>
 <td>—</td>
 </tr>
 <tr>
 <td><code>MBInstalledPackages</code></td>
-<td><code>package_versions</code> for every installed package</td>
+<td><code>python.installed_packages</code> (and optionally <code>python.installed_package_paths</code>) for every installed package</td>
 <td>—</td>
 </tr>
 <tr>
@@ -1465,12 +1465,12 @@ combine any number of microbench mixins without conflicts, and their
 </tr>
 <tr>
 <td><code>MBNvidiaSmi</code></td>
-<td><code>nvidia_&lt;attr&gt;</code> per GPU (see below)</td>
+<td><code>nvidia</code> — list of per-GPU dicts (see below)</td>
 <td><code>nvidia-smi</code> on PATH</td>
 </tr>
 <tr>
 <td><code>MBLineProfiler</code></td>
-<td><code>line_profiler</code> (base64-encoded profile, see below)</td>
+<td><code>call.line_profiler</code> (base64-encoded profile, see below)</td>
 <td>line_profiler</td>
 </tr>
 <tr>
@@ -1496,7 +1496,7 @@ function as <code>args</code> (list) and <code>kwargs</code> (dict):</p>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># record contains: {&quot;args&quot;: [1], &quot;kwargs&quot;: {&quot;b&quot;: 2}, ...}</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;args&quot;: [1], &quot;kwargs&quot;: {&quot;b&quot;: 2}}, ...}</span>
 </code></pre></div>
 <h3 id="mbreturnvalue"><code>MBReturnValue</code></h3>
 <p>Captures the return value of the decorated function as <code>return_value</code>:</p>
@@ -1512,7 +1512,7 @@ function as <code>args</code> (list) and <code>kwargs</code> (dict):</p>
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">compute</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># record contains: {&quot;return_value&quot;: 4950, ...}</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;return_value&quot;: 4950}, ...}</span>
 </code></pre></div>
 <p>The return value must be JSON-serialisable. If it is not, a
 <code>JSONEncodeWarning</code> is issued and a placeholder is stored. See
@@ -1527,11 +1527,11 @@ custom types.</p>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">,</span> <span class="n">MBHostRamTotal</span><span class="p">):</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">pass</span>
 </code></pre></div>
-<p>Fields: <code>cpu_cores_logical</code>, <code>cpu_cores_physical</code>, <code>ram_total</code> (bytes).</p>
+<p>Fields: <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes).</p>
 <h2 id="job-resource-utilisation">Job resource utilisation</h2>
 <h3 id="mbpeakmemory"><code>MBPeakMemory</code></h3>
 <p>Captures the peak Python memory allocation during the benchmarked function
-(across all iterations when <code>iterations &gt; 1</code>) as <code>peak_memory_bytes</code> (bytes).
+(across all iterations when <code>iterations &gt; 1</code>) as <code>call.peak_memory_bytes</code> (bytes).
 Uses <a href="https://docs.python.org/3/library/tracemalloc.html"><code>tracemalloc</code></a> from
 the standard library — no extra dependencies required.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBPeakMemory</span>
@@ -1546,7 +1546,7 @@ the standard library — no extra dependencies required.</p>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">process</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># record contains: {&quot;peak_memory_bytes&quot;: 8056968, ...}</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;peak_memory_bytes&quot;: 8056968}, ...}</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -1623,7 +1623,7 @@ string as the version. Hierarchical module names such as
 standard set by both Lmod and Environment Modules. No subprocess is
 required and there are no extra dependencies.</p>
 <h3 id="mbworkingdir"><code>MBWorkingDir</code></h3>
-<p>Captures the absolute path of the working directory at benchmark time into <code>working_dir</code>:</p>
+<p>Captures the absolute path of the working directory at benchmark time into <code>call.working_dir</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBWorkingDir</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBWorkingDir</span><span class="p">):</span>
@@ -1633,8 +1633,10 @@ required and there are no extra dependencies.</p>
 </code></pre></div>
 <p>Each record will contain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;working_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/experiments/run-42&quot;</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="p">}</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">&quot;working_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/experiments/run-42&quot;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">}</span>
 </code></pre></div>
 <p>Useful for reproducibility — records exactly which directory was current when
 the benchmark ran, so results from different nodes or directories can be
@@ -1655,21 +1657,21 @@ container — the number that determines your benchmark's resource budget.</p>
 </code></pre></div>
 <p>Each record will contain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="p">{</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;cgroup_limits&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">&quot;cgroup_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong><code>cpu_cores</code></strong> is derived from the cgroup CPU quota and period
+<p><strong><code>cpu_cores_limit</code></strong> is derived from the cgroup CPU quota and period
 (<code>quota_us / period_us</code>), so it represents effective CPU parallelism rather than
 a physical core count. A SLURM job launched with <code>--cpus-per-task=4</code> will
-typically report <code>cpu_cores: 4.0</code>.</p>
-<p><strong><code>memory_bytes</code></strong> is the hard memory limit in bytes. A job allocated <code>--mem=16G</code>
-will typically report <code>memory_bytes: 17179869184</code>.</p>
+typically report <code>cpu_cores_limit: 4.0</code>.</p>
+<p><strong><code>memory_bytes_limit</code></strong> is the hard memory limit in bytes. A job allocated <code>--mem=16G</code>
+will typically report <code>memory_bytes_limit: 17179869184</code>.</p>
 <p>Both fields are <code>null</code> when no limit is set (the scheduler granted unlimited
-access to that resource). <code>cgroup_limits</code> is an empty dict on non-Linux
+access to that resource). <code>cgroups</code> is an empty dict on non-Linux
 platforms or when the cgroup filesystem is unavailable.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -1689,7 +1691,7 @@ the kernel-enforced resource limits.</p>
 </code></pre></div>
 <p>Each record will contain:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;git_info&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;git&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/project&quot;</span><span class="p">,</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2&quot;</span><span class="p">,</span>
 <a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
@@ -1776,12 +1778,13 @@ namespace:</p>
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="k">pass</span>
 </code></pre></div>
-<p>The <code>package_versions</code> field will contain <code>{"numpy": "1.26.0", "pandas": "2.1.0", ...}</code>.</p>
+<p>The <code>python.loaded_packages</code> field will contain <code>{"numpy": "1.26.0", "pandas": "2.1.0", ...}</code>.</p>
 <h3 id="mbinstalledpackages"><code>MBInstalledPackages</code></h3>
 <p>Captures every package available for import (from <code>importlib.metadata</code>).
-Useful for full reproducibility audits. Can be slow on environments with
-many packages.</p>
-<p>Set <code>capture_paths = True</code> to also record installation paths:</p>
+Results are stored in <code>python.installed_packages</code>. Useful for full
+reproducibility audits. Can be slow on environments with many packages.</p>
+<p>Set <code>capture_paths = True</code> to also record installation paths in
+<code>python.installed_package_paths</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
@@ -1803,7 +1806,7 @@ If <code>conda</code> is not on <code>PATH</code>, the <code>CONDA_EXE</code> en
 </code></pre></div>
 <h3 id="capture_versions"><code>capture_versions</code></h3>
 <p>To capture specific package versions without a mixin, list them on the
-class:</p>
+class. Results are stored in <code>python.loaded_packages</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
@@ -1819,33 +1822,39 @@ class:</p>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;pcie.link.width.max&#39;</span><span class="p">)</span>
 <a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123&#39;</span><span class="p">,)</span>  <span class="c1"># UUIDs preferred; omit to capture all</span>
 </code></pre></div>
-<p>Results are stored as <code>nvidia_&lt;attr&gt;</code> dicts keyed by GPU UUID, e.g.
-<code>nvidia_gpu_name: {"GPU-abc123": "NVIDIA A100"}</code>.</p>
+<p>Results are stored in <code>nvidia</code> as a list of per-GPU dicts, each containing a
+<code>uuid</code> key plus one key per attribute, e.g.:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="p">{</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span><span class="nt">&quot;nvidia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GPU-abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;gpu_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NVIDIA A100&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;memory.total&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;40960 MiB&quot;</span><span class="p">}</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="p">}</span>
+</code></pre></div>
 <p>Run <code>nvidia-smi --help-query-gpu</code> for the full list of available attributes.
 Run <code>nvidia-smi -L</code> to list GPU UUIDs.</p>
 <h2 id="line-profiler-mblineprofiler">Line profiler — <code>MBLineProfiler</code></h2>
 <p>Captures a line-by-line timing profile of the decorated function using
 <a href="https://github.com/rkern/line_profiler">line_profiler</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>    <span class="k">pass</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="nd">@bench</span>
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
-<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
-<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
-<a id="__codelineno-28-13" name="__codelineno-28-13" href="#__codelineno-28-13"></a>    <span class="k">return</span> <span class="n">acc</span>
-<a id="__codelineno-28-14" name="__codelineno-28-14" href="#__codelineno-28-14"></a>
-<a id="__codelineno-28-15" name="__codelineno-28-15" href="#__codelineno-28-15"></a><span class="n">my_function</span><span class="p">()</span>
-<a id="__codelineno-28-16" name="__codelineno-28-16" href="#__codelineno-28-16"></a>
-<a id="__codelineno-28-17" name="__codelineno-28-17" href="#__codelineno-28-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-<a id="__codelineno-28-18" name="__codelineno-28-18" href="#__codelineno-28-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>    <span class="k">return</span> <span class="n">acc</span>
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a>
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">])</span>
 </code></pre></div>
-<p>The profile is stored as a base64-encoded pickle in the <code>line_profiler</code> field.
+<p>The profile is stored as a base64-encoded pickle in the <code>call.line_profiler</code> field.
 Use <code>MBLineProfiler.decode_line_profile()</code> to deserialise it, or
 <code>MBLineProfiler.print_line_profile()</code> to print it directly.</p>
 <div class="admonition warning">

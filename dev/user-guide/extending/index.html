@@ -965,12 +965,12 @@ dictionary that will be serialised as the result record.</p>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>  <span class="c1"># e.g. &#39;x86_64&#39;</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capturepost_slow_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="c1"># run_durations and finish_time are available in capturepost_ methods</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="c1"># call.durations and call.finish_time are available in capturepost_ methods</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;durations&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;slow_call&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
-<p>Avoid key names that clash with built-in fields (e.g. <code>start_time</code>,
-<code>function_name</code>). The <code>mb_</code> prefix is reserved for microbench internals.</p>
+<p>Avoid key names that clash with built-in fields (e.g. <code>call.start_time</code>,
+<code>call.name</code>). The <code>mb</code> and <code>call</code> top-level keys are reserved for microbench internals.</p>
 <p>For more advanced extension patterns — custom JSON encoding, writing
 reusable mixins, and tools for consuming benchmark output — see
 <a href="../advanced/">Advanced usage</a>.</p>
