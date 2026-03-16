@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from microbench import __version__
 from microbench.__main__ import main
 
 
@@ -858,3 +859,11 @@ def test_cli_hash_algorithm(tmp_path):
     assert len(sha256_hex) == 64  # sha256 produces a 64-char hex digest
     assert len(md5_hex) == 32  # md5 produces a 32-char hex digest
     assert sha256_hex != md5_hex
+
+
+def test_cli_version(capsys):
+    """--version prints the package version and exits 0."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--version'])
+    assert exc.value.code == 0
+    assert __version__ in capsys.readouterr().out
