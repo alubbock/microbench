@@ -861,6 +861,65 @@ def test_cli_hash_algorithm(tmp_path):
     assert sha256_hex != md5_hex
 
 
+def test_cli_timeout_not_exceeded():
+    """--timeout that does not fire produces a normal record with no timed_out field."""
+    mock_proc = _make_mock_popen()
+    mock_proc.returncode = 0
+
+    buf = io.StringIO()
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit) as exc:
+                main(['--no-mixin', '--timeout', '30', '--', 'sleep', '1'])
+    assert exc.value.code == 0
+    record = json.loads(buf.getvalue())
+    assert 'timed_out' not in record['call']
+    assert record['call']['returncode'] == [0]
+
+
+def test_cli_timeout_sigterm_sufficient():
+    """--timeout: process exits after SIGTERM; SIGKILL is not sent."""
+    mock_proc = _make_mock_popen()
+    mock_proc.returncode = -15  # killed by SIGTERM
+    mock_proc.wait.side_effect = [
+        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # main timeout
+        None,  # exits cleanly after SIGTERM (within grace period)
+        None,  # called again by Popen.__exit__
+    ]
+
+    buf = io.StringIO()
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit):
+                main(['--no-mixin', '--timeout', '5', '--', 'sleep', '100'])
+    record = json.loads(buf.getvalue())
+    assert record['call']['timed_out'] is True
+    mock_proc.terminate.assert_called_once()
+    mock_proc.kill.assert_not_called()
+
+
+def test_cli_timeout_sigkill_required():
+    """--timeout: SIGKILL sent when process ignores SIGTERM past the grace period."""
+    mock_proc = _make_mock_popen()
+    mock_proc.returncode = -9  # killed by SIGKILL
+    mock_proc.wait.side_effect = [
+        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # main timeout
+        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # grace period
+        None,  # exits after SIGKILL
+        None,  # called again by Popen.__exit__
+    ]
+
+    buf = io.StringIO()
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit):
+                main(['--no-mixin', '--timeout', '5', '--', 'sleep', '100'])
+    record = json.loads(buf.getvalue())
+    assert record['call']['timed_out'] is True
+    mock_proc.terminate.assert_called_once()
+    mock_proc.kill.assert_called_once()
+
+
 def test_cli_version(capsys):
     """--version prints the package version and exits 0."""
     with pytest.raises(SystemExit) as exc:

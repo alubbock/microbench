@@ -47,6 +47,9 @@ _DEFAULT_MIXINS = (
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
 
+# Seconds to wait after SIGTERM before sending SIGKILL on timeout.
+_SIGTERM_GRACE_PERIOD = 5
+
 
 def _make_mixin_type(mixin_map):
     """Return an argparse type function that normalises and validates mixin names."""
@@ -126,6 +129,17 @@ class _SubprocessMonitorThread(threading.Thread):
                     break
         except psutil.NoSuchProcess:
             pass
+
+
+def _positive_float(value):
+    """Return an argparse type function that accepts positive floats."""
+    try:
+        fvalue = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'{value!r} is not a number')
+    if fvalue <= 0:
+        raise argparse.ArgumentTypeError(f'must be > 0, got {fvalue}')
+    return fvalue
 
 
 def _int_at_least(minimum):
@@ -253,6 +267,29 @@ def _build_parser(mixin_map):
         ),
     )
     parser.add_argument(
+        '--timeout',
+        type=_positive_float,
+        default=None,
+        metavar='SECONDS',
+        help=(
+            'Send SIGTERM to the command after SECONDS seconds per iteration. '
+            'If the process has not exited after an additional grace period '
+            f'(default {_SIGTERM_GRACE_PERIOD}s, see --timeout-grace-period), '
+            'sends SIGKILL. '
+            'Timed-out iterations are recorded with call.timed_out = true.'
+        ),
+    )
+    parser.add_argument(
+        '--timeout-grace-period',
+        type=_positive_float,
+        default=_SIGTERM_GRACE_PERIOD,
+        metavar='SECONDS',
+        help=(
+            f'Seconds to wait after SIGTERM before sending SIGKILL. '
+            f'Only relevant when --timeout is used. Default: {_SIGTERM_GRACE_PERIOD}.'
+        ),
+    )
+    parser.add_argument(
         '--field',
         '-f',
         action='append',
@@ -350,6 +387,7 @@ def main(argv=None):
             self._subprocess_stdout = []
             self._subprocess_stderr = []
             self._subprocess_monitor = []
+            self._subprocess_timed_out = False
             self._subprocess_timed_phase = True
 
         def capturepost_subprocess_result(self, bm_data):
@@ -357,6 +395,8 @@ def main(argv=None):
             call['invocation'] = 'CLI'
             call['command'] = self._subprocess_command
             call['returncode'] = self._subprocess_returncodes
+            if self._subprocess_timed_out:
+                call['timed_out'] = True
             if self._subprocess_stdout:
                 call['stdout'] = self._subprocess_stdout
             if self._subprocess_stderr:
@@ -399,6 +439,7 @@ def main(argv=None):
     bench._subprocess_stdout = []
     bench._subprocess_stderr = []
     bench._subprocess_monitor = []
+    bench._subprocess_timed_out = False
     bench._subprocess_timed_phase = False  # becomes True after warmup
 
     # Hold references to the real streams before any patching in tests.
@@ -409,8 +450,14 @@ def main(argv=None):
         capture_stdout = args.stdout in _CAPTURE_CHOICES
         capture_stderr = args.stderr in _CAPTURE_CHOICES
         monitor_interval = args.monitor_interval
+        timeout = args.timeout
 
-        if not capture_stdout and not capture_stderr and monitor_interval is None:
+        if (
+            not capture_stdout
+            and not capture_stderr
+            and monitor_interval is None
+            and timeout is None
+        ):
             result = subprocess.run(cmd)
             bench._subprocess_returncodes.append(result.returncode)
             return
@@ -468,7 +515,17 @@ def main(argv=None):
                 monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
                 monitor_thread.start()
 
-            proc.wait()
+            timed_out = False
+            try:
+                proc.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                proc.terminate()
+                try:
+                    proc.wait(timeout=args.timeout_grace_period)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait()
 
             if monitor_thread is not None:
                 monitor_thread.stop()
@@ -478,6 +535,8 @@ def main(argv=None):
             for t in threads:
                 t.join()
 
+        if timed_out and bench._subprocess_timed_phase:
+            bench._subprocess_timed_out = True
         bench._subprocess_returncodes.append(proc.returncode)
         if capture_stdout:
             bench._subprocess_stdout.append(''.join(stdout_chunks))
