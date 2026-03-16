@@ -156,6 +156,13 @@ def _build_parser(mixin_map):
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+    from microbench import __version__
+
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'microbench {__version__}',
+    )
     parser.add_argument(
         '--outfile',
         '-o',
