@@ -46,11 +46,12 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 
 ## Default mixins
 
-When no `--mixin` is specified, `host-info`, `slurm-info`, and
-`loaded-modules` are included automatically, capturing hostname,
-operating system, all `SLURM_*` environment variables, and the loaded
-Lmod/Environment Modules software stack. All three degrade gracefully
-to empty dicts outside of their respective environments.
+When no `--mixin` is specified, `host-info`, `slurm-info`,
+`loaded-modules`, and `working-dir` are included automatically, capturing
+hostname, operating system, all `SLURM_*` environment variables, the loaded
+Lmod/Environment Modules software stack, and the current working directory.
+All four degrade gracefully or produce stable values outside their respective
+environments.
 
 Mixin names use a short kebab-case form without the `MB` prefix
 (e.g. `host-info` instead of `MBHostInfo`). MB-prefixed names are also

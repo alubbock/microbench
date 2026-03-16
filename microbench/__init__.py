@@ -50,6 +50,7 @@ from .mixins import (
     MBPythonVersion,
     MBReturnValue,
     MBSlurmInfo,
+    MBWorkingDir,
     _MonitorThread,
 )
 
@@ -83,6 +84,7 @@ __all__ = [
     'MBPeakMemory',
     'MBSlurmInfo',
     'MBLoadedModules',
+    'MBWorkingDir',
     'MBCgroupLimits',
     'MBGitInfo',
     'MBFileHash',

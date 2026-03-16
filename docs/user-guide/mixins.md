@@ -30,6 +30,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBPeakMemory` | `peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
+| `MBWorkingDir` | `working_dir` — absolute path of the working directory at benchmark time | — |
 | `MBCgroupLimits` | `cgroup_limits` dict with `cpu_cores`, `memory_bytes`, `cgroup_version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
 | `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
@@ -218,6 +219,31 @@ string as the version. Hierarchical module names such as
 This mixin reads the `LOADEDMODULES` environment variable, which is the
 standard set by both Lmod and Environment Modules. No subprocess is
 required and there are no extra dependencies.
+
+### `MBWorkingDir`
+
+Captures the absolute path of the working directory at benchmark time into `working_dir`:
+
+```python
+from microbench import MicroBench, MBWorkingDir
+
+class Bench(MicroBench, MBWorkingDir):
+    pass
+
+bench = Bench()
+```
+
+Each record will contain:
+
+```json
+{
+  "working_dir": "/home/user/experiments/run-42"
+}
+```
+
+Useful for reproducibility — records exactly which directory was current when
+the benchmark ran, so results from different nodes or directories can be
+distinguished. Included in the CLI defaults.
 
 ### `MBCgroupLimits`
 

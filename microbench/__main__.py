@@ -37,7 +37,7 @@ def _get_mixin_map():
     }
 
 
-_DEFAULT_MIXINS = ('host-info', 'slurm-info', 'loaded-modules')
+_DEFAULT_MIXINS = ('host-info', 'slurm-info', 'loaded-modules', 'working-dir')
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
 
