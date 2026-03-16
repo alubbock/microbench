@@ -29,7 +29,6 @@ combine any number of microbench mixins without conflicts, and their
 | `MBFunctionCall` | `call.args`, `call.kwargs` | — |
 | `MBReturnValue` | `call.return_value` | — |
 | `MBPythonInfo` | `python.version`, `python.prefix`, `python.executable` — **included in `MicroBench` by default** | — |
-| `MBPythonVersion` | `python_version`, `python_executable` — *deprecated, use `MBPythonInfo`* | — |
 | `MBHostInfo` | `host.hostname`, `host.os`; also `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes) when psutil is installed (silently omitted otherwise) | psutil (optional) |
 | `MBPeakMemory` | `call.peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
@@ -112,9 +111,8 @@ Fields added when psutil is installed (silently omitted otherwise):
 `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes).
 
 !!! note
-    `MBHostCpuCores` and `MBHostRamTotal` are deprecated. `MBHostInfo` now
-    covers all three mixins. The separate classes still work but emit a
-    `DeprecationWarning` at call time.
+    `MBHostCpuCores` and `MBHostRamTotal` have been removed. Use `MBHostInfo`,
+    which captures all host fields including the psutil-dependent ones.
 
 ## Job resource utilisation
 

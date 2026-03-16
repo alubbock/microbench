@@ -6,6 +6,14 @@ All notable changes to microbench are documented here.
 
 ### Breaking changes (vs v1.1.0)
 
+- **Removed deprecated mixins**: `MBPythonVersion`, `MBHostCpuCores`, and
+  `MBHostRamTotal` have been removed.
+  - Replace `MBPythonVersion` with `MBPythonInfo` (captures `python.version`,
+    `python.prefix`, `python.executable`).
+  - Replace `MBHostCpuCores` and/or `MBHostRamTotal` with `MBHostInfo`, which
+    now captures `host.cpu_cores_logical`, `host.cpu_cores_physical`, and
+    `host.ram_total` automatically when psutil is installed.
+
 - **Namespace restructuring of record fields**: All benchmark record fields are
   now grouped into top-level namespace dicts, making records self-documenting
   and easier to query. The complete rename table is below.

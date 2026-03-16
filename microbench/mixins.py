@@ -152,23 +152,6 @@ class MBReturnValue:
     pass
 
 
-class MBPythonVersion:
-    """Capture the Python version and location of the Python executable.
-
-    .. deprecated::
-        Use :class:`MBPythonInfo` instead. ``MBPythonVersion`` will be
-        removed in a future release.
-    """
-
-    cli_compatible = True
-
-    def capture_python_version(self, bm_data):
-        bm_data['python_version'] = platform.python_version()
-
-    def capture_python_executable(self, bm_data):
-        bm_data['python_executable'] = sys.executable
-
-
 class MBPythonInfo:
     """Capture the Python interpreter version, prefix, and executable path.
 
@@ -179,7 +162,7 @@ class MBPythonInfo:
     - ``executable``: ``sys.executable`` — the absolute interpreter path
 
     This mixin is included in :class:`MicroBench` by default (Python API)
-    and in the CLI default mixin set. It supersedes :class:`MBPythonVersion`.
+    and in the CLI default mixin set. It supersedes the former ``MBPythonVersion``.
     """
 
     cli_compatible = True
@@ -200,8 +183,8 @@ class MBHostInfo:
     ``host.ram_total`` (bytes). The psutil fields are silently omitted when
     psutil is not available — no error or warning is raised.
 
-    This mixin supersedes the separate :class:`MBHostCpuCores` and
-    :class:`MBHostRamTotal` mixins, which are deprecated.
+    This mixin supersedes the former ``MBHostCpuCores`` and ``MBHostRamTotal``
+    mixins, which have been removed.
     """
 
     cli_compatible = True
@@ -776,65 +759,6 @@ class MBLineProfiler:
     def print_line_profile(cls, line_profile_pickled, **kwargs):
         lp_data = cls.decode_line_profile(line_profile_pickled)
         line_profiler.show_text(lp_data.timings, lp_data.unit, **kwargs)
-
-
-class _NeedsPsUtil:
-    @classmethod
-    def _check_psutil(cls):
-        if not psutil:
-            raise ImportError('psutil library needed')
-
-
-class MBHostCpuCores:
-    """Capture the number of logical and physical CPU cores.
-
-    .. deprecated::
-        Use :class:`MBHostInfo` instead. ``MBHostInfo`` now captures
-        ``host.cpu_cores_logical`` and ``host.cpu_cores_physical`` automatically
-        when psutil is available. ``MBHostCpuCores`` will be removed in a
-        future release.
-    """
-
-    cli_compatible = True
-
-    def capture_cpu_cores(self, bm_data):
-        warnings.warn(
-            'MBHostCpuCores is deprecated and will be removed in a future '
-            'release. Use MBHostInfo instead, which now captures '
-            'host.cpu_cores_logical and host.cpu_cores_physical when psutil '
-            'is available.',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if psutil is None:
-            return
-        host = bm_data.setdefault('host', {})
-        host['cpu_cores_logical'] = psutil.cpu_count(logical=True)
-        host['cpu_cores_physical'] = psutil.cpu_count(logical=False)
-
-
-class MBHostRamTotal:
-    """Capture the total host RAM in bytes.
-
-    .. deprecated::
-        Use :class:`MBHostInfo` instead. ``MBHostInfo`` now captures
-        ``host.ram_total`` automatically when psutil is available.
-        ``MBHostRamTotal`` will be removed in a future release.
-    """
-
-    cli_compatible = True
-
-    def capture_total_ram(self, bm_data):
-        warnings.warn(
-            'MBHostRamTotal is deprecated and will be removed in a future '
-            'release. Use MBHostInfo instead, which now captures '
-            'host.ram_total when psutil is available.',
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if psutil is None:
-            return
-        bm_data.setdefault('host', {})['ram_total'] = psutil.virtual_memory().total
 
 
 class MBPeakMemory:
