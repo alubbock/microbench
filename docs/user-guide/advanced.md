@@ -46,7 +46,7 @@ Mixin captures run inside the exit handler. Slow or unavailable captures
 (e.g. `MBCondaPackages` when conda is not installed) can delay exit, which
 matters when operating inside a SLURM grace period. Use
 `capture_optional = True` on the benchmark class so individual capture
-failures are recorded in `mb_capture_errors` rather than aborting the
+failures are recorded in `call.capture_errors` rather than aborting the
 handler:
 
 ```python
@@ -78,21 +78,23 @@ with bench.record('pipeline'):
         write(result)
 ```
 
-Sub-timings are appended to `mb_timings` in call order:
+Sub-timings are appended to `call.timings` in call order:
 
 ```json
 {
-  "function_name": "pipeline",
-  "run_durations": [0.183],
-  "mb_timings": [
-    {"name": "parse",     "duration": 0.041},
-    {"name": "transform", "duration": 0.120},
-    {"name": "write",     "duration": 0.022}
-  ]
+  "call": {
+    "name": "pipeline",
+    "durations": [0.183],
+    "timings": [
+      {"name": "parse",     "duration": 0.041},
+      {"name": "transform", "duration": 0.120},
+      {"name": "write",     "duration": 0.022}
+    ]
+  }
 }
 ```
 
-`mb_timings` is absent from the record when `bench.time()` is never called.
+`call.timings` is absent from the record when `bench.time()` is never called.
 
 ### Compatibility
 
@@ -112,7 +114,7 @@ records nothing and raises no error.
 ### Behaviour with `iterations`
 
 With `iterations=N`, each call to the decorated function runs `N` times. Every
-`bench.time()` inside the body fires once per iteration, so `mb_timings` will
+`bench.time()` inside the body fires once per iteration, so `call.timings` will
 contain `N` entries per named phase:
 
 ```python
@@ -124,14 +126,14 @@ def pipeline():
         ...
 
 pipeline()
-# mb_timings → [{"name": "step", ...}, {"name": "step", ...}, {"name": "step", ...}]
+# call.timings → [{"name": "step", ...}, {"name": "step", ...}, {"name": "step", ...}]
 ```
 
 ### Exceptions
 
 An exception raised inside `with bench.time('phase')` closes the segment and
 records its duration before the exception propagates. The record will contain
-the partial `mb_timings` for all segments that completed or started before the
+the partial `call.timings` for all segments that completed or started before the
 exception.
 
 ## Exception capture
@@ -143,8 +145,10 @@ the error type and message:
 
 ```json
 {
-  "function_name": "risky_step",
-  "run_durations": [0.042],
+  "call": {
+    "name": "risky_step",
+    "durations": [0.042]
+  },
   "exception": {"type": "SolverError", "message": "convergence failed"}
 }
 ```
@@ -182,13 +186,15 @@ When one or more captures fail, the record contains:
 
 ```json
 {
-  "mb_capture_errors": [
-    {"method": "capture_nvidia", "error": "FileNotFoundError: [Errno 2] No such file or directory: 'nvidia-smi'"}
-  ]
+  "call": {
+    "capture_errors": [
+      {"method": "capture_nvidia", "error": "FileNotFoundError: [Errno 2] No such file or directory: 'nvidia-smi'"}
+    ]
+  }
 }
 ```
 
-`mb_capture_errors` is absent from the record when all captures succeed,
+`call.capture_errors` is absent from the record when all captures succeed,
 keeping the happy-path output clean.
 
 !!! tip "When to use `capture_optional`"
@@ -246,8 +252,9 @@ from microbench.livestream import LiveStream
 
 class MyStream(LiveStream):
     def process_alert(self, data):
-        if sum(data['run_durations']) > 10.0:
-            print(f"Slow call on {data.get('hostname')}: {data['run_durations']}")
+        if sum(data.get('call', {}).get('durations', [])) > 10.0:
+            host = data.get('host', {}).get('hostname', 'unknown')
+            print(f"Slow call on {host}: {data['call']['durations']}")
 
 stream = MyStream('/home/user/results.jsonl')
 # ... runs in background while your job continues ...
@@ -266,10 +273,13 @@ import time
 class Watcher(LiveStream):
     def filter(self, data):
         # Only show records from GPU nodes
-        return 'gpu' in data.get('hostname', '')
+        return 'gpu' in data.get('host', {}).get('hostname', '')
 
     def display(self, data):
-        print(f"{data['function_name']} | {data['hostname']} | {data['run_durations']}")
+        name = data.get('call', {}).get('name', '?')
+        host = data.get('host', {}).get('hostname', '?')
+        durs = data.get('call', {}).get('durations', [])
+        print(f"{name} | {host} | {durs}")
 
 stream = Watcher('/home/user/results.jsonl')
 try:
@@ -303,8 +313,9 @@ import pandas
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 
 # Compare the environment of the slowest and fastest calls
-slowest = results.loc[results['run_durations'].apply(sum).idxmax()]
-fastest = results.loc[results['run_durations'].apply(sum).idxmin()]
+results_flat = pandas.DataFrame(FileOutput('/home/user/results.jsonl').get_results(flat=True))
+slowest = results_flat.loc[results_flat['call.durations'].apply(sum).idxmax()]
+fastest = results_flat.loc[results_flat['call.durations'].apply(sum).idxmin()]
 
 envdiff(slowest, fastest)
 ```

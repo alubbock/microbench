@@ -17,15 +17,16 @@ def test_psutil():
 
     test_func()
 
-    results = mybench.get_results(format='df')
+    results = mybench.get_results()
+    host = results[0]['host']
     # psutil.cpu_count(logical=True) can return None on some platforms
     # (e.g. macOS with psutil 7.x), so check that at least one is set
-    logical = results['cpu_cores_logical'][0]
-    physical = results['cpu_cores_physical'][0]
+    logical = host['cpu_cores_logical']
+    physical = host['cpu_cores_physical']
     assert (logical is not None and logical >= 1) or (
         physical is not None and physical >= 1
     ), f'Expected at least one core count, got logical={logical}, physical={physical}'
-    assert results['ram_total'][0] > 0
+    assert host['ram_total'] > 0
 
 
 def test_psutil_missing_raises():

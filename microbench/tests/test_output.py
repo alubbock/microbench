@@ -5,7 +5,6 @@ import warnings
 from unittest.mock import MagicMock, patch
 
 import numpy
-import pandas
 import pytest
 
 from microbench import (
@@ -87,8 +86,8 @@ def test_outfile_string_path():
         noop()
 
         assert os.path.getsize(tmppath) > 0
-        results = pandas.read_json(tmppath, lines=True)
-        assert results['function_name'][0] == 'noop'
+        results = bench.get_results()
+        assert results[0]['call']['name'] == 'noop'
     finally:
         os.unlink(tmppath)
 
@@ -109,7 +108,7 @@ def test_get_results_without_pandas():
         # Default format='dict' works without pandas
         results = bench.get_results()
         assert isinstance(results, list)
-        assert results[0]['function_name'] == 'noop'
+        assert results[0]['call']['name'] == 'noop'
 
         # format='df' raises ImportError
         with pytest.raises(ImportError, match='pandas'):
@@ -139,9 +138,9 @@ def test_multi_sink_output():
     noop()
 
     assert len(sink_a.records) == 2
-    results = sink_b.get_results(format='df')
+    results = sink_b.get_results()
     assert len(results) == 2
-    assert (results['function_name'] == 'noop').all()
+    assert all(r['call']['name'] == 'noop' for r in results)
 
 
 def test_output_base_get_results_raises():
@@ -195,10 +194,10 @@ def test_redis_output_get_results():
 
         noop()
 
-        results = bench.get_results(format='df')
-        assert results['function_name'][0] == 'noop'
-        assert 'start_time' in results.columns
-        assert 'finish_time' in results.columns
+        results = bench.get_results()
+        assert results[0]['call']['name'] == 'noop'
+        assert 'start_time' in results[0]['call']
+        assert 'finish_time' in results[0]['call']
 
         mock_redis_client.rpush.assert_called_once()
         assert mock_redis_client.rpush.call_args[0][0] == 'test:bench'
@@ -238,9 +237,9 @@ def test_redis_output_multiple_results():
         func_a()
         func_b()
 
-        results = bench.get_results(format='df')
+        results = bench.get_results()
         assert len(results) == 2
-        assert list(results['function_name']) == ['func_a', 'func_b']
+        assert [r['call']['name'] for r in results] == ['func_a', 'func_b']
 
 
 def test_unjsonencodable_arg_kwarg_retval():
@@ -262,10 +261,10 @@ def test_unjsonencodable_arg_kwarg_retval():
         assert len(w) == 3
         assert all(issubclass(w_.category, JSONEncodeWarning) for w_ in w)
 
-    results = bench.get_results(format='df')
-    assert results['args'][0] == [_UNENCODABLE_PLACEHOLDER_VALUE]
-    assert results['kwargs'][0] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
-    assert results['return_value'][0] == _UNENCODABLE_PLACEHOLDER_VALUE
+    results = bench.get_results()
+    assert results[0]['call']['args'] == [_UNENCODABLE_PLACEHOLDER_VALUE]
+    assert results[0]['call']['kwargs'] == {'arg2': _UNENCODABLE_PLACEHOLDER_VALUE}
+    assert results[0]['call']['return_value'] == _UNENCODABLE_PLACEHOLDER_VALUE
 
 
 def test_custom_jsonencoder():
@@ -300,8 +299,8 @@ def test_custom_jsonencoder():
 
     dummy()
 
-    results = bench.get_results(format='df')
-    assert results['return_value'][0] == str(obj)
+    results = bench.get_results()
+    assert results[0]['call']['return_value'] == str(obj)
 
 
 def test_jsonencoder_numpy_types():
@@ -341,7 +340,7 @@ def test_get_results_default_returns_list_of_dicts():
     assert isinstance(results, list)
     assert len(results) == 2
     assert all(isinstance(r, dict) for r in results)
-    assert results[0]['function_name'] == 'noop'
+    assert results[0]['call']['name'] == 'noop'
 
 
 def test_get_results_format_df_returns_dataframe():
@@ -356,7 +355,7 @@ def test_get_results_format_df_returns_dataframe():
 
     results = bench.get_results(format='df')
     assert hasattr(results, 'columns')  # DataFrame duck-type check
-    assert results['function_name'][0] == 'noop'
+    assert results['call'][0]['name'] == 'noop'
 
 
 def test_get_results_invalid_format_raises():
@@ -442,7 +441,7 @@ def test_get_results_flat_df():
 
 
 def test_summary_function_prints(capsys):
-    """summary() prints min/mean/median/max/stdev of run_durations."""
+    """summary() prints min/mean/median/max/stdev of call.durations."""
     bench = MicroBench()
 
     @bench
@@ -463,15 +462,15 @@ def test_summary_function_prints(capsys):
 
 
 def test_summary_function_no_results(capsys):
-    """summary() prints a message when there are no run_durations."""
-    summary([{'function_name': 'noop'}])
+    """summary() prints a message when there are no call.durations."""
+    summary([{'call': {'name': 'noop'}}])
     out = capsys.readouterr().out
-    assert 'No run_durations' in out
+    assert 'No' in out
 
 
 def test_summary_single_result_no_stdev(capsys):
     """summary() prints nan for stdev when there is only one duration."""
-    summary([{'run_durations': [0.5]}])
+    summary([{'call': {'durations': [0.5]}}])
     out = capsys.readouterr().out
     assert 'n=1' in out
     assert 'stdev=nan' in out

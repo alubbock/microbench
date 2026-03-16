@@ -41,8 +41,8 @@ def test_line_profiler():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = lpbench.get_results(format='df')
-    lp = MBLineProfiler.decode_line_profile(results['line_profiler'][0])
+    results = lpbench.get_results()
+    lp = MBLineProfiler.decode_line_profile(results[0]['call']['line_profiler'])
     assert lp.__class__.__name__ == 'LineStats'
-    MBLineProfiler.print_line_profile(results['line_profiler'][0])
+    MBLineProfiler.print_line_profile(results[0]['call']['line_profiler'])
     assert not all(len(v) == 0 for v in lp.timings.values()), 'No timings present'

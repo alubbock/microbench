@@ -24,7 +24,7 @@ from microbench import (
 
 
 def test_mb_run_id_and_version():
-    """Every record contains mb_run_id (UUID) and mb_version."""
+    """Every record contains mb.run_id (UUID) and mb.version."""
     import re
 
     import microbench
@@ -38,17 +38,18 @@ def test_mb_run_id_and_version():
     noop()
     noop()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
 
-    # mb_run_id is a valid UUID and consistent across calls
+    # mb.run_id is a valid UUID and consistent across calls
     uuid_re = re.compile(
         r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     )
-    assert results['mb_run_id'].nunique() == 1
-    assert uuid_re.match(results['mb_run_id'][0])
+    run_ids = {r['mb']['run_id'] for r in results}
+    assert len(run_ids) == 1
+    assert uuid_re.match(list(run_ids)[0])
 
-    # mb_version matches the installed package version
-    assert (results['mb_version'] == microbench.__version__).all()
+    # mb.version matches the installed package version
+    assert all(r['mb']['version'] == microbench.__version__ for r in results)
 
 
 def test_microbench_includes_python_info_by_default():
@@ -77,7 +78,7 @@ def test_microbench_includes_python_info_by_default():
 
 
 def test_mb_run_id_shared_across_instances():
-    """All MicroBench instances in the same process share the same mb_run_id."""
+    """All MicroBench instances in the same process share the same mb.run_id."""
     bench_a = MicroBench()
     bench_b = MicroBench()
 
@@ -92,8 +93,8 @@ def test_mb_run_id_shared_across_instances():
     func_a()
     func_b()
 
-    run_id_a = bench_a.get_results(format='df')['mb_run_id'][0]
-    run_id_b = bench_b.get_results(format='df')['mb_run_id'][0]
+    run_id_a = bench_a.get_results()[0]['mb']['run_id']
+    run_id_b = bench_b.get_results()[0]['mb']['run_id']
     assert run_id_a == run_id_b
 
 
@@ -116,14 +117,12 @@ def test_function():
     for _ in range(3):
         assert my_function() == 499999500000
 
-    results = benchmark.get_results(format='df')
-    assert (results['function_name'] == 'my_function').all()
-    assert results['package_versions'][0]['pandas'] == pandas.__version__
-    runtimes = results['finish_time'] - results['start_time']
-    assert (runtimes > datetime.timedelta(0)).all()
-
-    assert results['timestamp_tz'][0] == 'UTC'
-    assert results['duration_counter'][0] == 'perf_counter'
+    results = benchmark.get_results()
+    assert all(r['call']['name'] == 'my_function' for r in results)
+    assert results[0]['python']['loaded_packages']['pandas'] == pandas.__version__
+    assert all(r['call']['durations'][0] >= 0 for r in results)
+    assert results[0]['mb']['timezone'] == 'UTC'
+    assert results[0]['mb']['duration_counter'] == 'perf_counter'
 
 
 def test_multi_iterations():
@@ -141,21 +140,26 @@ def test_multi_iterations():
     # call the function
     my_function()
 
-    results = benchmark.get_results(format='df')
-    assert (results['function_name'] == 'my_function').all()
-    runtimes = results['finish_time'] - results['start_time']
-    assert (runtimes >= datetime.timedelta(0)).all()
-    assert results['timestamp_tz'][0] == str(tz)
-    # Verify the timezone is actually applied to the timestamps, not just recorded
-    assert results['start_time'][0].utcoffset() == datetime.timedelta(hours=10)
-    assert results['finish_time'][0].utcoffset() == datetime.timedelta(hours=10)
+    results = benchmark.get_results()
+    result = results[0]
+    assert result['call']['name'] == 'my_function'
+    assert result['mb']['timezone'] == str(tz)
 
-    assert len(results['run_durations'][0]) == iterations
-    assert all(dur >= 0 for dur in results['run_durations'][0])
+    # Parse datetime strings to verify timezone offset
+    from datetime import datetime as dt
+
+    start = dt.fromisoformat(result['call']['start_time'])
+    finish = dt.fromisoformat(result['call']['finish_time'])
+    assert finish >= start
+    assert start.utcoffset() == datetime.timedelta(hours=10)
+    assert finish.utcoffset() == datetime.timedelta(hours=10)
+
+    assert len(result['call']['durations']) == iterations
+    assert all(dur >= 0 for dur in result['call']['durations'])
 
 
 def test_capture_optional_records_errors():
-    """capture_optional=True catches failing captures, records in mb_capture_errors."""
+    """capture_optional=True catches failures; records in call.capture_errors."""
 
     class BrokenCapture(MicroBench):
         capture_optional = True
@@ -171,8 +175,8 @@ def test_capture_optional_records_errors():
 
     noop()
 
-    results = bench.get_results(format='df')
-    errors = results['mb_capture_errors'][0]
+    results = bench.get_results()
+    errors = results[0]['call']['capture_errors']
     assert len(errors) == 1
     assert errors[0]['method'] == 'capture_will_fail'
     assert 'RuntimeError' in errors[0]['error']
@@ -180,7 +184,7 @@ def test_capture_optional_records_errors():
 
 
 def test_capture_optional_no_errors_no_field():
-    """When no captures fail, mb_capture_errors is absent from the record."""
+    """When no captures fail, call.capture_errors is absent from the record."""
 
     class Bench(MicroBench):
         capture_optional = True
@@ -193,8 +197,8 @@ def test_capture_optional_no_errors_no_field():
 
     noop()
 
-    results = bench.get_results(format='df')
-    assert 'mb_capture_errors' not in results.columns
+    results = bench.get_results()
+    assert 'capture_errors' not in results[0].get('call', {})
 
 
 def test_capture_optional_false_raises():
@@ -231,8 +235,8 @@ def test_capture_optional_capturepost():
 
     noop()
 
-    results = bench.get_results(format='df')
-    errors = results['mb_capture_errors'][0]
+    results = bench.get_results()
+    errors = results[0]['call']['capture_errors']
     assert any(e['method'] == 'capturepost_will_fail' for e in errors)
 
 
@@ -251,10 +255,10 @@ def test_warmup():
     # 3 warmup + 2 recorded iterations = 5 total calls
     assert call_count == 5
 
-    results = bench.get_results(format='df')
-    # Only one record (one decorated call), with 2 run_durations
+    results = bench.get_results()
+    # Only one record (one decorated call), with 2 call.durations
     assert len(results) == 1
-    assert len(results['run_durations'][0]) == 2
+    assert len(results[0]['call']['durations']) == 2
 
 
 def test_local_timezone():
@@ -279,11 +283,16 @@ def test_local_timezone():
 
     noop()
 
-    results = benchmark.get_results(format='df')
+    from datetime import datetime as dt
+
+    results = benchmark.get_results()
+    result = results[0]
+    start = dt.fromisoformat(result['call']['start_time'])
+    finish = dt.fromisoformat(result['call']['finish_time'])
     expected_offset = datetime.datetime.now().astimezone().utcoffset()
-    assert results['start_time'][0].utcoffset() == expected_offset
-    assert results['finish_time'][0].utcoffset() == expected_offset
-    assert results['timestamp_tz'][0] == str(local_tz)
+    assert start.utcoffset() == expected_offset
+    assert finish.utcoffset() == expected_offset
+    assert result['mb']['timezone'] == str(local_tz)
 
 
 def test_monitor():
@@ -304,8 +313,8 @@ def test_monitor():
     assert not monitor_bench._monitor_thread.is_alive()
 
     # Check some monitor data was captured
-    results = monitor_bench.get_results(format='df')
-    assert len(results['monitor']) > 0
+    results = monitor_bench.get_results()
+    assert len(results[0]['call']['monitor']) > 0
 
 
 def test_monitor_from_non_main_thread():
@@ -366,8 +375,10 @@ def test_monitor_multiple_samples():
 
     slow_function()
 
-    results = monitor_bench.get_results(format='df')
-    assert len(results['monitor'][0]) >= 2, 'Expected at least 2 monitor samples'
+    results = monitor_bench.get_results()
+    assert len(results[0]['call']['monitor']) >= 2, (
+        'Expected at least 2 monitor samples'
+    )
 
 
 def test_functioncall_args_not_double_encoded():
@@ -388,9 +399,9 @@ def test_functioncall_args_not_double_encoded():
 
     dummy(42, {'key': 'value'}, kw_str='hello')
 
-    results = bench.get_results(format='df')
-    args = results['args'][0]
-    kwargs = results['kwargs'][0]
+    results = bench.get_results()
+    args = results[0]['call']['args']
+    kwargs = results[0]['call']['kwargs']
 
     # Values must be their native Python types, not JSON-encoded strings
     assert args[0] == 42, f'Expected int 42, got {args[0]!r}'
@@ -410,26 +421,26 @@ def test_record_standard_fields():
     with bench.record('my_block'):
         pass
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    row = results.iloc[0]
-    assert row['function_name'] == 'my_block'
-    assert 'start_time' in results.columns
-    assert 'finish_time' in results.columns
-    assert len(row['run_durations']) == 1
-    assert 'mb_run_id' in results.columns
-    assert 'mb_version' in results.columns
+    result = results[0]
+    assert result['call']['name'] == 'my_block'
+    assert 'start_time' in result['call']
+    assert 'finish_time' in result['call']
+    assert len(result['call']['durations']) == 1
+    assert 'run_id' in result['mb']
+    assert 'version' in result['mb']
 
 
 def test_record_no_name_defaults():
-    """bench.record() with no name sets function_name to '<record>'."""
+    """bench.record() with no name sets call.name to '<record>'."""
     bench = MicroBench()
 
     with bench.record():
         pass
 
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['function_name'] == '<record>'
+    results = bench.get_results()
+    assert results[0]['call']['name'] == '<record>'
 
 
 def test_record_static_fields():
@@ -439,9 +450,9 @@ def test_record_static_fields():
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['experiment'] == 'run-1'
-    assert results.iloc[0]['trial'] == 3
+    results = bench.get_results()
+    assert results[0]['experiment'] == 'run-1'
+    assert results[0]['trial'] == 3
 
 
 def test_record_mixin_fields():
@@ -455,9 +466,10 @@ def test_record_mixin_fields():
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert 'hostname' in results.columns
-    assert 'operating_system' in results.columns
+    results = bench.get_results()
+    assert 'host' in results[0]
+    assert 'hostname' in results[0]['host']
+    assert 'os' in results[0]['host']
 
 
 def test_record_multiple_records():
@@ -469,9 +481,9 @@ def test_record_multiple_records():
     with bench.record('second'):
         pass
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 2
-    assert list(results['function_name']) == ['first', 'second']
+    assert [r['call']['name'] for r in results] == ['first', 'second']
 
 
 def test_record_exception_captured_and_reraised():
@@ -482,9 +494,9 @@ def test_record_exception_captured_and_reraised():
         with bench.record('block'):
             raise ValueError('oops')
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    exc = results.iloc[0]['exception']
+    exc = results[0]['exception']
     assert exc['type'] == 'ValueError'
     assert exc['message'] == 'oops'
 
@@ -496,8 +508,8 @@ def test_record_no_exception_field_on_success():
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert 'exception' not in results.columns
+    results = bench.get_results()
+    assert 'exception' not in results[0]
 
 
 def test_record_coexists_with_decorator():
@@ -513,9 +525,9 @@ def test_record_coexists_with_decorator():
 
     decorated()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 2
-    assert set(results['function_name']) == {'ctx', 'decorated'}
+    assert {r['call']['name'] for r in results} == {'ctx', 'decorated'}
 
 
 # ---------------------------------------------------------------------------
@@ -534,9 +546,9 @@ def test_decorator_exception_captured_and_reraised():
     with pytest.raises(RuntimeError, match='boom'):
         failing()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    exc = results.iloc[0]['exception']
+    exc = results[0]['exception']
     assert exc['type'] == 'RuntimeError'
     assert exc['message'] == 'boom'
 
@@ -551,8 +563,8 @@ def test_decorator_no_exception_field_on_success():
 
     ok()
 
-    results = bench.get_results(format='df')
-    assert 'exception' not in results.columns
+    results = bench.get_results()
+    assert 'exception' not in results[0]
 
 
 def test_decorator_exception_stops_iterations():
@@ -571,9 +583,9 @@ def test_decorator_exception_stops_iterations():
     with pytest.raises(ValueError):
         sometimes_fails()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert call_count == 2
-    assert len(results.iloc[0]['run_durations']) == 2
+    assert len(results[0]['call']['durations']) == 2
 
 
 def test_decorator_return_value_mixin_skipped_on_exception():
@@ -591,8 +603,8 @@ def test_decorator_return_value_mixin_skipped_on_exception():
     with pytest.raises(TypeError):
         failing()
 
-    results = bench.get_results(format='df')
-    assert 'return_value' not in results.columns
+    results = bench.get_results()
+    assert 'return_value' not in results[0].get('call', {})
 
 
 # ---------------------------------------------------------------------------
@@ -611,9 +623,9 @@ def test_record_mbfunctioncall_produces_empty_args():
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['args'] == []
-    assert results.iloc[0]['kwargs'] == {}
+    results = bench.get_results()
+    assert results[0]['call']['args'] == []
+    assert results[0]['call']['kwargs'] == {}
 
 
 def test_record_mbreturnvalue_ignored():
@@ -627,8 +639,8 @@ def test_record_mbreturnvalue_ignored():
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert 'return_value' not in results.columns
+    results = bench.get_results()
+    assert 'return_value' not in results[0].get('call', {})
 
 
 # ---------------------------------------------------------------------------
@@ -639,7 +651,7 @@ def test_record_mbreturnvalue_ignored():
 def _invoke_record_on_exit(bench):
     """Directly call the registered exit handler and return its results."""
     bench._record_on_exit_handler()
-    return bench.get_results(format='df')
+    return bench.get_results()
 
 
 def test_record_on_exit_standard_fields():
@@ -654,18 +666,18 @@ def test_record_on_exit_standard_fields():
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert len(results) == 1
-    row = results.iloc[0]
-    assert row['function_name'] == 'simulation'
-    assert len(row['run_durations']) == 1
-    assert row['run_durations'][0] >= 0
-    assert 'start_time' in results.columns
-    assert 'finish_time' in results.columns
-    assert 'mb_run_id' in results.columns
-    assert 'mb_version' in results.columns
+    result = results[0]
+    assert result['call']['name'] == 'simulation'
+    assert len(result['call']['durations']) == 1
+    assert result['call']['durations'][0] >= 0
+    assert 'start_time' in result['call']
+    assert 'finish_time' in result['call']
+    assert 'run_id' in result['mb']
+    assert 'version' in result['mb']
 
 
 def test_record_on_exit_default_name():
-    """record_on_exit() with no name sets function_name to '<process>'."""
+    """record_on_exit() with no name sets call.name to '<process>'."""
     bench = MicroBench()
     orig_excepthook = sys.excepthook
     try:
@@ -675,7 +687,7 @@ def test_record_on_exit_default_name():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    assert results.iloc[0]['function_name'] == '<process>'
+    assert results[0]['call']['name'] == '<process>'
 
 
 def test_record_on_exit_static_fields():
@@ -689,8 +701,8 @@ def test_record_on_exit_static_fields():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    assert results.iloc[0]['experiment'] == 'run-1'
-    assert results.iloc[0]['trial'] == 7
+    assert results[0]['experiment'] == 'run-1'
+    assert results[0]['trial'] == 7
 
 
 def test_record_on_exit_mixin_fields():
@@ -708,8 +720,9 @@ def test_record_on_exit_mixin_fields():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    assert 'hostname' in results.columns
-    assert 'operating_system' in results.columns
+    assert 'host' in results[0]
+    assert 'hostname' in results[0]['host']
+    assert 'os' in results[0]['host']
 
 
 def test_record_on_exit_exception_capture():
@@ -727,7 +740,7 @@ def test_record_on_exit_exception_capture():
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert len(results) == 1
-    exc_field = results.iloc[0]['exception']
+    exc_field = results[0]['exception']
     assert exc_field['type'] == 'RuntimeError'
     assert exc_field['message'] == 'something broke'
 
@@ -743,7 +756,7 @@ def test_record_on_exit_no_exception_field_on_clean_exit():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    assert 'exception' not in results.columns
+    assert 'exception' not in results[0]
 
 
 def test_record_on_exit_sigterm_writes_record():
@@ -758,14 +771,14 @@ def test_record_on_exit_sigterm_writes_record():
         # Invoke the handler but prevent it from re-killing the process.
         with patch('os.kill'), patch('signal.signal'):
             handler(_signal.SIGTERM, None)
-        results = bench.get_results(format='df')
+        results = bench.get_results()
     finally:
         sys.excepthook = orig_excepthook
         _signal.signal(_signal.SIGTERM, orig_sigterm)
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert len(results) == 1
-    assert results.iloc[0]['exit_signal'] == 'SIGTERM'
+    assert results[0]['exit_signal'] == 'SIGTERM'
 
 
 def test_record_on_exit_handle_sigterm_false():
@@ -789,7 +802,7 @@ def test_record_on_exit_double_fire_prevention():
         bench.record_on_exit('sim')
         bench._record_on_exit_handler()
         bench._record_on_exit_handler()
-        results = bench.get_results(format='df')
+        results = bench.get_results()
     finally:
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
@@ -813,13 +826,13 @@ def test_record_on_exit_re_registration_replaces_first():
         assert first_handler is not second_handler
 
         second_handler()
-        results = bench.get_results(format='df')
+        results = bench.get_results()
     finally:
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert len(results) == 1
-    assert results.iloc[0]['function_name'] == 'second'
+    assert results[0]['call']['name'] == 'second'
 
 
 def test_record_on_exit_non_main_thread_warns():
@@ -866,7 +879,7 @@ def test_record_on_exit_output_fallback_to_stderr(capsys):
     import json as _json
 
     record = _json.loads(captured.err.strip())
-    assert record['function_name'] == 'sim'
+    assert record['call']['name'] == 'sim'
 
 
 # ---------------------------------------------------------------------------
@@ -885,18 +898,19 @@ async def test_async_decorator_standard_fields():
 
     await async_noop()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    assert results.iloc[0]['function_name'] == 'async_noop'
-    assert 'start_time' in results.columns
-    assert 'finish_time' in results.columns
-    assert len(results.iloc[0]['run_durations']) == 1
-    assert results.iloc[0]['run_durations'][0] >= 0
+    result = results[0]
+    assert result['call']['name'] == 'async_noop'
+    assert 'start_time' in result['call']
+    assert 'finish_time' in result['call']
+    assert len(result['call']['durations']) == 1
+    assert result['call']['durations'][0] >= 0
 
 
 @pytest.mark.asyncio
 async def test_async_decorator_iterations():
-    """iterations=N on an async function produces N run_durations."""
+    """iterations=N on an async function produces N call.durations entries."""
     bench = MicroBench(iterations=3)
 
     @bench
@@ -905,8 +919,8 @@ async def test_async_decorator_iterations():
 
     await async_noop()
 
-    results = bench.get_results(format='df')
-    assert len(results.iloc[0]['run_durations']) == 3
+    results = bench.get_results()
+    assert len(results[0]['call']['durations']) == 3
 
 
 @pytest.mark.asyncio
@@ -925,8 +939,8 @@ async def test_async_decorator_warmup():
 
     # 2 warmup + 3 recorded = 5 total
     assert call_count == 5
-    results = bench.get_results(format='df')
-    assert len(results.iloc[0]['run_durations']) == 3
+    results = bench.get_results()
+    assert len(results[0]['call']['durations']) == 3
 
 
 @pytest.mark.asyncio
@@ -941,9 +955,9 @@ async def test_async_decorator_exception():
     with pytest.raises(ValueError, match='async boom'):
         await async_fail()
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    exc = results.iloc[0]['exception']
+    exc = results[0]['exception']
     assert exc['type'] == 'ValueError'
     assert exc['message'] == 'async boom'
 
@@ -964,8 +978,8 @@ async def test_async_decorator_return_value():
     result = await async_compute()
 
     assert result == 42
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['return_value'] == 42
+    results = bench.get_results()
+    assert results[0]['call']['return_value'] == 42
 
 
 @pytest.mark.asyncio
@@ -983,9 +997,9 @@ async def test_async_decorator_functioncall():
 
     await async_fn(1, y=2)
 
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['args'] == [1]
-    assert results.iloc[0]['kwargs'] == {'y': 2}
+    results = bench.get_results()
+    assert results[0]['call']['args'] == [1]
+    assert results[0]['call']['kwargs'] == {'y': 2}
 
 
 @pytest.mark.asyncio
@@ -996,25 +1010,25 @@ async def test_async_arecord_standard_fields():
     async with bench.arecord('my_block'):
         await asyncio.sleep(0)
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    row = results.iloc[0]
-    assert row['function_name'] == 'my_block'
-    assert 'start_time' in results.columns
-    assert 'finish_time' in results.columns
-    assert len(row['run_durations']) == 1
+    result = results[0]
+    assert result['call']['name'] == 'my_block'
+    assert 'start_time' in result['call']
+    assert 'finish_time' in result['call']
+    assert len(result['call']['durations']) == 1
 
 
 @pytest.mark.asyncio
 async def test_async_arecord_no_name_defaults():
-    """bench.arecord() with no name sets function_name to '<record>'."""
+    """bench.arecord() with no name sets call.name to '<record>'."""
     bench = MicroBench()
 
     async with bench.arecord():
         pass
 
-    results = bench.get_results(format='df')
-    assert results.iloc[0]['function_name'] == '<record>'
+    results = bench.get_results()
+    assert results[0]['call']['name'] == '<record>'
 
 
 @pytest.mark.asyncio
@@ -1026,9 +1040,9 @@ async def test_async_arecord_exception():
         async with bench.arecord('block'):
             raise RuntimeError('async oops')
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    exc = results.iloc[0]['exception']
+    exc = results[0]['exception']
     assert exc['type'] == 'RuntimeError'
     assert exc['message'] == 'async oops'
 
@@ -1066,8 +1080,8 @@ async def test_async_monitor_thread():
     await async_noop()
 
     assert not monitor_bench._monitor_thread.is_alive()
-    results = monitor_bench.get_results(format='df')
-    assert len(results['monitor'][0]) > 0
+    results = monitor_bench.get_results()
+    assert len(results[0]['call']['monitor']) > 0
 
 
 @pytest.mark.asyncio
@@ -1085,9 +1099,9 @@ async def test_monitor_with_arecord():
         await asyncio.sleep(0)
 
     assert not bench._monitor_thread.is_alive()
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 1
-    assert len(results.iloc[0]['monitor']) > 0
+    assert len(results[0]['call']['monitor']) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -1122,7 +1136,7 @@ def test_monitor_record_on_exit_samples_span_lifetime():
         _atexit.unregister(bench._record_on_exit_handler)
 
     assert len(results) == 1
-    monitor_data = results.iloc[0]['monitor']
+    monitor_data = results[0]['call']['monitor']
     assert len(monitor_data) >= 2, (
         f'Expected >=2 monitor samples across process lifetime, got {len(monitor_data)}'
     )
@@ -1155,7 +1169,7 @@ def test_monitor_record_on_exit_re_registration_terminates_old_thread():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    assert results.iloc[0]['function_name'] == 'second'
+    assert results[0]['call']['name'] == 'second'
 
 
 # ---------------------------------------------------------------------------
@@ -1164,7 +1178,7 @@ def test_monitor_record_on_exit_re_registration_terminates_old_thread():
 
 
 def test_time_with_record():
-    """bench.time() inside bench.record() appends entries to mb_timings."""
+    """bench.time() inside bench.record() appends entries to call.timings."""
     bench = MicroBench()
 
     with bench.record('pipeline'):
@@ -1173,8 +1187,8 @@ def test_time_with_record():
         with bench.time('transform'):
             pass
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'parse'
     assert timings[1]['name'] == 'transform'
@@ -1195,8 +1209,8 @@ def test_time_with_decorator():
 
     pipeline()
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'step_a'
     assert timings[1]['name'] == 'step_b'
@@ -1216,8 +1230,8 @@ async def test_time_with_async_decorator():
 
     await async_pipeline()
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'fetch'
     assert timings[1]['name'] == 'process'
@@ -1234,15 +1248,15 @@ async def test_time_with_arecord():
         with bench.time('save'):
             pass
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'load'
     assert timings[1]['name'] == 'save'
 
 
 def test_time_with_record_on_exit():
-    """bench.time() after bench.record_on_exit() accumulates in mb_timings."""
+    """bench.time() after bench.record_on_exit() accumulates in call.timings."""
     bench = MicroBench()
     orig_excepthook = sys.excepthook
     try:
@@ -1256,7 +1270,7 @@ def test_time_with_record_on_exit():
         sys.excepthook = orig_excepthook
         _atexit.unregister(bench._record_on_exit_handler)
 
-    timings = results.iloc[0]['mb_timings']
+    timings = results[0]['call']['timings']
     assert len(timings) == 2
     assert timings[0]['name'] == 'setup'
     assert timings[1]['name'] == 'run'
@@ -1273,19 +1287,19 @@ def test_time_noop_outside_benchmark():
         pass
 
     # Nothing written
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 0
 
 
 def test_time_absent_when_not_used():
-    """mb_timings is absent from the record when bench.time() is never called."""
+    """call.timings is absent from the record when bench.time() is never called."""
     bench = MicroBench()
 
     with bench.record('block'):
         pass
 
-    results = bench.get_results(format='df')
-    assert 'mb_timings' not in results.columns
+    results = bench.get_results()
+    assert 'timings' not in results[0].get('call', {})
 
 
 def test_time_multiple_iterations():
@@ -1299,8 +1313,8 @@ def test_time_multiple_iterations():
 
     pipeline()
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 3
     assert all(t['name'] == 'step' for t in timings)
 
@@ -1314,15 +1328,15 @@ def test_time_exception_closes_segment():
             with bench.time('risky'):
                 raise ValueError('fail')
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 1
     assert timings[0]['name'] == 'risky'
     assert timings[0]['duration'] >= 0
 
 
 def test_time_ordering_preserved():
-    """mb_timings entries appear in call order."""
+    """call.timings entries appear in call order."""
     bench = MicroBench()
 
     names = ['alpha', 'beta', 'gamma', 'delta']
@@ -1331,8 +1345,8 @@ def test_time_ordering_preserved():
             with bench.time(n):
                 pass
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert [t['name'] for t in timings] == names
 
 
@@ -1345,15 +1359,15 @@ def test_time_same_name_multiple_times():
             with bench.time('repeat'):
                 pass
 
-    results = bench.get_results(format='df')
-    timings = results.iloc[0]['mb_timings']
+    results = bench.get_results()
+    timings = results[0]['call']['timings']
     assert len(timings) == 3
     assert all(t['name'] == 'repeat' for t in timings)
 
 
 @pytest.mark.asyncio
 async def test_time_concurrent_arecord():
-    """Two concurrent arecord() calls get independent mb_timings."""
+    """Two concurrent arecord() calls get independent call.timings."""
     bench = MicroBench()
 
     async def task_a():
@@ -1368,15 +1382,15 @@ async def test_time_concurrent_arecord():
 
     await asyncio.gather(task_a(), task_b())
 
-    results = bench.get_results(format='df')
+    results = bench.get_results()
     assert len(results) == 2
-    by_name = {row['function_name']: row for _, row in results.iterrows()}
+    by_name = {r['call']['name']: r for r in results}
 
-    assert by_name['a']['mb_timings'] == [
-        {'name': 'a_step', 'duration': by_name['a']['mb_timings'][0]['duration']}
+    assert by_name['a']['call']['timings'] == [
+        {'name': 'a_step', 'duration': by_name['a']['call']['timings'][0]['duration']}
     ]
-    assert by_name['b']['mb_timings'] == [
-        {'name': 'b_step', 'duration': by_name['b']['mb_timings'][0]['duration']}
+    assert by_name['b']['call']['timings'] == [
+        {'name': 'b_step', 'duration': by_name['b']['call']['timings'][0]['duration']}
     ]
-    assert by_name['a']['mb_timings'][0]['name'] == 'a_step'
-    assert by_name['b']['mb_timings'][0]['name'] == 'b_step'
+    assert by_name['a']['call']['timings'][0]['name'] == 'a_step'
+    assert by_name['b']['call']['timings'][0]['name'] == 'b_step'

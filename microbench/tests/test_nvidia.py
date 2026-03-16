@@ -29,9 +29,11 @@ def test_nvidia():
 
     test()
 
-    results = bench.get_results(format='df')
-    assert 'nvidia_gpu_name' in results.columns
-    assert 'nvidia_memory.total' in results.columns
+    results = bench.get_results()
+    assert 'nvidia' in results[0]
+    assert len(results[0]['nvidia']) > 0
+    assert 'gpu_name' in results[0]['nvidia'][0]
+    assert 'memory.total' in results[0]['nvidia'][0]
 
 
 def test_nvidia_custom_attributes():
@@ -49,8 +51,9 @@ def test_nvidia_custom_attributes():
     with patch('subprocess.check_output', return_value=_FAKE_NVIDIA_SMI_OUTPUT):
         noop()
 
-    results = bench.get_results(format='df')
-    assert 'nvidia_gpu_name' in results.columns
+    results = bench.get_results()
+    assert 'nvidia' in results[0]
+    assert results[0]['nvidia'][0]['gpu_name'] == 'Tesla T4'
 
 
 def test_nvidia_gpus_empty_raises():

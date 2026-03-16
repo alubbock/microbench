@@ -15,7 +15,7 @@ mixins.
 - **Extensible via mixins** — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more
 - **Cluster and HPC ready** — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes
 - **JSONL output** — one JSON object per call; load directly into pandas with `read_json(..., lines=True)`; no schema lock-in
-- **Automatic run correlation** — `mb_run_id` is a UUID generated once per process; all bench suites in the same run share it, enabling `groupby('mb_run_id')` across independent suites
+- **Automatic run correlation** — `mb.run_id` is a UUID generated once per process; all bench suites in the same run share it, enabling `groupby('mb.run_id')` across independent suites
 - **Flexible output** — write to a local file, an in-memory buffer, or Redis; concurrent writers safe via `O_APPEND`
 
 ## Installation
@@ -56,25 +56,36 @@ my_function(1_000_000)
 results = bench.get_results()
 ```
 
-Each call produces one record. `results` is a pandas DataFrame:
+Each call produces one record. With `get_results(flat=True)` the record looks
+like:
 
 ```
-   mb_run_id                             mb_version  function_name  run_durations  experiment
-0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  1.1.0      my_function    [0.049823]     baseline
+   mb.run_id                             mb.version  call.name   call.durations  experiment
+0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function  [0.049823]     baseline
 ```
 
 The underlying JSON for a single record looks like:
 
 ```json
 {
-  "mb_run_id": "3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9",
-  "mb_version": "1.1.0",
-  "start_time": "2024-01-15T10:30:00.123456+00:00",
-  "finish_time": "2024-01-15T10:30:00.172279+00:00",
-  "run_durations": [0.049823],
-  "function_name": "my_function",
-  "timestamp_tz": "UTC",
-  "duration_counter": "perf_counter",
+  "mb": {
+    "run_id": "3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9",
+    "version": "2.0.0",
+    "timezone": "UTC",
+    "duration_counter": "perf_counter"
+  },
+  "call": {
+    "invocation": "Python",
+    "name": "my_function",
+    "start_time": "2024-01-15T10:30:00.123456+00:00",
+    "finish_time": "2024-01-15T10:30:00.172279+00:00",
+    "durations": [0.049823]
+  },
+  "python": {
+    "version": "3.12.4",
+    "prefix": "/opt/conda/envs/myenv",
+    "executable": "/opt/conda/envs/myenv/bin/python"
+  },
   "experiment": "baseline"
 }
 ```

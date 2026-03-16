@@ -25,25 +25,25 @@ combine any number of microbench mixins without conflicts, and their
 
 | Mixin | Fields captured | Extra requirements |
 |---|---|---|
-| *(none)* | `mb_run_id`, `mb_version`, `start_time`, `finish_time`, `run_durations`, `function_name`, `timestamp_tz`, `duration_counter` | — |
-| `MBFunctionCall` | `args`, `kwargs` | — |
-| `MBReturnValue` | `return_value` | — |
-| `MBPythonInfo` | `python` dict: `version`, `prefix`, `executable` — **included in `MicroBench` by default** | — |
+| *(none)* | `mb.run_id`, `mb.version`, `mb.timezone`, `mb.duration_counter`, `call.invocation`, `call.name`, `call.start_time`, `call.finish_time`, `call.durations` | — |
+| `MBFunctionCall` | `call.args`, `call.kwargs` | — |
+| `MBReturnValue` | `call.return_value` | — |
+| `MBPythonInfo` | `python.version`, `python.prefix`, `python.executable` — **included in `MicroBench` by default** | — |
 | `MBPythonVersion` | `python_version`, `python_executable` — *deprecated, use `MBPythonInfo`* | — |
-| `MBHostInfo` | `hostname`, `operating_system` | — |
-| `MBHostCpuCores` | `cpu_cores_logical`, `cpu_cores_physical` | psutil |
-| `MBHostRamTotal` | `ram_total` (bytes) | psutil |
-| `MBPeakMemory` | `peak_memory_bytes` | — |
+| `MBHostInfo` | `host.hostname`, `host.os` | — |
+| `MBHostCpuCores` | `host.cpu_cores_logical`, `host.cpu_cores_physical` | psutil |
+| `MBHostRamTotal` | `host.ram_total` (bytes) | psutil |
+| `MBPeakMemory` | `call.peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
-| `MBWorkingDir` | `working_dir` — absolute path of the working directory at benchmark time | — |
-| `MBCgroupLimits` | `cgroup_limits` dict with `cpu_cores`, `memory_bytes`, `cgroup_version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
-| `MBGitInfo` | `git_info` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
-| `MBGlobalPackages` | `package_versions` for every package in the caller's global scope | — |
-| `MBInstalledPackages` | `package_versions` for every installed package | — |
+| `MBWorkingDir` | `call.working_dir` — absolute path of the working directory at benchmark time | — |
+| `MBCgroupLimits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
+| `MBGitInfo` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
+| `MBGlobalPackages` | `python.loaded_packages` for every package in the caller's global scope | — |
+| `MBInstalledPackages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
 | `MBCondaPackages` | `conda` dict with `name`, `path`, and `packages` (version dict) | `conda` on PATH or `CONDA_EXE` set |
-| `MBNvidiaSmi` | `nvidia_<attr>` per GPU (see below) | `nvidia-smi` on PATH |
-| `MBLineProfiler` | `line_profiler` (base64-encoded profile, see below) | line_profiler |
+| `MBNvidiaSmi` | `nvidia` — list of per-GPU dicts (see below) | `nvidia-smi` on PATH |
+| `MBLineProfiler` | `call.line_profiler` (base64-encoded profile, see below) | line_profiler |
 | `MBFileHash` | `file_hashes` — SHA-256 checksum of each specified file | — |
 
 ## Function calls and return values
@@ -66,7 +66,7 @@ def add(a, b):
     return a + b
 
 add(1, b=2)
-# record contains: {"args": [1], "kwargs": {"b": 2}, ...}
+# record contains: {"call": {"args": [1], "kwargs": {"b": 2}}, ...}
 ```
 
 ### `MBReturnValue`
@@ -86,7 +86,7 @@ def compute(n):
     return sum(range(n))
 
 compute(100)
-# record contains: {"return_value": 4950, ...}
+# record contains: {"call": {"return_value": 4950}, ...}
 ```
 
 The return value must be JSON-serialisable. If it is not, a
@@ -108,14 +108,14 @@ class Bench(MicroBench, MBHostCpuCores, MBHostRamTotal):
     pass
 ```
 
-Fields: `cpu_cores_logical`, `cpu_cores_physical`, `ram_total` (bytes).
+Fields: `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes).
 
 ## Job resource utilisation
 
 ### `MBPeakMemory`
 
 Captures the peak Python memory allocation during the benchmarked function
-(across all iterations when `iterations > 1`) as `peak_memory_bytes` (bytes).
+(across all iterations when `iterations > 1`) as `call.peak_memory_bytes` (bytes).
 Uses [`tracemalloc`](https://docs.python.org/3/library/tracemalloc.html) from
 the standard library — no extra dependencies required.
 
@@ -132,7 +132,7 @@ def process(data):
     return sorted(data)
 
 process(list(range(1_000_000, 0, -1)))
-# record contains: {"peak_memory_bytes": 8056968, ...}
+# record contains: {"call": {"peak_memory_bytes": 8056968}, ...}
 ```
 
 !!! note
@@ -228,7 +228,7 @@ required and there are no extra dependencies.
 
 ### `MBWorkingDir`
 
-Captures the absolute path of the working directory at benchmark time into `working_dir`:
+Captures the absolute path of the working directory at benchmark time into `call.working_dir`:
 
 ```python
 from microbench import MicroBench, MBWorkingDir
@@ -243,7 +243,9 @@ Each record will contain:
 
 ```json
 {
-  "working_dir": "/home/user/experiments/run-42"
+  "call": {
+    "working_dir": "/home/user/experiments/run-42"
+  }
 }
 ```
 
@@ -273,24 +275,24 @@ Each record will contain:
 
 ```json
 {
-  "cgroup_limits": {
-    "cpu_cores": 4.0,
-    "memory_bytes": 17179869184,
-    "cgroup_version": 2
+  "cgroups": {
+    "cpu_cores_limit": 4.0,
+    "memory_bytes_limit": 17179869184,
+    "version": 2
   }
 }
 ```
 
-**`cpu_cores`** is derived from the cgroup CPU quota and period
+**`cpu_cores_limit`** is derived from the cgroup CPU quota and period
 (`quota_us / period_us`), so it represents effective CPU parallelism rather than
 a physical core count. A SLURM job launched with `--cpus-per-task=4` will
-typically report `cpu_cores: 4.0`.
+typically report `cpu_cores_limit: 4.0`.
 
-**`memory_bytes`** is the hard memory limit in bytes. A job allocated `--mem=16G`
-will typically report `memory_bytes: 17179869184`.
+**`memory_bytes_limit`** is the hard memory limit in bytes. A job allocated `--mem=16G`
+will typically report `memory_bytes_limit: 17179869184`.
 
 Both fields are `null` when no limit is set (the scheduler granted unlimited
-access to that resource). `cgroup_limits` is an empty dict on non-Linux
+access to that resource). `cgroups` is an empty dict on non-Linux
 platforms or when the cgroup filesystem is unavailable.
 
 !!! tip
@@ -317,7 +319,7 @@ Each record will contain:
 
 ```json
 {
-  "git_info": {
+  "git": {
     "repo": "/home/user/project",
     "commit": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
     "branch": "main",
@@ -433,15 +435,16 @@ class Bench(MicroBench, MBGlobalPackages):
     pass
 ```
 
-The `package_versions` field will contain `{"numpy": "1.26.0", "pandas": "2.1.0", ...}`.
+The `python.loaded_packages` field will contain `{"numpy": "1.26.0", "pandas": "2.1.0", ...}`.
 
 ### `MBInstalledPackages`
 
 Captures every package available for import (from `importlib.metadata`).
-Useful for full reproducibility audits. Can be slow on environments with
-many packages.
+Results are stored in `python.installed_packages`. Useful for full
+reproducibility audits. Can be slow on environments with many packages.
 
-Set `capture_paths = True` to also record installation paths:
+Set `capture_paths = True` to also record installation paths in
+`python.installed_package_paths`:
 
 ```python
 class Bench(MicroBench, MBInstalledPackages):
@@ -472,7 +475,7 @@ class Bench(MicroBench, MBCondaPackages):
 ### `capture_versions`
 
 To capture specific package versions without a mixin, list them on the
-class:
+class. Results are stored in `python.loaded_packages`:
 
 ```python
 import numpy, pandas
@@ -496,8 +499,16 @@ class GpuBench(MicroBench, MBNvidiaSmi):
     nvidia_gpus = ('GPU-abc123',)  # UUIDs preferred; omit to capture all
 ```
 
-Results are stored as `nvidia_<attr>` dicts keyed by GPU UUID, e.g.
-`nvidia_gpu_name: {"GPU-abc123": "NVIDIA A100"}`.
+Results are stored in `nvidia` as a list of per-GPU dicts, each containing a
+`uuid` key plus one key per attribute, e.g.:
+
+```json
+{
+  "nvidia": [
+    {"uuid": "GPU-abc123", "gpu_name": "NVIDIA A100", "memory.total": "40960 MiB"}
+  ]
+}
+```
 
 Run `nvidia-smi --help-query-gpu` for the full list of available attributes.
 Run `nvidia-smi -L` to list GPU UUIDs.
@@ -525,10 +536,10 @@ def my_function():
 my_function()
 
 results = bench.get_results()
-MBLineProfiler.print_line_profile(results['line_profiler'][0])
+MBLineProfiler.print_line_profile(results[0]['call']['line_profiler'])
 ```
 
-The profile is stored as a base64-encoded pickle in the `line_profiler` field.
+The profile is stored as a base64-encoded pickle in the `call.line_profiler` field.
 Use `MBLineProfiler.decode_line_profile()` to deserialise it, or
 `MBLineProfiler.print_line_profile()` to print it directly.
 

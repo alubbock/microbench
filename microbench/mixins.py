@@ -115,26 +115,27 @@ class MBFunctionCall:
     """Capture function arguments and keyword arguments"""
 
     def capture_function_args_and_kwargs(self, bm_data):
+        call = bm_data.setdefault('call', {})
         # Check all args are encodeable as JSON, then store the raw value
-        bm_data['args'] = []
+        call['args'] = []
         for i, v in enumerate(bm_data['_args']):
             try:
                 self.to_json(v)
-                bm_data['args'].append(v)
+                call['args'].append(v)
             except TypeError:
                 warnings.warn(
                     f'Function argument {i} is not JSON encodable (type: {type(v)}). '
                     'Extend JSONEncoder class to fix (see README).',
                     JSONEncodeWarning,
                 )
-                bm_data['args'].append(_UNENCODABLE_PLACEHOLDER_VALUE)
+                call['args'].append(_UNENCODABLE_PLACEHOLDER_VALUE)
 
         # Check all kwargs are encodeable as JSON, then store the raw value
-        bm_data['kwargs'] = {}
+        call['kwargs'] = {}
         for k, v in bm_data['_kwargs'].items():
             try:
                 self.to_json(v)
-                bm_data['kwargs'][k] = v
+                call['kwargs'][k] = v
             except TypeError:
                 warnings.warn(
                     f'Function keyword argument "{k}" is not JSON encodable'
@@ -142,7 +143,7 @@ class MBFunctionCall:
                     ' (see README).',
                     JSONEncodeWarning,
                 )
-                bm_data['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
+                call['kwargs'][k] = _UNENCODABLE_PLACEHOLDER_VALUE
 
 
 class MBReturnValue:
@@ -184,23 +185,25 @@ class MBPythonInfo:
     cli_compatible = True
 
     def capture_python_info(self, bm_data):
-        bm_data['python'] = {
-            'version': platform.python_version(),
-            'prefix': sys.prefix,
-            'executable': sys.executable,
-        }
+        python = bm_data.setdefault('python', {})
+        python['version'] = platform.python_version()
+        python['prefix'] = sys.prefix
+        python['executable'] = sys.executable
 
 
 class MBHostInfo:
-    """Capture the hostname and operating system."""
+    """Capture the hostname and operating system.
+
+    Results are stored in the ``host`` dict with keys ``hostname`` and ``os``.
+    """
 
     cli_compatible = True
 
     def capture_hostname(self, bm_data):
-        bm_data['hostname'] = socket.gethostname()
+        bm_data.setdefault('host', {})['hostname'] = socket.gethostname()
 
     def capture_os(self, bm_data):
-        bm_data['operating_system'] = sys.platform
+        bm_data.setdefault('host', {})['os'] = sys.platform
 
 
 _microbench_dir = os.path.dirname(os.path.abspath(__file__))
@@ -280,12 +283,16 @@ class MBLoadedModules:
 
 
 class MBWorkingDir:
-    """Capture the working directory at benchmark time."""
+    """Capture the working directory at benchmark time.
+
+    Records the current working directory as ``call.working_dir``. This is
+    per-call data since the working directory can change between calls.
+    """
 
     cli_compatible = True
 
     def capture_working_dir(self, bm_data):
-        bm_data['working_dir'] = os.getcwd()
+        bm_data.setdefault('call', {})['working_dir'] = os.getcwd()
 
 
 def _read_cgroup_v2():
@@ -318,7 +325,11 @@ def _read_cgroup_v2():
         if content != 'max':
             memory_bytes = int(content)
 
-    return {'cpu_cores': cpu_cores, 'memory_bytes': memory_bytes, 'cgroup_version': 2}
+    return {
+        'cpu_cores_limit': cpu_cores,
+        'memory_bytes_limit': memory_bytes,
+        'version': 2,
+    }
 
 
 def _read_cgroup_v1():
@@ -359,37 +370,41 @@ def _read_cgroup_v1():
             if limit < 2**62:
                 memory_bytes = limit
 
-    return {'cpu_cores': cpu_cores, 'memory_bytes': memory_bytes, 'cgroup_version': 1}
+    return {
+        'cpu_cores_limit': cpu_cores,
+        'memory_bytes_limit': memory_bytes,
+        'version': 1,
+    }
 
 
 class MBCgroupLimits:
     """Capture CPU quota and memory limit from Linux cgroups.
 
     Works for SLURM jobs and Kubernetes pods (cgroup v1 and v2). Results
-    are stored in the ``cgroup_limits`` field as a dict containing:
+    are stored in the ``cgroups`` field as a dict containing:
 
-    - ``cpu_cores``: effective CPU parallelism as a float (quota ÷ period),
-      or ``None`` if unlimited or unavailable.
-    - ``memory_bytes``: memory limit in bytes as an int, or ``None`` if
-      unlimited or unavailable.
-    - ``cgroup_version``: ``1`` or ``2``.
+    - ``cpu_cores_limit``: effective CPU parallelism as a float (quota ÷
+      period), or ``None`` if unlimited or unavailable.
+    - ``memory_bytes_limit``: memory limit in bytes as an int, or ``None``
+      if unlimited or unavailable.
+    - ``version``: ``1`` or ``2``.
 
     On non-Linux systems or when the cgroup filesystem is unavailable,
-    ``cgroup_limits`` is an empty dict.
+    ``cgroups`` is an empty dict.
 
     Note:
-        ``cpu_cores`` is derived from the cgroup CPU quota and period, so it
-        represents effective CPU parallelism, not a physical core count. A
-        SLURM job launched with ``--cpus-per-task=4`` will typically report
-        ``cpu_cores: 4.0``.
+        ``cpu_cores_limit`` is derived from the cgroup CPU quota and period,
+        so it represents effective CPU parallelism, not a physical core count.
+        A SLURM job launched with ``--cpus-per-task=4`` will typically report
+        ``cpu_cores_limit: 4.0``.
 
     Example output::
 
         {
-            "cgroup_limits": {
-                "cpu_cores": 4.0,
-                "memory_bytes": 17179869184,
-                "cgroup_version": 2
+            "cgroups": {
+                "cpu_cores_limit": 4.0,
+                "memory_bytes_limit": 17179869184,
+                "version": 2
             }
         }
     """
@@ -398,15 +413,15 @@ class MBCgroupLimits:
 
     def capture_cgroup_limits(self, bm_data):
         if sys.platform != 'linux':
-            bm_data['cgroup_limits'] = {}
+            bm_data['cgroups'] = {}
             return
         try:
             if os.path.exists('/sys/fs/cgroup/cgroup.controllers'):
-                bm_data['cgroup_limits'] = _read_cgroup_v2()
+                bm_data['cgroups'] = _read_cgroup_v2()
             else:
-                bm_data['cgroup_limits'] = _read_cgroup_v1()
+                bm_data['cgroups'] = _read_cgroup_v1()
         except (OSError, ValueError, ZeroDivisionError):
-            bm_data['cgroup_limits'] = {}
+            bm_data['cgroups'] = {}
 
 
 class MBGitInfo:
@@ -415,7 +430,7 @@ class MBGitInfo:
     Requires ``git`` ≥ 2.11 to be available on ``PATH``. Records the
     current repo directory, commit hash, branch name, and whether the
     working tree has uncommitted changes. Results are stored in the
-    ``git_info`` field.
+    ``git`` field.
 
     By default inspects the repository containing the running script
     (``sys.argv[0]``), falling back to the shell's working directory
@@ -437,7 +452,7 @@ class MBGitInfo:
     Example output::
 
         {
-            "git_info": {
+            "git": {
                 "repo": "/home/user/project",
                 "commit": "a1b2c3d4e5f6...",
                 "branch": "main",
@@ -496,7 +511,7 @@ class MBGitInfo:
             elif not line.startswith('#'):
                 dirty = True
 
-        bm_data['git_info'] = {
+        bm_data['git'] = {
             'repo': repo,
             'commit': commit,
             'branch': branch,
@@ -587,7 +602,11 @@ class MBFileHash:
 
 
 class MBGlobalPackages:
-    """Capture Python packages imported in global environment"""
+    """Capture Python packages imported in global environment.
+
+    Results are stored in ``python.loaded_packages`` as a dict mapping
+    package name to version string.
+    """
 
     def capture_functions(self, bm_data):
         # Walk up the call stack to the first frame outside the microbench
@@ -676,9 +695,14 @@ class MBInstalledPackages:
     Records the name and version of every distribution available in the
     current Python environment via ``importlib.metadata``.
 
+    Results are stored in ``python.installed_packages`` as a dict mapping
+    package name to version string. When ``capture_paths=True``,
+    installation paths are stored in ``python.installed_package_paths``.
+
     Attributes:
         capture_paths (bool): Also record the installation path of each
-            package under ``package_paths``. Defaults to ``False``.
+            package under ``python.installed_package_paths``. Defaults to
+            ``False``.
     """
 
     cli_compatible = True
@@ -687,14 +711,15 @@ class MBInstalledPackages:
     def capture_packages(self, bm_data):
         import importlib.metadata
 
-        bm_data['package_versions'] = {}
+        python = bm_data.setdefault('python', {})
+        python['installed_packages'] = {}
         if self.capture_paths:
-            bm_data['package_paths'] = {}
+            python['installed_package_paths'] = {}
 
         for pkg in importlib.metadata.distributions():
-            bm_data['package_versions'][pkg.name] = pkg.version
+            python['installed_packages'][pkg.name] = pkg.version
             if self.capture_paths:
-                bm_data['package_paths'][pkg.name] = os.path.dirname(
+                python['installed_package_paths'][pkg.name] = os.path.dirname(
                     pkg.locate_file(pkg.files[0])
                 )
 
@@ -707,10 +732,13 @@ class MBLineProfiler:
     times the execution of each line of Python code in your function. This will
     slightly slow down the execution of your function, so it's not recommended
     in production.
+
+    Results are stored in ``call.line_profiler`` as a base64-encoded pickled
+    ``LineStats`` object.
     """
 
     def capturepost_line_profile(self, bm_data):
-        bm_data['line_profiler'] = base64.b64encode(
+        bm_data.setdefault('call', {})['line_profiler'] = base64.b64encode(
             pickle.dumps(self._line_profiler.get_stats())
         ).decode('utf8')
 
@@ -739,24 +767,32 @@ class _NeedsPsUtil:
 
 
 class MBHostCpuCores(_NeedsPsUtil):
-    """Capture the number of logical CPU cores."""
+    """Capture the number of logical and physical CPU cores.
+
+    Results are stored in the ``host`` dict under ``cpu_cores_logical``
+    and ``cpu_cores_physical``.
+    """
 
     cli_compatible = True
 
     def capture_cpu_cores(self, bm_data):
         self._check_psutil()
-        bm_data['cpu_cores_logical'] = psutil.cpu_count(logical=True)
-        bm_data['cpu_cores_physical'] = psutil.cpu_count(logical=False)
+        host = bm_data.setdefault('host', {})
+        host['cpu_cores_logical'] = psutil.cpu_count(logical=True)
+        host['cpu_cores_physical'] = psutil.cpu_count(logical=False)
 
 
 class MBHostRamTotal(_NeedsPsUtil):
-    """Capture the total host RAM in bytes."""
+    """Capture the total host RAM in bytes.
+
+    Result is stored in ``host.ram_total``.
+    """
 
     cli_compatible = True
 
     def capture_total_ram(self, bm_data):
         self._check_psutil()
-        bm_data['ram_total'] = psutil.virtual_memory().total
+        bm_data.setdefault('host', {})['ram_total'] = psutil.virtual_memory().total
 
 
 class MBPeakMemory:
@@ -764,7 +800,7 @@ class MBPeakMemory:
 
     Uses :mod:`tracemalloc` from the Python standard library (no extra
     dependencies). Records the peak memory allocated in bytes across all
-    iterations as ``peak_memory_bytes``.
+    iterations as ``call.peak_memory_bytes``.
 
     Note:
         ``tracemalloc`` tracks memory that goes through Python's allocator,
@@ -786,7 +822,7 @@ class MBPeakMemory:
         import tracemalloc
 
         _, peak = tracemalloc.get_traced_memory()
-        bm_data['peak_memory_bytes'] = peak
+        bm_data.setdefault('call', {})['peak_memory_bytes'] = peak
         if not self._tracemalloc_was_tracing:
             tracemalloc.stop()
 
@@ -797,9 +833,22 @@ class MBNvidiaSmi:
     Requires the ``nvidia-smi`` utility to be available on ``PATH``
     (bundled with NVIDIA drivers).
 
-    Results are stored as ``nvidia_<attr>`` fields, each a dict keyed by
-    GPU UUID. Run ``nvidia-smi --help-query-gpu`` for all available
-    attribute names. Run ``nvidia-smi -L`` to list GPU UUIDs.
+    Results are stored as ``nvidia``, a list of per-GPU dicts. Each dict
+    contains ``uuid`` plus one key per queried attribute. Run
+    ``nvidia-smi --help-query-gpu`` for all available attribute names.
+    Run ``nvidia-smi -L`` to list GPU UUIDs.
+
+    Example output::
+
+        {
+            "nvidia": [
+                {
+                    "uuid": "GPU-abc123",
+                    "gpu_name": "Tesla T4",
+                    "memory.total": "16160 MiB"
+                }
+            ]
+        }
 
     Attributes:
         nvidia_attributes (tuple[str]): Attributes to query. Defaults to
@@ -846,16 +895,18 @@ class MBNvidiaSmi:
         # Execute the command
         res = subprocess.check_output(cmd).decode('utf8')
 
-        # Process results
+        # Process results into a list of per-GPU dicts
+        nvidia_list = []
         for gpu_line in res.split('\n'):
             if not gpu_line:
                 continue
             gpu_res = gpu_line.split(', ')
+            gpu_uuid = gpu_res[0]
+            gpu_dict = {'uuid': gpu_uuid}
             for attr_idx, attr in enumerate(nvidia_attributes):
-                gpu_uuid = gpu_res[0]
-                bm_data.setdefault(f'nvidia_{attr}', {})[gpu_uuid] = gpu_res[
-                    attr_idx + 1
-                ]
+                gpu_dict[attr] = gpu_res[attr_idx + 1]
+            nvidia_list.append(gpu_dict)
+        bm_data['nvidia'] = nvidia_list
 
 
 class _MonitorThread(threading.Thread):

@@ -103,7 +103,7 @@ __all__ = [
 
 
 def summary(results):
-    """Print summary statistics for ``run_durations`` across a list of results.
+    """Print summary statistics for ``call.durations`` across a list of results.
 
     Requires no dependencies beyond the Python standard library.
 
@@ -125,7 +125,7 @@ def summary(results):
     """
     durations = []
     for r in results:
-        durations.extend(r.get('run_durations', []))
+        durations.extend(r.get('call', {}).get('durations', []))
 
     n = len(durations)
     if n == 0:
@@ -165,15 +165,15 @@ class MicroBenchBase:
                 :class:`io.StringIO` buffer when no *outputs* are given).
             json_encoder (json.JSONEncoder, optional): JSONEncoder for
                 benchmark results. Defaults to JSONEncoder.
-            tz (timezone, optional): Timezone for start_time and finish_time.
-                Defaults to timezone.utc.
+            tz (timezone, optional): Timezone for call.start_time and
+                call.finish_time. Defaults to timezone.utc.
             iterations (int, optional): Number of iterations to run function.
                 Defaults to 1.
             warmup (int, optional): Number of unrecorded calls to make before
                 timing begins. Useful for priming caches or JIT compilation.
                 Defaults to 0.
             duration_counter (callable, optional): Timer function to use for
-                run_durations. Defaults to time.perf_counter.
+                call.durations. Defaults to time.perf_counter.
             outputs (list of Output, optional): One or more :class:`Output`
                 sinks that receive each benchmark result. Mutually exclusive
                 with *outfile*. Defaults to a single :class:`FileOutput`
@@ -210,13 +210,15 @@ class MicroBenchBase:
             self._outputs = [FileOutput()]
 
     def pre_start_triggers(self, bm_data):
-        # Store timezone
-        bm_data['timestamp_tz'] = str(self.tz)
-        # Store duration counter function name
-        bm_data['duration_counter'] = self._duration_counter.__name__
-        # Run ID and package version (added to every record automatically)
-        bm_data['mb_run_id'] = _run_id
-        bm_data['mb_version'] = __version__
+        # Store static config in mb namespace
+        mb = bm_data.setdefault('mb', {})
+        mb['timezone'] = str(self.tz)
+        mb['duration_counter'] = self._duration_counter.__name__
+        mb['run_id'] = _run_id
+        mb['version'] = __version__
+
+        # Mark as a Python API invocation (CLI overrides this to 'CLI')
+        bm_data.setdefault('call', {})['invocation'] = 'Python'
 
         # Capture environment variables
         if hasattr(self, 'env_vars'):
@@ -226,7 +228,7 @@ class MicroBenchBase:
                 )
 
             for env_var in self.env_vars:
-                bm_data[f'env_{env_var}'] = os.environ.get(env_var)
+                bm_data.setdefault('env', {})[env_var] = os.environ.get(env_var)
 
         # Capture package versions
         if hasattr(self, 'capture_versions'):
@@ -248,7 +250,9 @@ class MicroBenchBase:
                         try:
                             method(bm_data)
                         except Exception as e:
-                            bm_data.setdefault('mb_capture_errors', []).append(
+                            bm_data.setdefault('call', {}).setdefault(
+                                'capture_errors', []
+                            ).append(
                                 {
                                     'method': method_name,
                                     'error': f'{type(e).__name__}: {e}',
@@ -260,17 +264,17 @@ class MicroBenchBase:
         # Initialise monitor thread
         if hasattr(self, 'monitor'):
             interval = getattr(self, 'monitor_interval', 60)
-            bm_data['monitor'] = []
+            bm_data.setdefault('call', {})['monitor'] = []
             self._monitor_thread = _MonitorThread(
-                self.monitor, interval, bm_data['monitor'], self.tz
+                self.monitor, interval, bm_data['call']['monitor'], self.tz
             )
             self._monitor_thread.start()
 
-        bm_data['run_durations'] = []
-        bm_data['start_time'] = datetime.now(self.tz)
+        bm_data.setdefault('call', {})['durations'] = []
+        bm_data.setdefault('call', {})['start_time'] = datetime.now(self.tz)
 
     def post_finish_triggers(self, bm_data):
-        bm_data['finish_time'] = datetime.now(self.tz)
+        bm_data.setdefault('call', {})['finish_time'] = datetime.now(self.tz)
 
         # Terminate monitor thread and gather results
         if hasattr(self, '_monitor_thread'):
@@ -287,7 +291,9 @@ class MicroBenchBase:
                         try:
                             method(bm_data)
                         except Exception as e:
-                            bm_data.setdefault('mb_capture_errors', []).append(
+                            bm_data.setdefault('call', {}).setdefault(
+                                'capture_errors', []
+                            ).append(
                                 {
                                     'method': method_name,
                                     'error': f'{type(e).__name__}: {e}',
@@ -300,23 +306,24 @@ class MicroBenchBase:
         bm_data['_run_start'] = self._duration_counter()
 
     def post_run_triggers(self, bm_data):
-        bm_data['run_durations'].append(
+        bm_data['call']['durations'].append(
             self._duration_counter() - bm_data['_run_start']
         )
 
     def capture_function_name(self, bm_data):
         if '_func' in bm_data:
-            bm_data['function_name'] = bm_data['_func'].__name__
+            bm_data.setdefault('call', {})['name'] = bm_data['_func'].__name__
 
     def _capture_package_version(self, bm_data, pkg, skip_if_none=False):
-        bm_data.setdefault('package_versions', {})
         try:
             ver = pkg.__version__
         except AttributeError:
             if skip_if_none:
                 return
             ver = None
-        bm_data['package_versions'][pkg.__name__] = ver
+        bm_data.setdefault('python', {}).setdefault('loaded_packages', {})[
+            pkg.__name__
+        ] = ver
 
     def to_json(self, bm_data):
         bm_str = f'{json.dumps(bm_data, cls=self._json_encoder)}'
@@ -336,8 +343,8 @@ class MicroBenchBase:
             format (str): ``'dict'`` (default) returns a list of dicts;
                 ``'df'`` returns a pandas DataFrame (requires pandas).
             flat (bool): If *True*, flatten nested dict fields into
-                dot-notation keys (e.g. ``slurm.job_id``). Works for
-                both formats and does not require pandas.
+                dot-notation keys (e.g. ``call.name``, ``host.hostname``).
+                Works for both formats and does not require pandas.
 
         Returns:
             list[dict] or pandas.DataFrame
@@ -358,7 +365,7 @@ class MicroBenchBase:
         )
 
     def summary(self):
-        """Print summary statistics for ``run_durations`` across all results.
+        """Print summary statistics for ``call.durations`` across all results.
 
         Requires no dependencies beyond the Python standard library.
         Reads results via :meth:`get_results`.
@@ -410,7 +417,7 @@ class MicroBenchBase:
                     elif isinstance(self, MBReturnValue):
                         try:
                             self.to_json(res)
-                            bm_data['return_value'] = res
+                            bm_data.setdefault('call', {})['return_value'] = res
                         except TypeError:
                             warnings.warn(
                                 f'Return value is not JSON encodable '
@@ -418,7 +425,9 @@ class MicroBenchBase:
                                 'Extend JSONEncoder class to fix (see README).',
                                 JSONEncodeWarning,
                             )
-                            bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
+                            bm_data.setdefault('call', {})['return_value'] = (
+                                _UNENCODABLE_PLACEHOLDER_VALUE
+                            )
 
                     # Delete any underscore-prefixed keys
                     bm_data = {
@@ -482,14 +491,16 @@ class MicroBenchBase:
                 elif isinstance(self, MBReturnValue):
                     try:
                         self.to_json(res)
-                        bm_data['return_value'] = res
+                        bm_data.setdefault('call', {})['return_value'] = res
                     except TypeError:
                         warnings.warn(
                             f'Return value is not JSON encodable (type: {type(res)}). '
                             'Extend JSONEncoder class to fix (see README).',
                             JSONEncodeWarning,
                         )
-                        bm_data['return_value'] = _UNENCODABLE_PLACEHOLDER_VALUE
+                        bm_data.setdefault('call', {})['return_value'] = (
+                            _UNENCODABLE_PLACEHOLDER_VALUE
+                        )
 
                 # Delete any underscore-prefixed keys
                 bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
@@ -509,7 +520,7 @@ class MicroBenchBase:
         """Return a context manager that times a block and writes one record.
 
         Args:
-            name (str, optional): Value for the ``function_name`` field.
+            name (str, optional): Value for the ``call.name`` field.
                 Defaults to ``'<record>'``.
 
         Example::
@@ -525,7 +536,7 @@ class MicroBenchBase:
         Use with ``async with`` inside an async function or coroutine.
 
         Args:
-            name (str, optional): Value for the ``function_name`` field.
+            name (str, optional): Value for the ``call.name`` field.
                 Defaults to ``'<record>'``.
 
         .. note::
@@ -543,7 +554,7 @@ class MicroBenchBase:
     def time(self, name: str) -> '_TimingSection':
         """Return a context manager recording a named sub-timing within a benchmark.
 
-        Sub-timings are stored in ``mb_timings`` as a list of
+        Sub-timings are stored in ``call.timings`` as a list of
         ``{"name": ..., "duration": ...}`` dicts in call order.
         Compatible with ``bench.record()``, ``bench.arecord()``,
         ``@bench`` (sync and async), and ``bench.record_on_exit()``.
@@ -566,7 +577,7 @@ class MicroBenchBase:
         previous registration and resets the start time.
 
         Args:
-            name (str, optional): Value for the ``function_name`` field.
+            name (str, optional): Value for the ``call.name`` field.
                 Defaults to ``'<process>'``.
             handle_sigterm (bool): Install a SIGTERM handler that writes the
                 record before re-delivering the signal. Only effective when
@@ -653,18 +664,18 @@ class MicroBenchBase:
 
             bm_data = dict()
             bm_data.update(self._bm_static)
-            bm_data['function_name'] = name or '<process>'
+            bm_data.setdefault('call', {})['name'] = name or '<process>'
             bm_data['_args'] = ()
             bm_data['_kwargs'] = {}
 
             self.pre_start_triggers(bm_data)
-            # pre_start_triggers sets start_time and run_durations=[]; override
+            # pre_start_triggers sets call.start_time and call.durations=[]; override
             # both with the values recorded at the call site.
-            bm_data['start_time'] = _start_time
-            bm_data['run_durations'] = [self._duration_counter() - _start_counter]
+            bm_data['call']['start_time'] = _start_time
+            bm_data['call']['durations'] = [self._duration_counter() - _start_counter]
             # Replace exit-time-only monitor samples with our full-run ones.
             if _monitor_slot is not None:
-                bm_data['monitor'] = _monitor_slot
+                bm_data['call']['monitor'] = _monitor_slot
 
             self.post_finish_triggers(bm_data)
 
@@ -679,7 +690,9 @@ class MicroBenchBase:
                 bm_data['exit_signal'] = exit_signal
 
             if self._record_on_exit_timings:
-                bm_data['mb_timings'] = list(self._record_on_exit_timings)
+                bm_data.setdefault('call', {})['timings'] = list(
+                    self._record_on_exit_timings
+                )
 
             bm_data = {k: v for k, v in bm_data.items() if not k.startswith('_')}
 
@@ -743,10 +756,10 @@ class _ContextManagerRun:
             )
         bm_data = dict()
         bm_data.update(self._bench._bm_static)
-        bm_data['function_name'] = self._name or '<record>'
+        bm_data.setdefault('call', {})['name'] = self._name or '<record>'
         # Sentinels so MBFunctionCall produces args=[], kwargs={} rather than
         # a KeyError; _func is intentionally absent so capture_function_name
-        # leaves function_name as set above.
+        # leaves call.name as set above.
         bm_data['_args'] = ()
         bm_data['_kwargs'] = {}
         self._bm_data = bm_data
@@ -786,7 +799,7 @@ class _AsyncContextManagerRun:
             )
         bm_data = dict()
         bm_data.update(self._bench._bm_static)
-        bm_data['function_name'] = self._name or '<record>'
+        bm_data.setdefault('call', {})['name'] = self._name or '<record>'
         bm_data['_args'] = ()
         bm_data['_kwargs'] = {}
         self._bm_data = bm_data
@@ -832,7 +845,7 @@ class _TimingSection:
         duration = self._bench._duration_counter() - self._start
         entry = {'name': self._name, 'duration': duration}
         if self._bm_data is not None:
-            self._bm_data.setdefault('mb_timings', []).append(entry)
+            self._bm_data.setdefault('call', {}).setdefault('timings', []).append(entry)
         elif hasattr(self._bench, '_record_on_exit_timings'):
             self._bench._record_on_exit_timings.append(entry)
         return False  # never suppress exceptions

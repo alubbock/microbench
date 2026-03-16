@@ -32,17 +32,17 @@ import pandas
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 ```
 
-Pass `flat=True` to flatten nested mixin fields (e.g. `slurm`, `git_info`,
-`cgroup_limits`) into dot-notation keys:
+Pass `flat=True` to flatten nested fields (e.g. `mb`, `call`, `slurm`, `git`,
+`cgroups`) into dot-notation keys:
 
 ```python
 results = bench.get_results(flat=True)
-# {'function_name': 'noop', 'slurm.job_id': '12345', 'slurm.cpus_on_node': '8', ...}
+# {'call.name': 'noop', 'mb.run_id': '...', 'slurm.job_id': '12345', ...}
 ```
 
 ## Quick summary
 
-Print min/mean/median/max/stdev of `run_durations` with no extra dependencies:
+Print min/mean/median/max/stdev of `call.durations` with no extra dependencies:
 
 ```python
 bench.summary()

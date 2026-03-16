@@ -34,18 +34,19 @@ bench.summary()
 # n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan
 ```
 
-Every record contains these fields automatically:
+Every record contains these fields automatically (all nested under `mb` or `call`):
 
 | Field | Description |
 |---|---|
-| `mb_run_id` | UUID generated once when `microbench` is imported. Identical across all bench suites in the same process — use `groupby('mb_run_id')` to correlate records from different benchmarks in the same run. |
-| `mb_version` | Version of the `microbench` package that produced the record. |
-| `start_time` | ISO-8601 timestamp when the function was called (UTC by default). |
-| `finish_time` | ISO-8601 timestamp when the function returned. |
-| `run_durations` | List of per-iteration durations in seconds. |
-| `function_name` | Name of the decorated function. |
-| `timestamp_tz` | Timezone used for `start_time`/`finish_time`. |
-| `duration_counter` | Name of the timer function used for `run_durations`. |
+| `mb.run_id` | UUID generated once when `microbench` is imported. Identical across all bench suites in the same process — use `groupby('mb.run_id')` to correlate records from different benchmarks in the same run. |
+| `mb.version` | Version of the `microbench` package that produced the record. |
+| `mb.timezone` | Timezone used for `call.start_time`/`call.finish_time`. |
+| `mb.duration_counter` | Name of the timer function used for `call.durations`. |
+| `call.invocation` | `'Python'` for the Python API, `'CLI'` for the command-line interface. |
+| `call.name` | Name of the decorated function (or the name passed to `bench.record()`). |
+| `call.start_time` | ISO-8601 timestamp when the function was called (UTC by default). |
+| `call.finish_time` | ISO-8601 timestamp when the function returned. |
+| `call.durations` | List of per-iteration durations in seconds. |
 
 ## Extended example
 
@@ -74,14 +75,14 @@ myfunction(x, y)
 Mixins used:
 - `MBFunctionCall` records the supplied arguments `x` and `y`.
 - `MBPythonVersion` captures the Python version.
-- `MBHostInfo` captures `hostname` and `operating_system`.
+- `MBHostInfo` captures `host.hostname` and `host.os`.
 - `MBSlurmInfo` captures all `SLURM_` environment variables (used by the
   [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
 
 Class variables:
 - `outfile` saves results to a file (one JSON object per line).
 - `capture_versions` records the versions of specified packages.
-- `env_vars` captures environment variables as `env_<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for more.
+- `env_vars` captures environment variables as `env.<NAME>` fields — see [Environment variables](user-guide/configuration.md#environment-variables) for more.
 
 Constructor arguments:
 - `iterations=3` runs the function three times, recording all three durations.
@@ -142,26 +143,27 @@ summary(bench.get_results())
 Load into a pandas DataFrame for full aggregation and filtering:
 
 ```python
-results = bench.get_results(format='df')
+results = bench.get_results(format='df', flat=True)
 
-# run_durations is a list of per-iteration times; sum for total call time
-results['total_duration'] = results['run_durations'].apply(sum)
+# call.durations is a list of per-iteration times; sum for total call time
+results['total_duration'] = results['call.durations'].apply(sum)
 
 # Average call time by Python version
-results.groupby('python_version')['total_duration'].mean()
+results.groupby('python.version')['total_duration'].mean()
 
 # Correlate records from the same process run
-results.groupby('mb_run_id')['total_duration'].describe()
+results.groupby('mb.run_id')['total_duration'].describe()
 ```
 
-Use `flat=True` to flatten nested mixin fields (e.g. `slurm`, `git_info`,
-`cgroup_limits`) into dot-notation columns — useful when loading into pandas
-or a spreadsheet:
+Use `flat=True` to flatten nested fields (e.g. `slurm`, `git`,
+`cgroups`, `call`, `mb`) into dot-notation columns — useful when loading
+into pandas or a spreadsheet:
 
 ```python
 results = bench.get_results(flat=True)          # list of flat dicts
 results = bench.get_results(format='df', flat=True)  # flat DataFrame
-# 'slurm' dict becomes columns: slurm.job_id, slurm.cpus_on_node, ...
+# 'call' dict becomes: call.name, call.durations, call.start_time, ...
+# 'slurm' dict becomes: slurm.job_id, slurm.cpus_on_node, ...
 ```
 
 See the [pandas documentation](https://pandas.pydata.org/docs/) for more.
@@ -188,7 +190,7 @@ with bench.record('preprocessing'):
 ```
 
 Each `with` block produces one record. The `name` argument sets the
-`function_name` field. All mixins, static fields, and output sinks
+`call.name` field. All mixins, static fields, and output sinks
 behave identically to the decorator form.
 
 If the block raises an exception the record is still written, with an

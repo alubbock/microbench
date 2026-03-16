@@ -42,8 +42,7 @@ def test_mb_slurm_info():
     with patch.dict(os.environ, slurm_env, clear=False):
         noop()
 
-    results = bench.get_results(format='df')
-    slurm = results['slurm'][0]
+    slurm = bench.get_results()[0]['slurm']
     assert slurm['job_id'] == '12345'
     assert slurm['array_task_id'] == '3'
     assert slurm['nodelist'] == 'gpu-node-01'
@@ -67,8 +66,7 @@ def test_mb_slurm_info_empty():
     with patch.dict(os.environ, clean_env, clear=True):
         noop()
 
-    results = bench.get_results(format='df')
-    assert results['slurm'][0] == {}
+    assert bench.get_results()[0]['slurm'] == {}
 
 
 def test_mb_loaded_modules():
@@ -90,7 +88,7 @@ def test_mb_loaded_modules():
     ):
         noop()
 
-    modules = bench.get_results(format='df')['loaded_modules'][0]
+    modules = bench.get_results()[0]['loaded_modules']
     assert modules['gcc'] == '12.2.0'
     assert modules['openmpi'] == '4.1.5'
     assert modules['python'] == '3.10.4'
@@ -112,7 +110,7 @@ def test_mb_loaded_modules_empty():
     with patch.dict(os.environ, clean_env, clear=True):
         noop()
 
-    assert bench.get_results(format='df')['loaded_modules'][0] == {}
+    assert bench.get_results()[0]['loaded_modules'] == {}
 
 
 def test_mb_loaded_modules_no_version():
@@ -130,7 +128,7 @@ def test_mb_loaded_modules_no_version():
     with patch.dict(os.environ, {'LOADEDMODULES': 'null:gcc/12.2.0'}, clear=False):
         noop()
 
-    modules = bench.get_results(format='df')['loaded_modules'][0]
+    modules = bench.get_results()[0]['loaded_modules']
     assert modules['null'] == ''
     assert modules['gcc'] == '12.2.0'
 
@@ -155,7 +153,7 @@ def test_mb_loaded_modules_version_with_slash():
     ):
         noop()
 
-    modules = bench.get_results(format='df')['loaded_modules'][0]
+    modules = bench.get_results()[0]['loaded_modules']
     assert modules['GCC'] == '12.2.0-GCCcore-12.2.0'
 
 
@@ -174,7 +172,7 @@ def test_mb_working_dir():
     noop()
 
     result = bench.get_results()[0]
-    assert result['working_dir'] == os.getcwd()
+    assert result['call']['working_dir'] == os.getcwd()
 
 
 def test_capture_global_packages():
@@ -184,12 +182,14 @@ def test_capture_global_packages():
 
     noop()
 
-    results = globals_bench.get_results(format='df')
+    results = globals_bench.get_results()
 
     # We should've captured microbench and pandas versions from top level
     # imports in this file
-    assert results['package_versions'][0]['microbench'] == str(microbench_version)
-    assert results['package_versions'][0]['pandas'] == pandas.__version__
+    assert results[0]['python']['loaded_packages']['microbench'] == str(
+        microbench_version
+    )
+    assert results[0]['python']['loaded_packages']['pandas'] == pandas.__version__
 
 
 def test_capture_packages_importlib():
@@ -204,8 +204,8 @@ def test_capture_packages_importlib():
 
     noop()
 
-    results = pkg_bench.get_results(format='df')
-    assert pandas.__version__ == results['package_versions'][0]['pandas']
+    results = pkg_bench.get_results()
+    assert pandas.__version__ == results[0]['python']['installed_packages']['pandas']
 
 
 def test_capture_packages_self_imports_metadata():
@@ -229,9 +229,9 @@ def test_capture_packages_self_imports_metadata():
 
         noop()
 
-        results = bench.get_results(format='df')
-        assert isinstance(results['package_versions'][0], dict)
-        assert len(results['package_versions'][0]) > 0
+        results = bench.get_results()
+        assert isinstance(results[0]['python']['installed_packages'], dict)
+        assert len(results[0]['python']['installed_packages']) > 0
     finally:
         if saved is not None:
             sys.modules['importlib.metadata'] = saved
@@ -249,8 +249,8 @@ def test_mb_peak_memory():
 
     allocate()
 
-    results = bench.get_results(format='df')
-    assert results['peak_memory_bytes'][0] > 0
+    results = bench.get_results()
+    assert results[0]['call']['peak_memory_bytes'] > 0
 
 
 def test_mb_peak_memory_stops_tracemalloc():
@@ -292,8 +292,8 @@ def test_mb_peak_memory_preserves_existing_trace():
         noop()
 
         assert tracemalloc.is_tracing()
-        results = bench.get_results(format='df')
-        assert 'peak_memory_bytes' in results.columns
+        results = bench.get_results()
+        assert 'peak_memory_bytes' in results[0]['call']
     finally:
         tracemalloc.stop()
 
@@ -338,11 +338,11 @@ def test_mb_git_info():
     with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_CLEAN)):
         noop()
 
-    git_info = bench.get_results(format='df')['git_info'][0]
-    assert git_info['repo'] == '/home/user/project'
-    assert git_info['commit'] == 'abc123def456abc123def456abc123def456abc1'
-    assert git_info['branch'] == 'main'
-    assert git_info['dirty'] is False
+    git = bench.get_results()[0]['git']
+    assert git['repo'] == '/home/user/project'
+    assert git['commit'] == 'abc123def456abc123def456abc123def456abc1'
+    assert git['branch'] == 'main'
+    assert git['dirty'] is False
 
 
 def test_mb_git_info_dirty():
@@ -360,7 +360,7 @@ def test_mb_git_info_dirty():
     with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_DIRTY)):
         noop()
 
-    assert bench.get_results(format='df')['git_info'][0]['dirty'] is True
+    assert bench.get_results()[0]['git']['dirty'] is True
 
 
 def test_mb_git_info_detached_head():
@@ -378,7 +378,7 @@ def test_mb_git_info_detached_head():
     with patch('subprocess.check_output', side_effect=_git_mock(_GIT_STATUS_DETACHED)):
         noop()
 
-    assert bench.get_results(format='df')['git_info'][0]['branch'] == ''
+    assert bench.get_results()[0]['git']['branch'] == ''
 
 
 def test_mb_git_info_no_git_raises():
@@ -661,7 +661,7 @@ def test_cgroup_limits_non_linux():
     with patch('sys.platform', 'win32'):
         noop()
 
-    assert bench.get_results(format='df')['cgroup_limits'][0] == {}
+    assert bench.get_results()[0].get('cgroups', {}) == {}
 
 
 def test_cgroup_limits_v2_limited():
@@ -695,10 +695,10 @@ def test_cgroup_limits_v2_limited():
     ):
         noop()
 
-    result = bench.get_results(format='df')['cgroup_limits'][0]
-    assert result['cpu_cores'] == 4.0
-    assert result['memory_bytes'] == 17179869184
-    assert result['cgroup_version'] == 2
+    result = bench.get_results()[0]['cgroups']
+    assert result['cpu_cores_limit'] == 4.0
+    assert result['memory_bytes_limit'] == 17179869184
+    assert result['version'] == 2
 
 
 def test_cgroup_limits_v2_unlimited():
@@ -732,10 +732,10 @@ def test_cgroup_limits_v2_unlimited():
     ):
         noop()
 
-    result = bench.get_results(format='df')['cgroup_limits'][0]
-    assert result['cpu_cores'] is None
-    assert result['memory_bytes'] is None
-    assert result['cgroup_version'] == 2
+    result = bench.get_results()[0]['cgroups']
+    assert result['cpu_cores_limit'] is None
+    assert result['memory_bytes_limit'] is None
+    assert result['version'] == 2
 
 
 def test_cgroup_limits_v1_limited():
@@ -771,14 +771,14 @@ def test_cgroup_limits_v1_limited():
     ):
         noop()
 
-    result = bench.get_results(format='df')['cgroup_limits'][0]
-    assert result['cpu_cores'] == 2.0
-    assert result['memory_bytes'] == 8589934592
-    assert result['cgroup_version'] == 1
+    result = bench.get_results()[0]['cgroups']
+    assert result['cpu_cores_limit'] == 2.0
+    assert result['memory_bytes_limit'] == 8589934592
+    assert result['version'] == 1
 
 
 def test_cgroup_limits_v1_unlimited_cpu():
-    """cgroup v1: quota -1 means unlimited CPU; cpu_cores is None."""
+    """cgroup v1: quota -1 means unlimited CPU; cpu_cores_limit is None."""
 
     class Bench(MicroBench, MBCgroupLimits):
         pass
@@ -810,10 +810,10 @@ def test_cgroup_limits_v1_unlimited_cpu():
     ):
         noop()
 
-    result = bench.get_results(format='df')['cgroup_limits'][0]
-    assert result['cpu_cores'] is None
-    assert result['memory_bytes'] == 4294967296
-    assert result['cgroup_version'] == 1
+    result = bench.get_results()[0]['cgroups']
+    assert result['cpu_cores_limit'] is None
+    assert result['memory_bytes_limit'] == 4294967296
+    assert result['version'] == 1
 
 
 def test_cgroup_limits_unavailable():
@@ -835,4 +835,4 @@ def test_cgroup_limits_unavailable():
     ):
         noop()
 
-    assert bench.get_results(format='df')['cgroup_limits'][0] == {}
+    assert bench.get_results()[0].get('cgroups', {}) == {}
