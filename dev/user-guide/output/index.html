@@ -993,6 +993,7 @@ available, such as on cloud or HPC clusters. Requires
 </code></pre></div>
 <p>Results are appended to a Redis list using <code>RPUSH</code> and read back with
 <code>LRANGE</code>.</p>
+<p>The CLI exposes the same sink via <code>--redis-output KEY</code> (see the <a href="../../cli/#redis-output">CLI reference</a>).</p>
 <h2 id="custom-output-sinks">Custom output sinks</h2>
 <p>Subclass <code>Output</code> and implement <code>write</code> to send results anywhere:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">Output</span>

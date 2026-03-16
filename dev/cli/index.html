@@ -520,6 +520,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#redis-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dry-run" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1061,6 +1072,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#redis-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dry-run" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1125,6 +1147,7 @@ select a specific Python interpreter explicitly.</p>
 <h2 id="usage">Usage</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench [options] -- COMMAND [ARGS...]
 </code></pre></div>
+<p><strong>Output</strong></p>
 <table>
 <thead>
 <tr>
@@ -1150,6 +1173,37 @@ select a specific Python interpreter explicitly.</p>
 <td>HTTP method for <code>--http-output</code>. Defaults to <code>POST</code>. Requires <code>--http-output</code>.</td>
 </tr>
 <tr>
+<td><code>--redis-output KEY</code></td>
+<td>RPUSH each record as JSON to a Redis list at KEY. Can be combined with <code>--outfile</code> or <code>--http-output</code>. Requires the <code>redis</code> package.</td>
+</tr>
+<tr>
+<td><code>--redis-host HOST</code></td>
+<td>Redis server hostname for <code>--redis-output</code> (default: <code>localhost</code>).</td>
+</tr>
+<tr>
+<td><code>--redis-port PORT</code></td>
+<td>Redis server port for <code>--redis-output</code> (default: <code>6379</code>). Requires <code>--redis-output</code>.</td>
+</tr>
+<tr>
+<td><code>--redis-db DB</code></td>
+<td>Redis database index for <code>--redis-output</code> (default: <code>0</code>). Requires <code>--redis-output</code>.</td>
+</tr>
+<tr>
+<td><code>--redis-password PASSWORD</code></td>
+<td>Redis AUTH password for <code>--redis-output</code>. Requires <code>--redis-output</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mixins</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
 <td><code>--mixin MIXIN [MIXIN ...]</code> / <code>-m MIXIN [MIXIN ...]</code></td>
 <td>One or more mixins to include. Replaces defaults when specified.</td>
 </tr>
@@ -1165,6 +1219,17 @@ select a specific Python interpreter explicitly.</p>
 <td><code>--no-mixin</code></td>
 <td>Disable all mixins including defaults. Records only timing and command fields.</td>
 </tr>
+</tbody>
+</table>
+<p><strong>Execution</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>--iterations N</code> / <code>-n N</code></td>
 <td>Run the command N times, recording each duration. Defaults to 1.</td>
@@ -1172,10 +1237,6 @@ select a specific Python interpreter explicitly.</p>
 <tr>
 <td><code>--warmup N</code> / <code>-w N</code></td>
 <td>Run the command N times before timing begins (unrecorded). Defaults to 0.</td>
-</tr>
-<tr>
-<td><code>--dry-run</code></td>
-<td>Print the resolved configuration and exit without running the command.</td>
 </tr>
 <tr>
 <td><code>--stdout[=suppress]</code></td>
@@ -1196,6 +1257,10 @@ select a specific Python interpreter explicitly.</p>
 <tr>
 <td><code>--monitor-interval SECONDS</code></td>
 <td>Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires <code>psutil</code>. See <a href="#subprocess-monitoring">Subprocess monitoring</a> below.</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Print the resolved configuration and exit without running the command.</td>
 </tr>
 <tr>
 <td><code>--field KEY=VALUE</code> / <code>-f KEY=VALUE</code></td>
@@ -1457,45 +1522,87 @@ is split on the first <code>:</code>, so bearer tokens and other header values w
 <p>To send results to a service that requires a shaped payload (e.g. Slack's
 <code>{"text": "..."}</code> envelope), use the Python API with a <code>HttpOutput</code> subclass
 that overrides <code>format_payload</code>. The CLI always sends the raw record JSON.</p>
+<h2 id="redis-output">Redis output</h2>
+<p>Use <code>--redis-output KEY</code> to RPUSH each record as JSON to a Redis list. This is
+the natural output sink for SLURM array jobs where many nodes write concurrently
+and a shared filesystem is impractical. Requires the
+<a href="https://github.com/andymccurdy/redis-py">redis-py</a> package (<code>pip install redis</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>Use <code>--redis-port</code> and <code>--redis-db</code> to connect to a non-default port or database:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span>--redis-port<span class="w"> </span><span class="m">6380</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span>--redis-db<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>For password-protected Redis instances, pass <code>--redis-password</code>. Read it from an
+environment variable to avoid it appearing in shell history:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--redis-password<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$REDIS_PASSWORD</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p><code>--redis-output</code> can be combined with <code>--outfile</code> or <code>--http-output</code> to write to
+multiple destinations simultaneously:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>Read results back from Redis with Python:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">redis</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">client</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">StrictRedis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis.example.com&#39;</span><span class="p">)</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">records</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">lrange</span><span class="p">(</span><span class="s1">&#39;bench:results&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+</code></pre></div>
+<p>Or via microbench's <code>RedisOutput.get_results()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">RedisOutput</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;bench:results&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis.example.com&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+</code></pre></div>
 <h2 id="dry-run">Dry run</h2>
 <p>Use <code>--dry-run</code> to verify your configuration without actually running the command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span>--dry-run<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>nvidia-smi<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--dry-run<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>nvidia-smi<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="w">    </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
 </code></pre></div>
 <p>Example output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Dry run — command will not be executed.
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>  Command:    ./run_simulation.sh --steps 1000
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>  Output:     /scratch/user/results.jsonl
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>  Mixins:     host-info, nvidia-smi, slurm-info
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>    --nvidia-attributes gpu_name power.draw
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>  Iterations: 10
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>Dry run — command will not be executed.
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>  Command:    ./run_simulation.sh --steps 1000
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>  Output:     /scratch/user/results.jsonl
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>  Mixins:     host-info, nvidia-smi, slurm-info
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    --nvidia-attributes gpu_name power.draw
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>  Iterations: 10
 </code></pre></div>
 <p>All argument validation still runs, so <code>--dry-run</code> will catch errors like a
 missing <code>--timeout</code> when <code>--timeout-grace-period</code> is given, or a <code>--hash-file</code>
 path that does not exist.</p>
 <h2 id="extra-metadata">Extra metadata</h2>
 <p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
 </code></pre></div>
 <p>All <code>--field</code> values are stored as strings.</p>
 <h2 id="subprocess-monitoring">Subprocess monitoring</h2>
 <p>Use <code>--monitor-interval SECONDS</code> to periodically sample the child process
 while it runs. This requires the <a href="https://psutil.readthedocs.io/"><code>psutil</code></a>
 package (<code>pip install psutil</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>microbench<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
 </code></pre></div>
 <p>The record gains a <code>call.monitor</code> field: a list of per-iteration
 sample lists (one inner list per <code>--iterations</code> call, warmup excluded).
@@ -1523,16 +1630,16 @@ Each sample is a dict with three keys:</p>
 </tbody>
 </table>
 <p>Example record (single iteration, two samples):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">      </span><span class="p">[</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="w">      </span><span class="p">]</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p">{</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">      </span><span class="p">[</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="w">      </span><span class="p">]</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="p">}</span>
 </code></pre></div>
 <p>Only the direct child process is tracked. If the child spawns its own
 subprocesses, their CPU and memory usage are not included.</p>
@@ -1540,18 +1647,18 @@ subprocesses, their CPU and memory usage are not included.</p>
 short-lived command with a long <code>--monitor-interval</code>), the inner list will
 be empty and <code>call.monitor</code> is omitted from the record.</p>
 <p>Analyse with <code>get_results()</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="n">samples</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">s</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;monitor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># [0] = first iteration</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="p">])</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_mb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_bytes&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">samples</span><span class="p">[[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;rss_mb&#39;</span><span class="p">]])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="n">samples</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>    <span class="n">s</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;monitor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># [0] = first iteration</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a><span class="p">])</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_mb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_bytes&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
+<a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">samples</span><span class="p">[[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;rss_mb&#39;</span><span class="p">]])</span>
 </code></pre></div>
 
 
