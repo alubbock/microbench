@@ -1221,13 +1221,15 @@ to use across heterogeneous cluster nodes.</p>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>microbench<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>host-cpu-cores<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
 </code></pre></div>
 <p>Each node that runs this job appends one JSONL record to <code>results.jsonl</code>,
-capturing hostname, CPU count, and all SLURM variables (job ID, array task
-ID, node list, etc.) alongside the wall-clock time of the simulation.</p>
+capturing hostname, OS, CPU count, RAM, and all SLURM variables (job ID, array
+task ID, node list, etc.) alongside the wall-clock time of the simulation.
+CPU and RAM fields are included automatically by <code>host-info</code> when psutil is
+installed.</p>
 <p>Read the results with pandas:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

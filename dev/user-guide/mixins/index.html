@@ -553,10 +553,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mbhostcpucores-and-mbhostramtotal" class="md-nav__link">
+  <a href="#mbhostinfo" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MBHostCpuCores and MBHostRamTotal
+        MBHostInfo
       
     </span>
   </a>
@@ -1105,10 +1105,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mbhostcpucores-and-mbhostramtotal" class="md-nav__link">
+  <a href="#mbhostinfo" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MBHostCpuCores and MBHostRamTotal
+        MBHostInfo
       
     </span>
   </a>
@@ -1354,9 +1354,9 @@
 <h1 id="mixins">Mixins</h1>
 <p>Mixins are classes that add metadata capture to a benchmark suite via
 multiple inheritance. Combine any number of mixins with <code>MicroBench</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">):</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">):</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">pass</span>
 </code></pre></div>
 <p><code>MicroBench</code> already includes <code>MBPythonInfo</code> by default, so a <code>python</code> dict
@@ -1405,18 +1405,8 @@ combine any number of microbench mixins without conflicts, and their
 </tr>
 <tr>
 <td><code>MBHostInfo</code></td>
-<td><code>host.hostname</code>, <code>host.os</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>MBHostCpuCores</code></td>
-<td><code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code></td>
-<td>psutil</td>
-</tr>
-<tr>
-<td><code>MBHostRamTotal</code></td>
-<td><code>host.ram_total</code> (bytes)</td>
-<td>psutil</td>
+<td><code>host.hostname</code>, <code>host.os</code>; also <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes) when psutil is installed (silently omitted otherwise)</td>
+<td>psutil (optional)</td>
 </tr>
 <tr>
 <td><code>MBPeakMemory</code></td>
@@ -1519,15 +1509,23 @@ function as <code>args</code> (list) and <code>kwargs</code> (dict):</p>
 <a href="../extending/#custom-json-encoding">Custom JSON encoding</a> to handle
 custom types.</p>
 <h2 id="host-resources">Host resources</h2>
-<h3 id="mbhostcpucores-and-mbhostramtotal"><code>MBHostCpuCores</code> and <code>MBHostRamTotal</code></h3>
-<p>Capture static host hardware information. Requires
-<a href="https://pypi.org/project/psutil/">psutil</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">,</span> <span class="n">MBHostRamTotal</span>
+<h3 id="mbhostinfo"><code>MBHostInfo</code></h3>
+<p>Captures hostname, operating system, and (when <a href="https://pypi.org/project/psutil/">psutil</a>
+is installed) CPU core counts and total RAM.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostCpuCores</span><span class="p">,</span> <span class="n">MBHostRamTotal</span><span class="p">):</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">):</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">pass</span>
 </code></pre></div>
-<p>Fields: <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes).</p>
+<p>Always-present fields: <code>host.hostname</code>, <code>host.os</code>.</p>
+<p>Fields added when psutil is installed (silently omitted otherwise):
+<code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>MBHostCpuCores</code> and <code>MBHostRamTotal</code> are deprecated. <code>MBHostInfo</code> now
+covers all three mixins. The separate classes still work but emit a
+<code>DeprecationWarning</code> at call time.</p>
+</div>
 <h2 id="job-resource-utilisation">Job resource utilisation</h2>
 <h3 id="mbpeakmemory"><code>MBPeakMemory</code></h3>
 <p>Captures the peak Python memory allocation during the benchmarked function
@@ -1644,8 +1642,7 @@ distinguished. Included in the CLI defaults.</p>
 <h3 id="mbcgrouplimits"><code>MBCgroupLimits</code></h3>
 <p>Captures the CPU quota and memory limit enforced by the Linux control groups
 (cgroups). Works for SLURM jobs and Kubernetes pods, on both cgroup v1 and
-cgroup v2 systems, with no external dependencies. Unlike <code>MBHostCpuCores</code> and
-<code>MBHostRamTotal</code> (which report the physical node's total resources),
+cgroup v2 systems, with no external dependencies. Unlike <code>MBHostInfo</code> (which reports the physical node's total resources),
 <code>MBCgroupLimits</code> reports what the scheduler actually allocated to this job or
 container — the number that determines your benchmark's resource budget.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span>
