@@ -61,6 +61,7 @@ def _show_mixins(mixin_map):
     """Print a table of available CLI-compatible mixins and their descriptions."""
     default_set = set(_DEFAULT_MIXINS)
     width = max(len(name) for name in mixin_map)
+    arg_indent = ' ' * (4 + width + 2)
     print('Available mixins (* = included by default):\n')
     for name in sorted(mixin_map):
         cls = mixin_map[name]
@@ -68,6 +69,17 @@ def _show_mixins(mixin_map):
         summary = doc.splitlines()[0] if doc else ''
         marker = '*' if name in default_set else ' '
         print(f'  {marker} {name:<{width}}  {summary}')
+        for arg in getattr(cls, 'cli_args', []):
+            flag = arg.flags[0]
+            if arg.metavar:
+                flag_display = (
+                    f'{flag} {arg.metavar} [{arg.metavar} ...]'
+                    if arg.nargs == '+'
+                    else f'{flag} {arg.metavar}'
+                )
+            else:
+                flag_display = flag
+            print(f'{arg_indent}{flag_display}')
 
 
 class _SubprocessMonitorThread(threading.Thread):
@@ -239,6 +251,21 @@ def _build_parser(mixin_map):
         nargs=argparse.REMAINDER,
         help='Command to benchmark (use -- to separate from microbench options).',
     )
+    # Mixin-specific arguments, auto-discovered from cli_args on each mixin class.
+    for cli_name, cls in sorted(mixin_map.items()):
+        for arg in getattr(cls, 'cli_args', []):
+            kwargs = {
+                'dest': arg.dest,
+                'default': None,
+                'help': f'[{cli_name}] {arg.help}',
+            }
+            if arg.metavar is not None:
+                kwargs['metavar'] = arg.metavar
+            if arg.nargs is not None:
+                kwargs['nargs'] = arg.nargs
+            if arg.type is not str:
+                kwargs['type'] = arg.type
+            parser.add_argument(*arg.flags, **kwargs)
     return parser
 
 
@@ -272,6 +299,18 @@ def main(argv=None):
         mixin_names = list(dict.fromkeys(args.mixins))
     else:
         mixin_names = list(_DEFAULT_MIXINS)
+
+    # Validate: mixin-specific args require their mixin to be loaded.
+    mixin_names_set = set(mixin_names)
+    for cli_name, cls in mixin_map.items():
+        if cli_name not in mixin_names_set:
+            for arg in getattr(cls, 'cli_args', []):
+                if getattr(args, arg.dest, None) is not None:
+                    parser.error(
+                        f'{arg.flags[0]}: the {cli_name!r} mixin is not loaded. '
+                        f'Add it with --mixin {cli_name} or use --all.'
+                    )
+
     mixins = [mixin_map[name] for name in mixin_names]
 
     extra_fields = {}
@@ -314,6 +353,23 @@ def main(argv=None):
         (MicroBench, _MBSubprocessResult, *mixins),
         {'capture_optional': True},
     )
+
+    # Apply mixin-specific CLI arguments, using cli_defaults where not supplied.
+    from microbench.mixins import _UNSET
+
+    for name in mixin_names:
+        for arg in getattr(mixin_map[name], 'cli_args', []):
+            user_value = getattr(args, arg.dest, None)
+            if user_value is not None:
+                setattr(BenchClass, arg.dest, user_value)
+            elif arg.cli_default is not _UNSET:
+                setattr(
+                    BenchClass,
+                    arg.dest,
+                    arg.cli_default(cmd)
+                    if callable(arg.cli_default)
+                    else arg.cli_default,
+                )
 
     output = FileOutput(args.outfile) if args.outfile else FileOutput(sys.stdout)
     bench = BenchClass(

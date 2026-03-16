@@ -179,10 +179,18 @@ All notable changes to microbench are documented here.
   timing; use `--stdout[=suppress]` and `--stderr[=suppress]` to capture
   subprocess output into the record (output is re-printed to the terminal
   unless `=suppress` is given); use `--monitor-interval SECONDS` to sample
-  child process CPU and memory over time (see below). Capture failures are
-  non-fatal by default (`capture_optional = True`), making the CLI safe
-  across heterogeneous cluster nodes. The process exits with the highest
-  returncode seen across all timed iterations.
+  child process CPU and memory over time (see below). Some mixins expose
+  their own configuration flags (shown in `--show-mixins` and `--help`):
+  `git-info` adds `--git-repo DIR` (default: current working directory),
+  and `file-hash` adds `--hash-file FILE [FILE ...]` (default: the
+  benchmarked command) and `--hash-algorithm ALGORITHM` (default:
+  `sha256`). Mixin flags are validated before the subprocess runs — passing
+  a non-existent path or a directory where a file is expected is caught
+  immediately. Supplying a mixin flag without loading the corresponding
+  mixin is an error. Capture failures are non-fatal by default
+  (`capture_optional = True`), making the CLI safe across heterogeneous
+  cluster nodes. The process exits with the highest returncode seen across
+  all timed iterations.
 
 - **CLI subprocess monitoring** (`--monitor-interval SECONDS`): periodically
   sample the child process's CPU usage and resident memory (RSS) while it

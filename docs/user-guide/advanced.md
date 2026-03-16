@@ -201,7 +201,9 @@ keeping the happy-path output clean.
 
 Microbench serialises records as JSON. If a captured value is not
 JSON-serialisable (e.g. a custom object), microbench replaces it with a
-placeholder and emits a `JSONEncodeWarning`.
+placeholder and emits a `JSONEncodeWarning`. Common places for this to
+occur are when capturing function arguments or return values via
+`MBFunctionCall` and `MBReturnValue` respectively.
 
 To handle custom types, subclass `JSONEncoder`:
 
@@ -229,33 +231,6 @@ make_graph()  # no warning
 
 `JSONEncoder` already handles `datetime`, `timedelta`, `timezone`, and
 numpy scalar/array types by default.
-
-## Writing a mixin
-
-A mixin is simply a class with one or more `capture_` or `capturepost_`
-methods. Define it as a standalone class, then combine it with `MicroBench`
-via multiple inheritance:
-
-```python
-class MBMachineType:
-    """Capture the machine architecture (e.g. x86_64, arm64)."""
-
-    def capture_machine_type(self, bm_data):
-        import platform
-        bm_data['machine_type'] = platform.machine()
-
-
-class MyBench(MicroBench, MBMachineType, MBPythonVersion):
-    pass
-```
-
-Mixins have no required base class. Python's **Method Resolution Order
-(MRO)** determines the order in which base classes are searched for
-methods — a deterministic left-to-right traversal that visits each class
-exactly once. Because every `capture_` method has a unique name, all of
-them are found and called regardless of MRO order. The MRO only matters if
-two mixins define a method with the *same* name, in which case the
-leftmost class in the inheritance list wins.
 
 ## Tailing output in real time
 
