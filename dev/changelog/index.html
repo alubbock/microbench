@@ -1083,10 +1083,18 @@
   timing; use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture
   subprocess output into the record (output is re-printed to the terminal
   unless <code>=suppress</code> is given); use <code>--monitor-interval SECONDS</code> to sample
-  child process CPU and memory over time (see below). Capture failures are
-  non-fatal by default (<code>capture_optional = True</code>), making the CLI safe
-  across heterogeneous cluster nodes. The process exits with the highest
-  returncode seen across all timed iterations.</p>
+  child process CPU and memory over time (see below). Some mixins expose
+  their own configuration flags (shown in <code>--show-mixins</code> and <code>--help</code>):
+  <code>git-info</code> adds <code>--git-repo DIR</code> (default: current working directory),
+  and <code>file-hash</code> adds <code>--hash-file FILE [FILE ...]</code> (default: the
+  benchmarked command) and <code>--hash-algorithm ALGORITHM</code> (default:
+  <code>sha256</code>). Mixin flags are validated before the subprocess runs — passing
+  a non-existent path or a directory where a file is expected is caught
+  immediately. Supplying a mixin flag without loading the corresponding
+  mixin is an error. Capture failures are non-fatal by default
+  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
+  cluster nodes. The process exits with the highest returncode seen across
+  all timed iterations.</p>
 </li>
 <li>
 <p><strong>CLI subprocess monitoring</strong> (<code>--monitor-interval SECONDS</code>): periodically

@@ -603,6 +603,29 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#writing-a-mixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a mixin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing a mixin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#making-a-mixin-cli-compatible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Making a mixin CLI-compatible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#custom-capture-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -610,6 +633,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -765,6 +793,29 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#writing-a-mixin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing a mixin
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Writing a mixin">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#making-a-mixin-cli-compatible" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Making a mixin CLI-compatible
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#custom-capture-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -772,6 +823,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -796,21 +852,122 @@
 
 
 <h1 id="extending-microbench">Extending microbench</h1>
-<h2 id="custom-capture-methods">Custom capture methods</h2>
+<h2 id="writing-a-mixin">Writing a mixin</h2>
+<p>A mixin is simply a class with one or more <code>capture_</code> or <code>capturepost_</code>
+methods. Define it as a standalone class, then combine it with <code>MicroBench</code>
+via multiple inheritance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBMachineType</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the machine architecture (e.g. x86_64, arm64).&quot;&quot;&quot;</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_machine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBMachineType</span><span class="p">,</span> <span class="n">MBPythonVersion</span><span class="p">):</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p>Mixins have no required base class. Python's <strong>Method Resolution Order
+(MRO)</strong> determines the order in which base classes are searched for
+methods — a deterministic left-to-right traversal that visits each class
+exactly once. Because every <code>capture_</code> method has a unique name, all of
+them are found and called regardless of MRO order. The MRO only matters if
+two mixins define a method with the <em>same</em> name, in which case the
+leftmost class in the inheritance list wins.</p>
+<h3 id="making-a-mixin-cli-compatible">Making a mixin CLI-compatible</h3>
+<p>A mixin with <code>cli_compatible = True</code> appears in <code>--show-mixins</code> and can be
+selected with <code>--mixin</code>. That attribute alone is enough for mixins that need
+no configuration:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBMachineType</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the machine architecture (e.g. x86_64, arm64).&quot;&quot;&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_machine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>
+</code></pre></div>
+<p>To expose configurable attributes as CLI flags, add a <code>cli_args</code> list of
+<code>CLIArg</code> instances. The CLI picks them up automatically — no changes to
+<code>__main__.py</code> are needed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">CLIArg</span><span class="p">,</span> <span class="n">_UNSET</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBOutputDir</span><span class="p">:</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Record the output directory for this run.&quot;&quot;&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--output-dir&#39;</span><span class="p">],</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;output_dir&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;DIR&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Output directory to record. CLI default: current working directory.&#39;</span><span class="p">,</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="n">cli_default</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cmd</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="p">),</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="p">]</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;output_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;output_dir&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<p><code>CLIArg</code> parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flags</code></td>
+<td>Flag strings, e.g. <code>['--output-dir']</code>.</td>
+</tr>
+<tr>
+<td><code>dest</code></td>
+<td>Mixin attribute name to set, e.g. <code>'output_dir'</code>.</td>
+</tr>
+<tr>
+<td><code>help</code></td>
+<td>Help text shown in <code>--help</code> and <code>--show-mixins</code>.</td>
+</tr>
+<tr>
+<td><code>metavar</code></td>
+<td>Display name for the value in help (e.g. <code>'DIR'</code>).</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Callable to convert and validate the raw string. Defaults to <code>str</code>. Raise <code>ValueError</code> to reject a value.</td>
+</tr>
+<tr>
+<td><code>nargs</code></td>
+<td>Number of arguments, e.g. <code>'+'</code> for one or more.</td>
+</tr>
+<tr>
+<td><code>cli_default</code></td>
+<td>Default when the flag is not supplied on the CLI. A callable receives the command list (<code>cmd</code>) and returns the default value. Use <code>_UNSET</code> (the default) to fall back to the mixin's own Python-API default logic instead.</td>
+</tr>
+</tbody>
+</table>
+<p>If a <code>cli_default</code> differs from the Python API default — for example because
+<code>sys.argv[0]</code> points to a different file in CLI context — document both
+defaults in the <code>help</code> string and in the mixin's docstring.</p>
+<p>Mixin flags are only accepted when their mixin is active. Passing a flag
+without <code>--mixin &lt;name&gt;</code> (or <code>--all</code>) is an error.</p>
+<h3 id="custom-capture-methods">Custom capture methods</h3>
 <p>Add methods prefixed with <code>capture_</code> to run before the function starts, or
 <code>capturepost_</code> to run after it returns. Each receives <code>bm_data</code>, the
 dictionary that will be serialised as the result record.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_machine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>  <span class="c1"># e.g. &#39;x86_64&#39;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capturepost_slow_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="c1"># run_durations and finish_time are available in capturepost_ methods</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;slow_call&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_machine_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;machine&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">machine</span><span class="p">()</span>  <span class="c1"># e.g. &#39;x86_64&#39;</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capturepost_slow_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="c1"># run_durations and finish_time are available in capturepost_ methods</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;run_durations&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;slow_call&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
 <p>Avoid key names that clash with built-in fields (e.g. <code>start_time</code>,
 <code>function_name</code>). The <code>mb_</code> prefix is reserved for microbench internals.</p>

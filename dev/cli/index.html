@@ -415,6 +415,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mixin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixin options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixin options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git-info-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git-info options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-hash-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file-hash options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#capture-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -873,6 +912,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mixin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixin options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixin options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git-info-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git-info options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-hash-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file-hash options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#capture-failures" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1062,6 +1140,54 @@ disable all mixins and record only timing and command fields:</p>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>python<span class="w"> </span>-m<span class="w"> </span>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
 </code></pre></div>
 <p>See <a href="../user-guide/mixins/">Mixins</a> for details on each.</p>
+<h2 id="mixin-options">Mixin options</h2>
+<p>Some mixins expose their own CLI flags for configuration. These are shown
+under each mixin in <code>--show-mixins</code> output and in <code>--help</code>. A mixin flag
+may only be used when its mixin is loaded; passing one without the
+corresponding mixin is an error.</p>
+<h3 id="git-info-options"><code>git-info</code> options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--git-repo DIR</code></td>
+<td>Directory to inspect for git information.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CLI default:</strong> current working directory.</p>
+<p><strong>Python API default:</strong> directory of the running script (<code>sys.argv[0]</code>).
+When using the CLI, <code>sys.argv[0]</code> points to the microbench package itself,
+so the CLI defaults to the working directory instead.</p>
+<h3 id="file-hash-options"><code>file-hash</code> options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--hash-file FILE [FILE ...]</code></td>
+<td>File(s) to hash.</td>
+</tr>
+<tr>
+<td><code>--hash-algorithm ALGORITHM</code></td>
+<td>Hash algorithm (e.g. <code>sha256</code>, <code>md5</code>). Default: <code>sha256</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CLI default for <code>--hash-file</code>:</strong> the benchmarked command executable
+(<code>cmd[0]</code>), e.g. <code>./run_simulation.sh</code>.</p>
+<p><strong>Python API default:</strong> the running script (<code>sys.argv[0]</code>). The same
+<code>sys.argv[0]</code> issue applies here, so the CLI defaults to hashing the
+command being benchmarked instead.</p>
 <h2 id="capture-failures">Capture failures</h2>
 <p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
 script not in a git repository) are caught automatically and recorded in
