@@ -32,6 +32,26 @@ from ._encoding import _UNENCODABLE_PLACEHOLDER_VALUE, JSONEncodeWarning
 _UNSET = object()
 
 
+def _resolve_cmd_path(cmd):
+    """Resolve cmd[0] to an absolute file path for use as a hash target.
+
+    Tries ``shutil.which`` first (handles bare command names like ``echo``
+    by searching PATH), then falls back to checking whether the string is
+    itself an existing file (handles relative and absolute paths that may
+    not be executable). Returns a one-element list with the resolved path,
+    or an empty list if the command cannot be resolved to a file.
+    """
+    import shutil
+
+    path = cmd[0]
+    resolved = shutil.which(path)
+    if resolved:
+        return [resolved]
+    if os.path.isfile(path):
+        return [path]
+    return []
+
+
 def _existing_file(value):
     """argparse type: accept an existing file path, reject directories."""
     if os.path.isdir(value):
@@ -494,7 +514,7 @@ class MBFileHash:
                 'CLI default: the benchmarked command executable. '
                 'Python API default: the running script.'
             ),
-            cli_default=lambda cmd: [cmd[0]],
+            cli_default=_resolve_cmd_path,
         ),
         CLIArg(
             flags=['--hash-algorithm'],

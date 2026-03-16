@@ -790,6 +790,23 @@ def test_cli_hash_file_default_cmd(tmp_path):
     assert str(target) in record.get('file_hashes', {})
 
 
+def test_cli_hash_file_default_resolves_bare_command(tmp_path):
+    """file-hash resolves bare command names via PATH for the default hash target."""
+    fake_bin = tmp_path / 'myapp'
+    fake_bin.write_bytes(b'#!/bin/sh')
+    with patch('shutil.which', return_value=str(fake_bin)):
+        _, record, _ = _run_main(['--mixin', 'file-hash', '--', 'myapp'])
+    assert str(fake_bin) in record.get('file_hashes', {})
+
+
+def test_cli_hash_file_default_unresolvable_cmd():
+    """file-hash records empty file_hashes without error when cmd cannot be resolved."""
+    with patch('shutil.which', return_value=None):
+        _, record, _ = _run_main(['--mixin', 'file-hash', '--', 'ghost_cmd'])
+    assert 'mb_capture_errors' not in record
+    assert record.get('file_hashes') == {}
+
+
 def test_cli_hash_algorithm(tmp_path):
     """--hash-algorithm changes the digest algorithm used by file-hash."""
     target = tmp_path / 'data.txt'
