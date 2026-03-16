@@ -32,7 +32,7 @@ Some mixins have optional requirements:
 
 | Mixin / feature | Requires |
 |---|---|
-| `MBHostCpuCores`, `MBHostRamTotal`, periodic monitoring | [psutil](https://pypi.org/project/psutil/) |
+| `MBHostInfo` (cpu/ram fields), periodic monitoring | [psutil](https://pypi.org/project/psutil/) |
 | `MBLineProfiler` | [line_profiler](https://github.com/rkern/line_profiler) |
 | `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
 | `MBCondaPackages` | `conda` on `PATH` |

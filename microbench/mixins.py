@@ -192,9 +192,16 @@ class MBPythonInfo:
 
 
 class MBHostInfo:
-    """Capture the hostname and operating system.
+    """Capture hostname, operating system, and (optionally) CPU and RAM info.
 
-    Results are stored in the ``host`` dict with keys ``hostname`` and ``os``.
+    Always records ``host.hostname`` and ``host.os`` using only the standard
+    library. When `psutil <https://pypi.org/project/psutil/>`_ is installed,
+    also records ``host.cpu_cores_logical``, ``host.cpu_cores_physical``, and
+    ``host.ram_total`` (bytes). The psutil fields are silently omitted when
+    psutil is not available — no error or warning is raised.
+
+    This mixin supersedes the separate :class:`MBHostCpuCores` and
+    :class:`MBHostRamTotal` mixins, which are deprecated.
     """
 
     cli_compatible = True
@@ -204,6 +211,18 @@ class MBHostInfo:
 
     def capture_os(self, bm_data):
         bm_data.setdefault('host', {})['os'] = sys.platform
+
+    def capture_cpu_cores(self, bm_data):
+        if psutil is None:
+            return
+        host = bm_data.setdefault('host', {})
+        host['cpu_cores_logical'] = psutil.cpu_count(logical=True)
+        host['cpu_cores_physical'] = psutil.cpu_count(logical=False)
+
+    def capture_ram_total(self, bm_data):
+        if psutil is None:
+            return
+        bm_data.setdefault('host', {})['ram_total'] = psutil.virtual_memory().total
 
 
 _microbench_dir = os.path.dirname(os.path.abspath(__file__))
@@ -766,32 +785,55 @@ class _NeedsPsUtil:
             raise ImportError('psutil library needed')
 
 
-class MBHostCpuCores(_NeedsPsUtil):
+class MBHostCpuCores:
     """Capture the number of logical and physical CPU cores.
 
-    Results are stored in the ``host`` dict under ``cpu_cores_logical``
-    and ``cpu_cores_physical``.
+    .. deprecated::
+        Use :class:`MBHostInfo` instead. ``MBHostInfo`` now captures
+        ``host.cpu_cores_logical`` and ``host.cpu_cores_physical`` automatically
+        when psutil is available. ``MBHostCpuCores`` will be removed in a
+        future release.
     """
 
     cli_compatible = True
 
     def capture_cpu_cores(self, bm_data):
-        self._check_psutil()
+        warnings.warn(
+            'MBHostCpuCores is deprecated and will be removed in a future '
+            'release. Use MBHostInfo instead, which now captures '
+            'host.cpu_cores_logical and host.cpu_cores_physical when psutil '
+            'is available.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if psutil is None:
+            return
         host = bm_data.setdefault('host', {})
         host['cpu_cores_logical'] = psutil.cpu_count(logical=True)
         host['cpu_cores_physical'] = psutil.cpu_count(logical=False)
 
 
-class MBHostRamTotal(_NeedsPsUtil):
+class MBHostRamTotal:
     """Capture the total host RAM in bytes.
 
-    Result is stored in ``host.ram_total``.
+    .. deprecated::
+        Use :class:`MBHostInfo` instead. ``MBHostInfo`` now captures
+        ``host.ram_total`` automatically when psutil is available.
+        ``MBHostRamTotal`` will be removed in a future release.
     """
 
     cli_compatible = True
 
     def capture_total_ram(self, bm_data):
-        self._check_psutil()
+        warnings.warn(
+            'MBHostRamTotal is deprecated and will be removed in a future '
+            'release. Use MBHostInfo instead, which now captures '
+            'host.ram_total when psutil is available.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if psutil is None:
+            return
         bm_data.setdefault('host', {})['ram_total'] = psutil.virtual_memory().total
 
 

@@ -4,9 +4,9 @@ Mixins are classes that add metadata capture to a benchmark suite via
 multiple inheritance. Combine any number of mixins with `MicroBench`:
 
 ```python
-from microbench import MicroBench, MBHostInfo, MBHostCpuCores
+from microbench import MicroBench, MBHostInfo
 
-class MyBench(MicroBench, MBHostInfo, MBHostCpuCores):
+class MyBench(MicroBench, MBHostInfo):
     pass
 ```
 
@@ -30,9 +30,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBReturnValue` | `call.return_value` | — |
 | `MBPythonInfo` | `python.version`, `python.prefix`, `python.executable` — **included in `MicroBench` by default** | — |
 | `MBPythonVersion` | `python_version`, `python_executable` — *deprecated, use `MBPythonInfo`* | — |
-| `MBHostInfo` | `host.hostname`, `host.os` | — |
-| `MBHostCpuCores` | `host.cpu_cores_logical`, `host.cpu_cores_physical` | psutil |
-| `MBHostRamTotal` | `host.ram_total` (bytes) | psutil |
+| `MBHostInfo` | `host.hostname`, `host.os`; also `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes) when psutil is installed (silently omitted otherwise) | psutil (optional) |
 | `MBPeakMemory` | `call.peak_memory_bytes` | — |
 | `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
 | `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
@@ -96,19 +94,27 @@ custom types.
 
 ## Host resources
 
-### `MBHostCpuCores` and `MBHostRamTotal`
+### `MBHostInfo`
 
-Capture static host hardware information. Requires
-[psutil](https://pypi.org/project/psutil/).
+Captures hostname, operating system, and (when [psutil](https://pypi.org/project/psutil/)
+is installed) CPU core counts and total RAM.
 
 ```python
-from microbench import MicroBench, MBHostCpuCores, MBHostRamTotal
+from microbench import MicroBench, MBHostInfo
 
-class Bench(MicroBench, MBHostCpuCores, MBHostRamTotal):
+class Bench(MicroBench, MBHostInfo):
     pass
 ```
 
-Fields: `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes).
+Always-present fields: `host.hostname`, `host.os`.
+
+Fields added when psutil is installed (silently omitted otherwise):
+`host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes).
+
+!!! note
+    `MBHostCpuCores` and `MBHostRamTotal` are deprecated. `MBHostInfo` now
+    covers all three mixins. The separate classes still work but emit a
+    `DeprecationWarning` at call time.
 
 ## Job resource utilisation
 
@@ -257,8 +263,7 @@ distinguished. Included in the CLI defaults.
 
 Captures the CPU quota and memory limit enforced by the Linux control groups
 (cgroups). Works for SLURM jobs and Kubernetes pods, on both cgroup v1 and
-cgroup v2 systems, with no external dependencies. Unlike `MBHostCpuCores` and
-`MBHostRamTotal` (which report the physical node's total resources),
+cgroup v2 systems, with no external dependencies. Unlike `MBHostInfo` (which reports the physical node's total resources),
 `MBCgroupLimits` reports what the scheduler actually allocated to this job or
 container — the number that determines your benchmark's resource budget.
 
