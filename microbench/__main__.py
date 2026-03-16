@@ -70,7 +70,14 @@ def _show_dry_run(args, cmd, mixin_names, mixin_map):
     """Print a summary of the resolved configuration and exit."""
     lines = ['Dry run — command will not be executed.\n']
     lines.append(f'  Command:    {" ".join(cmd)}')
-    lines.append(f'  Output:     {args.outfile or "stdout"}')
+    output_parts = []
+    if args.outfile:
+        output_parts.append(args.outfile)
+    if args.http_output:
+        output_parts.append(args.http_output)
+    if args.redis_output:
+        output_parts.append(f'redis:{args.redis_output}')
+    lines.append(f'  Output:     {", ".join(output_parts) or "stdout"}')
     lines.append(f'  Mixins:     {", ".join(mixin_names) if mixin_names else "none"}')
 
     # Mixin-specific settings that were explicitly supplied on the command line.
@@ -219,13 +226,15 @@ def _build_parser(mixin_map):
         action='version',
         version=f'microbench {__version__}',
     )
-    parser.add_argument(
+
+    output_group = parser.add_argument_group('output')
+    output_group.add_argument(
         '--outfile',
         '-o',
         metavar='FILE',
         help='Append results to FILE (JSONL format). Defaults to stdout.',
     )
-    parser.add_argument(
+    output_group.add_argument(
         '--http-output',
         metavar='URL',
         help=(
@@ -233,7 +242,7 @@ def _build_parser(mixin_map):
             'Can be combined with --outfile to write to both destinations.'
         ),
     )
-    parser.add_argument(
+    output_group.add_argument(
         '--http-output-header',
         metavar='KEY:VALUE',
         action='append',
@@ -245,13 +254,56 @@ def _build_parser(mixin_map):
             'Requires --http-output.'
         ),
     )
-    parser.add_argument(
+    output_group.add_argument(
         '--http-output-method',
         metavar='METHOD',
         default='POST',
         help='HTTP method for --http-output. Defaults to POST. Requires --http-output.',
     )
-    parser.add_argument(
+    output_group.add_argument(
+        '--redis-output',
+        metavar='KEY',
+        help=(
+            'RPUSH each record as JSON to a Redis list at KEY. '
+            'Can be combined with --outfile or --http-output. '
+            'Requires the "redis" package (pip install redis).'
+        ),
+    )
+    output_group.add_argument(
+        '--redis-host',
+        metavar='HOST',
+        default='localhost',
+        help='Redis server hostname for --redis-output (default: localhost).',
+    )
+    output_group.add_argument(
+        '--redis-port',
+        metavar='PORT',
+        type=int,
+        default=6379,
+        help=(
+            'Redis server port for --redis-output (default: 6379). '
+            'Requires --redis-output.'
+        ),
+    )
+    output_group.add_argument(
+        '--redis-db',
+        metavar='DB',
+        type=int,
+        default=0,
+        help=(
+            'Redis database index for --redis-output (default: 0). '
+            'Requires --redis-output.'
+        ),
+    )
+    output_group.add_argument(
+        '--redis-password',
+        metavar='PASSWORD',
+        default=None,
+        help='Redis AUTH password for --redis-output. Requires --redis-output.',
+    )
+
+    mixin_group = parser.add_argument_group('mixins')
+    mixin_group.add_argument(
         '--mixin',
         '-m',
         nargs='+',
@@ -264,20 +316,12 @@ def _build_parser(mixin_map):
             'MB-prefixed names (e.g. MBHostInfo) are also accepted.'
         ),
     )
-    parser.add_argument(
+    mixin_group.add_argument(
         '--show-mixins',
         action='store_true',
         help='List available mixins with descriptions and exit.',
     )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help=(
-            'Print the resolved configuration (command, mixins, settings) '
-            'and exit without running the command.'
-        ),
-    )
-    mixin_scope = parser.add_mutually_exclusive_group()
+    mixin_scope = mixin_group.add_mutually_exclusive_group()
     mixin_scope.add_argument(
         '--all',
         '-a',
@@ -291,7 +335,9 @@ def _build_parser(mixin_map):
         dest='no_mixins',
         help='Disable all mixins including defaults. Overrides --mixin.',
     )
-    parser.add_argument(
+
+    exec_group = parser.add_argument_group('execution')
+    exec_group.add_argument(
         '--iterations',
         '-n',
         type=_int_at_least(1),
@@ -299,7 +345,7 @@ def _build_parser(mixin_map):
         metavar='N',
         help='Run the command N times, recording each duration. Defaults to 1.',
     )
-    parser.add_argument(
+    exec_group.add_argument(
         '--warmup',
         '-w',
         type=_int_at_least(0),
@@ -307,7 +353,7 @@ def _build_parser(mixin_map):
         metavar='N',
         help='Run N unrecorded warm-up calls before timing begins. Defaults to 0.',
     )
-    parser.add_argument(
+    exec_group.add_argument(
         '--stdout',
         nargs='?',
         const='capture',
@@ -319,7 +365,7 @@ def _build_parser(mixin_map):
             'use --stdout=suppress to hide it.'
         ),
     )
-    parser.add_argument(
+    exec_group.add_argument(
         '--stderr',
         nargs='?',
         const='capture',
@@ -331,18 +377,7 @@ def _build_parser(mixin_map):
             'use --stderr=suppress to hide it.'
         ),
     )
-    parser.add_argument(
-        '--monitor-interval',
-        type=_int_at_least(1),
-        default=None,
-        metavar='SECONDS',
-        help=(
-            'Sample child process CPU usage and RSS every SECONDS seconds, '
-            'recording results in subprocess_monitor. Requires psutil. '
-            'Monitoring is disabled when this flag is omitted.'
-        ),
-    )
-    parser.add_argument(
+    exec_group.add_argument(
         '--timeout',
         type=_positive_float,
         default=None,
@@ -355,7 +390,7 @@ def _build_parser(mixin_map):
             'Timed-out iterations are recorded with call.timed_out = true.'
         ),
     )
-    parser.add_argument(
+    exec_group.add_argument(
         '--timeout-grace-period',
         type=_positive_float,
         default=None,
@@ -365,7 +400,26 @@ def _build_parser(mixin_map):
             f'Requires --timeout. Default: {_SIGTERM_GRACE_PERIOD}.'
         ),
     )
-    parser.add_argument(
+    exec_group.add_argument(
+        '--monitor-interval',
+        type=_int_at_least(1),
+        default=None,
+        metavar='SECONDS',
+        help=(
+            'Sample child process CPU usage and RSS every SECONDS seconds, '
+            'recording results in subprocess_monitor. Requires psutil. '
+            'Monitoring is disabled when this flag is omitted.'
+        ),
+    )
+    exec_group.add_argument(
+        '--dry-run',
+        action='store_true',
+        help=(
+            'Print the resolved configuration (command, mixins, settings) '
+            'and exit without running the command.'
+        ),
+    )
+    exec_group.add_argument(
         '--field',
         '-f',
         action='append',
@@ -373,12 +427,15 @@ def _build_parser(mixin_map):
         metavar='KEY=VALUE',
         help='Extra metadata field added to every record. Can be repeated.',
     )
+
     parser.add_argument(
         'command',
         nargs=argparse.REMAINDER,
         help='Command to benchmark (use -- to separate from microbench options).',
     )
+
     # Mixin-specific arguments, auto-discovered from cli_args on each mixin class.
+    mixin_opts_group = parser.add_argument_group('mixin options')
     for cli_name, cls in sorted(mixin_map.items()):
         for arg in getattr(cls, 'cli_args', []):
             kwargs = {
@@ -392,7 +449,7 @@ def _build_parser(mixin_map):
                 kwargs['nargs'] = arg.nargs
             if arg.type is not str:
                 kwargs['type'] = arg.type
-            parser.add_argument(*arg.flags, **kwargs)
+            mixin_opts_group.add_argument(*arg.flags, **kwargs)
     return parser
 
 
@@ -454,6 +511,21 @@ def main(argv=None):
         parser.error('--http-output-header requires --http-output.')
     if args.http_output_method != 'POST' and args.http_output is None:
         parser.error('--http-output-method requires --http-output.')
+
+    if args.redis_port != 6379 and args.redis_output is None:
+        parser.error('--redis-port requires --redis-output.')
+    if args.redis_db != 0 and args.redis_output is None:
+        parser.error('--redis-db requires --redis-output.')
+    if args.redis_password is not None and args.redis_output is None:
+        parser.error('--redis-password requires --redis-output.')
+    if args.redis_output:
+        try:
+            import redis  # noqa: F401
+        except ImportError:
+            parser.error(
+                '--redis-output requires the "redis" package. '
+                'Install it with: pip install redis'
+            )
 
     if args.monitor_interval is not None:
         try:
@@ -532,6 +604,15 @@ def main(argv=None):
                 method=args.http_output_method,
             )
         )
+    if args.redis_output:
+        from microbench import RedisOutput
+
+        redis_kwargs = dict(
+            host=args.redis_host, port=args.redis_port, db=args.redis_db
+        )
+        if args.redis_password is not None:
+            redis_kwargs['password'] = args.redis_password
+        outputs.append(RedisOutput(args.redis_output, **redis_kwargs))
     if not outputs:
         outputs.append(FileOutput(sys.stdout))
 

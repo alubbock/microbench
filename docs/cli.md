@@ -19,24 +19,41 @@ select a specific Python interpreter explicitly.
 microbench [options] -- COMMAND [ARGS...]
 ```
 
+**Output**
+
 | Option | Description |
 |---|---|
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
 | `--http-output URL` | POST each record as JSON to URL. Can be combined with `--outfile`. |
 | `--http-output-header KEY:VALUE` | Extra HTTP header for `--http-output` (repeatable). Use for authentication. Requires `--http-output`. |
 | `--http-output-method METHOD` | HTTP method for `--http-output`. Defaults to `POST`. Requires `--http-output`. |
+| `--redis-output KEY` | RPUSH each record as JSON to a Redis list at KEY. Can be combined with `--outfile` or `--http-output`. Requires the `redis` package. |
+| `--redis-host HOST` | Redis server hostname for `--redis-output` (default: `localhost`). |
+| `--redis-port PORT` | Redis server port for `--redis-output` (default: `6379`). Requires `--redis-output`. |
+| `--redis-db DB` | Redis database index for `--redis-output` (default: `0`). Requires `--redis-output`. |
+| `--redis-password PASSWORD` | Redis AUTH password for `--redis-output`. Requires `--redis-output`. |
+
+**Mixins**
+
+| Option | Description |
+|---|---|
 | `--mixin MIXIN [MIXIN ...]` / `-m MIXIN [MIXIN ...]` | One or more mixins to include. Replaces defaults when specified. |
 | `--show-mixins` | List all available mixins with descriptions and exit. |
 | `--all` / `-a` | Include all available mixins. |
 | `--no-mixin` | Disable all mixins including defaults. Records only timing and command fields. |
+
+**Execution**
+
+| Option | Description |
+|---|---|
 | `--iterations N` / `-n N` | Run the command N times, recording each duration. Defaults to 1. |
 | `--warmup N` / `-w N` | Run the command N times before timing begins (unrecorded). Defaults to 0. |
-| `--dry-run` | Print the resolved configuration and exit without running the command. |
 | `--stdout[=suppress]` | Capture stdout into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--stderr[=suppress]` | Capture stderr into the record and stream it to the terminal in real time. Use `=suppress` to capture without printing. |
 | `--timeout SECONDS` | Send SIGTERM to the command after SECONDS seconds per iteration. If the process has not exited after an additional grace period (default 5 s, see `--timeout-grace-period`), send SIGKILL. Timed-out iterations are recorded with `call.timed_out = true`. |
 | `--timeout-grace-period SECONDS` | Seconds to wait after SIGTERM before sending SIGKILL. Requires `--timeout`. Default: 5. |
 | `--monitor-interval SECONDS` | Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires `psutil`. See [Subprocess monitoring](#subprocess-monitoring) below. |
+| `--dry-run` | Print the resolved configuration and exit without running the command. |
 | `--field KEY=VALUE` / `-f KEY=VALUE` | Extra metadata field. Can be repeated. |
 
 Use `--` to separate microbench options from the command being benchmarked.
@@ -299,6 +316,67 @@ microbench \
 To send results to a service that requires a shaped payload (e.g. Slack's
 `{"text": "..."}` envelope), use the Python API with a `HttpOutput` subclass
 that overrides `format_payload`. The CLI always sends the raw record JSON.
+
+## Redis output
+
+Use `--redis-output KEY` to RPUSH each record as JSON to a Redis list. This is
+the natural output sink for SLURM array jobs where many nodes write concurrently
+and a shared filesystem is impractical. Requires the
+[redis-py](https://github.com/andymccurdy/redis-py) package (`pip install redis`).
+
+```bash
+microbench \
+    --redis-output bench:results \
+    --redis-host redis.example.com \
+    -- ./run_simulation.sh
+```
+
+Use `--redis-port` and `--redis-db` to connect to a non-default port or database:
+
+```bash
+microbench \
+    --redis-output bench:results \
+    --redis-host redis.example.com \
+    --redis-port 6380 \
+    --redis-db 1 \
+    -- ./run_simulation.sh
+```
+
+For password-protected Redis instances, pass `--redis-password`. Read it from an
+environment variable to avoid it appearing in shell history:
+
+```bash
+microbench \
+    --redis-output bench:results \
+    --redis-host redis.example.com \
+    --redis-password "$REDIS_PASSWORD" \
+    -- ./run_simulation.sh
+```
+
+`--redis-output` can be combined with `--outfile` or `--http-output` to write to
+multiple destinations simultaneously:
+
+```bash
+microbench \
+    --outfile /scratch/$USER/results.jsonl \
+    --redis-output bench:results \
+    -- ./run_simulation.sh
+```
+
+Read results back from Redis with Python:
+
+```python
+import redis, json
+client = redis.StrictRedis(host='redis.example.com')
+records = [json.loads(r) for r in client.lrange('bench:results', 0, -1)]
+```
+
+Or via microbench's `RedisOutput.get_results()`:
+
+```python
+from microbench import RedisOutput
+results = RedisOutput('bench:results', host='redis.example.com').get_results()
+```
 
 ## Dry run
 
