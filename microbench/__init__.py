@@ -51,7 +51,7 @@ from ._mixins import (
     MBWorkingDir,
     _MonitorThread,
 )
-from ._output import FileOutput, Output, RedisOutput
+from ._output import FileOutput, HttpOutput, Output, RedisOutput
 
 # Generated once at import time; shared by all MicroBench instances in this
 # process, allowing records from independent bench suites to be correlated.
@@ -73,6 +73,7 @@ __all__ = [
     # Output sinks
     'Output',
     'FileOutput',
+    'HttpOutput',
     'RedisOutput',
     # Mixin authoring
     'CLIArg',

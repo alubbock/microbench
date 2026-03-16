@@ -22,6 +22,9 @@ microbench [options] -- COMMAND [ARGS...]
 | Option | Description |
 |---|---|
 | `--outfile FILE` / `-o FILE` | Append results to FILE in JSONL format. Defaults to stdout. |
+| `--http-output URL` | POST each record as JSON to URL. Can be combined with `--outfile`. |
+| `--http-output-header KEY:VALUE` | Extra HTTP header for `--http-output` (repeatable). Use for authentication. Requires `--http-output`. |
+| `--http-output-method METHOD` | HTTP method for `--http-output`. Defaults to `POST`. Requires `--http-output`. |
 | `--mixin MIXIN [MIXIN ...]` / `-m MIXIN [MIXIN ...]` | One or more mixins to include. Replaces defaults when specified. |
 | `--show-mixins` | List all available mixins with descriptions and exit. |
 | `--all` / `-a` | Include all available mixins. |
@@ -253,6 +256,49 @@ df['any_timed_out'] = df['call.timed_out'].notna()
 ```
 
 The `call.returncode` for a SIGTERM-killed process will be `-15`; for SIGKILL, `-9`.
+
+## HTTP output
+
+Use `--http-output` to POST each record as JSON to an HTTP endpoint. The record
+body is identical to what `--outfile` would write. This is useful for real-time
+notifications and custom REST endpoints.
+
+```bash
+microbench --http-output https://api.example.com/benchmarks -- ./run.sh
+```
+
+For authenticated endpoints, pass headers with `--http-output-header`. The value
+is split on the first `:`, so bearer tokens and other header values work naturally:
+
+```bash
+microbench \
+    --http-output https://api.example.com/benchmarks \
+    --http-output-header "Authorization:Bearer $MY_TOKEN" \
+    -- ./run.sh
+```
+
+Multiple headers can be supplied by repeating the flag:
+
+```bash
+microbench \
+    --http-output https://api.example.com/benchmarks \
+    --http-output-header "Authorization:Bearer $TOKEN" \
+    --http-output-header "X-Tenant:my-org" \
+    -- ./run.sh
+```
+
+`--outfile` and `--http-output` can be combined to write to both destinations simultaneously:
+
+```bash
+microbench \
+    --outfile /scratch/$USER/results.jsonl \
+    --http-output https://hooks.example.com/events \
+    -- ./run.sh
+```
+
+To send results to a service that requires a shaped payload (e.g. Slack's
+`{"text": "..."}` envelope), use the Python API with a `HttpOutput` subclass
+that overrides `format_payload`. The CLI always sends the raw record JSON.
 
 ## Dry run
 
