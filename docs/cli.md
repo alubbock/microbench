@@ -143,14 +143,16 @@ A typical SLURM job script:
 
 microbench \
     --outfile /scratch/$USER/results.jsonl \
-    --mixin host-info slurm-info host-cpu-cores \
+    --mixin host-info slurm-info \
     --field experiment=baseline \
     -- ./run_simulation.sh --steps 10000
 ```
 
 Each node that runs this job appends one JSONL record to `results.jsonl`,
-capturing hostname, CPU count, and all SLURM variables (job ID, array task
-ID, node list, etc.) alongside the wall-clock time of the simulation.
+capturing hostname, OS, CPU count, RAM, and all SLURM variables (job ID, array
+task ID, node list, etc.) alongside the wall-clock time of the simulation.
+CPU and RAM fields are included automatically by `host-info` when psutil is
+installed.
 
 Read the results with pandas:
 
