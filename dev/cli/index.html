@@ -1120,11 +1120,12 @@ executables where adding a Python decorator is not practical.</p>
 </tbody>
 </table>
 <h2 id="default-mixins">Default mixins</h2>
-<p>When no <code>--mixin</code> is specified, <code>host-info</code>, <code>slurm-info</code>, and
-<code>loaded-modules</code> are included automatically, capturing hostname,
-operating system, all <code>SLURM_*</code> environment variables, and the loaded
-Lmod/Environment Modules software stack. All three degrade gracefully
-to empty dicts outside of their respective environments.</p>
+<p>When no <code>--mixin</code> is specified, <code>host-info</code>, <code>slurm-info</code>,
+<code>loaded-modules</code>, and <code>working-dir</code> are included automatically, capturing
+hostname, operating system, all <code>SLURM_*</code> environment variables, the loaded
+Lmod/Environment Modules software stack, and the current working directory.
+All four degrade gracefully or produce stable values outside their respective
+environments.</p>
 <p>Mixin names use a short kebab-case form without the <code>MB</code> prefix
 (e.g. <code>host-info</code> instead of <code>MBHostInfo</code>). MB-prefixed names are also
 accepted for convenience. Run <code>--show-mixins</code> to list all available

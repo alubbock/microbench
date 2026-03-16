@@ -1077,7 +1077,7 @@
   kebab-case names without the <code>MB</code> prefix (e.g. <code>host-info</code>,
   <code>python-version</code>); original MB-prefixed names are also accepted. Use
   <code>--mixin MIXIN [MIXIN ...]</code> to select metadata to capture (defaults to
-  <code>host-info</code>, <code>slurm-info</code>, and <code>loaded-modules</code>); use <code>--show-mixins</code> to
+  <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, and <code>working-dir</code>); use <code>--show-mixins</code> to
   list all available mixins with descriptions; use <code>--field KEY=VALUE</code> to
   attach extra labels; use <code>--iterations N</code> and <code>--warmup N</code> for repeat
   timing; use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture
@@ -1121,7 +1121,13 @@
   to version string (e.g. <code>{"gcc": "12.2.0", "openmpi": "4.1.5"}</code>). Reads
   the standard <code>LOADEDMODULES</code> environment variable — no subprocess, no
   extra dependencies. Empty dict when no modules are loaded. Included in
-  the CLI defaults alongside <code>MBHostInfo</code> and <code>MBSlurmInfo</code>.</p>
+  the CLI defaults alongside <code>MBHostInfo</code>, <code>MBSlurmInfo</code>, and <code>MBWorkingDir</code>.</p>
+</li>
+<li>
+<p><strong><code>MBWorkingDir</code> mixin</strong>: captures the absolute path of the working
+  directory at benchmark time into <code>working_dir</code>. No dependencies. Included
+  in the CLI defaults — useful for reproducibility when comparing results
+  across nodes or directories.</p>
 </li>
 <li>
 <p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
