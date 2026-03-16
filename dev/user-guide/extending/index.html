@@ -890,7 +890,7 @@ no configuration:</p>
 <p>To expose configurable attributes as CLI flags, add a <code>cli_args</code> list of
 <code>CLIArg</code> instances. The CLI picks them up automatically — no changes to
 <code>__main__.py</code> are needed:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench.mixins</span><span class="w"> </span><span class="kn">import</span> <span class="n">CLIArg</span><span class="p">,</span> <span class="n">_UNSET</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">CLIArg</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBOutputDir</span><span class="p">:</span>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Record the output directory for this run.&quot;&quot;&quot;</span>

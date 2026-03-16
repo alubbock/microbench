@@ -1318,7 +1318,7 @@
 
     <div class="doc doc-contents first">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="microbench.mixins.MBPythonInfo">MBPythonInfo</span></code>, <code><span title="microbench.MicroBenchBase">MicroBenchBase</span></code></p>
+              Bases: <code><span title="microbench._mixins.MBPythonInfo">MBPythonInfo</span></code>, <code><span title="microbench.MicroBenchBase">MicroBenchBase</span></code></p>
 
 
 
@@ -1335,17 +1335,17 @@ class with no default mixins, subclass :class:<code>MicroBenchBase</code> instea
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/__init__.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-854">854</a></span>
-<span class="normal"><a href="#__codelineno-0-855">855</a></span>
-<span class="normal"><a href="#__codelineno-0-856">856</a></span>
-<span class="normal"><a href="#__codelineno-0-857">857</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-857">857</a></span>
 <span class="normal"><a href="#__codelineno-0-858">858</a></span>
-<span class="normal"><a href="#__codelineno-0-859">859</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-854" name="__codelineno-0-854"></a><span class="k">class</span><span class="w"> </span><span class="nc">MicroBench</span><span class="p">(</span><span class="n">MBPythonInfo</span><span class="p">,</span> <span class="n">MicroBenchBase</span><span class="p">):</span>
-<a id="__codelineno-0-855" name="__codelineno-0-855"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark suite with :class:`MBPythonInfo` included by default.</span>
-<a id="__codelineno-0-856" name="__codelineno-0-856"></a>
-<a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="sd">    Subclass this for typical usage. If you need a completely bare benchmark</span>
-<a id="__codelineno-0-858" name="__codelineno-0-858"></a><span class="sd">    class with no default mixins, subclass :class:`MicroBenchBase` instead.</span>
-<a id="__codelineno-0-859" name="__codelineno-0-859"></a><span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal"><a href="#__codelineno-0-859">859</a></span>
+<span class="normal"><a href="#__codelineno-0-860">860</a></span>
+<span class="normal"><a href="#__codelineno-0-861">861</a></span>
+<span class="normal"><a href="#__codelineno-0-862">862</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-857" name="__codelineno-0-857"></a><span class="k">class</span><span class="w"> </span><span class="nc">MicroBench</span><span class="p">(</span><span class="n">MBPythonInfo</span><span class="p">,</span> <span class="n">MicroBenchBase</span><span class="p">):</span>
+<a id="__codelineno-0-858" name="__codelineno-0-858"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark suite with :class:`MBPythonInfo` included by default.</span>
+<a id="__codelineno-0-859" name="__codelineno-0-859"></a>
+<a id="__codelineno-0-860" name="__codelineno-0-860"></a><span class="sd">    Subclass this for typical usage. If you need a completely bare benchmark</span>
+<a id="__codelineno-0-861" name="__codelineno-0-861"></a><span class="sd">    class with no default mixins, subclass :class:`MicroBenchBase` instead.</span>
+<a id="__codelineno-0-862" name="__codelineno-0-862"></a><span class="sd">    &quot;&quot;&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1430,10 +1430,7 @@ summary(bench.get_results())
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>microbench/__init__.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-99"> 99</a></span>
-<span class="normal"><a href="#__codelineno-0-100">100</a></span>
-<span class="normal"><a href="#__codelineno-0-101">101</a></span>
-<span class="normal"><a href="#__codelineno-0-102">102</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-102">102</a></span>
 <span class="normal"><a href="#__codelineno-0-103">103</a></span>
 <span class="normal"><a href="#__codelineno-0-104">104</a></span>
 <span class="normal"><a href="#__codelineno-0-105">105</a></span>
@@ -1468,45 +1465,48 @@ summary(bench.get_results())
 <span class="normal"><a href="#__codelineno-0-134">134</a></span>
 <span class="normal"><a href="#__codelineno-0-135">135</a></span>
 <span class="normal"><a href="#__codelineno-0-136">136</a></span>
-<span class="normal"><a href="#__codelineno-0-137">137</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Print summary statistics for ``call.durations`` across a list of results.</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    Requires no dependencies beyond the Python standard library.</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    Args:</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        results (list[dict]): Result dicts as returned by</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">            :meth:`MicroBench.get_results` (default ``format=&#39;dict&#39;``).</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">    Example::</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        bench = MicroBench()</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">        @bench</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        def my_function():</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">            ...</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        my_function()</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">        summary(bench.get_results())</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        # n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a>    <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="n">durations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;durations&#39;</span><span class="p">,</span> <span class="p">[]))</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a>    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a>    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a>        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No run_durations found in results.&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="k">return</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a>    <span class="n">stdev</span> <span class="o">=</span> <span class="n">_statistics</span><span class="o">.</span><span class="n">stdev</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a>    <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a>        <span class="sa">f</span><span class="s1">&#39;n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">  &#39;</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a>        <span class="sa">f</span><span class="s1">&#39;min=</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a>        <span class="sa">f</span><span class="s1">&#39;mean=</span><span class="si">{</span><span class="n">_statistics</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="sa">f</span><span class="s1">&#39;median=</span><span class="si">{</span><span class="n">_statistics</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="sa">f</span><span class="s1">&#39;max=</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="sa">f</span><span class="s1">&#39;stdev=</span><span class="si">{</span><span class="n">stdev</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">&#39;</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span>
+<span class="normal"><a href="#__codelineno-0-138">138</a></span>
+<span class="normal"><a href="#__codelineno-0-139">139</a></span>
+<span class="normal"><a href="#__codelineno-0-140">140</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Print summary statistics for ``call.durations`` across a list of results.</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">    Requires no dependencies beyond the Python standard library.</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    Args:</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        results (list[dict]): Result dicts as returned by</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">            :meth:`MicroBench.get_results` (default ``format=&#39;dict&#39;``).</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    Example::</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        bench = MicroBench()</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        @bench</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        def my_function():</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">            ...</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a><span class="sd">        my_function()</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a><span class="sd">        summary(bench.get_results())</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">        # n=1  min=0.000042  mean=0.000042  median=0.000042  max=0.000042  stdev=nan</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>    <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="n">durations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;durations&#39;</span><span class="p">,</span> <span class="p">[]))</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No run_durations found in results.&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>        <span class="k">return</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>    <span class="n">stdev</span> <span class="o">=</span> <span class="n">_statistics</span><span class="o">.</span><span class="n">stdev</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>    <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>        <span class="sa">f</span><span class="s1">&#39;n=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">  &#39;</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="sa">f</span><span class="s1">&#39;min=</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>        <span class="sa">f</span><span class="s1">&#39;mean=</span><span class="si">{</span><span class="n">_statistics</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="sa">f</span><span class="s1">&#39;median=</span><span class="si">{</span><span class="n">_statistics</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a>        <span class="sa">f</span><span class="s1">&#39;max=</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">  &#39;</span>
+<a id="__codelineno-0-139" name="__codelineno-0-139"></a>        <span class="sa">f</span><span class="s1">&#39;stdev=</span><span class="si">{</span><span class="n">stdev</span><span class="si">:</span><span class="s1">.6f</span><span class="si">}</span><span class="s1">&#39;</span>
+<a id="__codelineno-0-140" name="__codelineno-0-140"></a>    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2298,7 +2298,7 @@ bench = MicroBench(outputs=[RedisOutput(&#39;microbench:mykey&#39;,
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-127">127</a></span>
 <span class="normal"><a href="#__codelineno-0-128">128</a></span>
 <span class="normal"><a href="#__codelineno-0-129">129</a></span>
@@ -2413,7 +2413,7 @@ bench = MicroBench(outputs=[RedisOutput(&#39;microbench:mykey&#39;,
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-162">162</a></span>
 <span class="normal"><a href="#__codelineno-0-163">163</a></span>
 <span class="normal"><a href="#__codelineno-0-164">164</a></span>
@@ -2460,7 +2460,7 @@ mixins, which have been removed.</p>
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-190">190</a></span>
 <span class="normal"><a href="#__codelineno-0-191">191</a></span>
 <span class="normal"><a href="#__codelineno-0-192">192</a></span>
@@ -2586,7 +2586,7 @@ variables are set (e.g. running locally), <code>slurm</code> is an empty dict.</
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-236">236</a></span>
 <span class="normal"><a href="#__codelineno-0-237">237</a></span>
 <span class="normal"><a href="#__codelineno-0-238">238</a></span>
@@ -2687,7 +2687,7 @@ package name to version string.</p>
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-619">619</a></span>
 <span class="normal"><a href="#__codelineno-0-620">620</a></span>
 <span class="normal"><a href="#__codelineno-0-621">621</a></span>
@@ -2830,7 +2830,7 @@ package under <code>python.installed_package_paths</code>. Defaults to
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-707">707</a></span>
 <span class="normal"><a href="#__codelineno-0-708">708</a></span>
 <span class="normal"><a href="#__codelineno-0-709">709</a></span>
@@ -2995,7 +2995,7 @@ Defaults to <code>False</code>.</p>
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-652">652</a></span>
 <span class="normal"><a href="#__codelineno-0-653">653</a></span>
 <span class="normal"><a href="#__codelineno-0-654">654</a></span>
@@ -3206,7 +3206,7 @@ after a reboot). Omit to poll all installed GPUs.</p>
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-809">809</a></span>
 <span class="normal"><a href="#__codelineno-0-810">810</a></span>
 <span class="normal"><a href="#__codelineno-0-811">811</a></span>
@@ -3471,7 +3471,7 @@ in production.</p>
 
 
               <details class="mkdocstrings-source">
-                <summary>Source code in <code>microbench/mixins.py</code></summary>
+                <summary>Source code in <code>microbench/_mixins.py</code></summary>
                 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-742">742</a></span>
 <span class="normal"><a href="#__codelineno-0-743">743</a></span>
 <span class="normal"><a href="#__codelineno-0-744">744</a></span>
@@ -3576,7 +3576,7 @@ over a network or from an untrusted file.</p>
 
 
             <details class="mkdocstrings-source">
-              <summary>Source code in <code>microbench/mixins.py</code></summary>
+              <summary>Source code in <code>microbench/_mixins.py</code></summary>
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-760">760</a></span>
 <span class="normal"><a href="#__codelineno-0-761">761</a></span>
 <span class="normal"><a href="#__codelineno-0-762">762</a></span>
