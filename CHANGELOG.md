@@ -4,7 +4,7 @@ All notable changes to microbench are documented here.
 
 ## [2.0.0] - unreleased
 
-### Breaking changes
+### Breaking changes (vs v1.1.0)
 
 - **`get_results()` now returns a list of dicts by default**: The default
   `format='dict'` returns a list of plain Python dicts and requires no
@@ -164,6 +164,35 @@ All notable changes to microbench are documented here.
   written before the exception propagates. An `exception` field is added
   containing `{"type": ..., "message": ...}`. The exception is always
   re-raised. With `--iterations N`, timing stops at the first exception.
+
+- **`microbench` console entry point**: `microbench` is now available as a
+  shell command after installation — no need to spell out `python -m microbench`.
+  `python -m microbench` remains fully equivalent and is still the recommended
+  form when you need to select a specific Python interpreter explicitly.
+
+- **`MBPythonInfo` mixin** replaces `MBPythonVersion`: records a `python` dict
+  with `version`, `prefix` (`sys.prefix`), and `executable` (`sys.executable`),
+  giving a complete picture of the running interpreter in one field. `MBPythonVersion`
+  is deprecated and will be removed in a future release. `MBPythonInfo` is included
+  in :class:`MicroBench` by default (Python API) and in the CLI default mixin set;
+  `--no-mixin` suppresses it on the CLI as usual.
+
+- **`MicroBenchBase`**: the core benchmarking machinery is now exposed as
+  `MicroBenchBase` (no default mixins). `MicroBench` inherits from both
+  `MicroBenchBase` and `MBPythonInfo`. Subclass `MicroBenchBase` directly when
+  you need a completely bare benchmark class with no automatic captures.
+
+- **`MBCondaPackages` improvements**:
+  - Queries the environment identified by `CONDA_PREFIX` (the shell's active conda
+    environment) rather than `sys.prefix`. Falls back to `sys.prefix` when
+    `CONDA_PREFIX` is not set.
+  - Falls back to `CONDA_EXE` if `conda` is not on `PATH` (common in non-interactive
+    SLURM batch scripts where conda is activated but its `bin/` is not on `PATH`).
+  - Replaces the separate `conda_versions` field with a unified `conda` dict
+    containing `name` (`CONDA_DEFAULT_ENV`), `path` (`CONDA_PREFIX`), and
+    `packages` (the version dict). Either of `name`/`path` may be `None` if
+    the corresponding variable is unset. With `get_results(flat=True)` these
+    expand to `conda.name`, `conda.path`, `conda.packages.<pkg>` etc.
 
 - **Command-line interface** (`python -m microbench`): wrap any external
   command and record host metadata alongside timing without writing Python

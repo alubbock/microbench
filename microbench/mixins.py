@@ -5,6 +5,7 @@ import os
 import pickle
 import platform
 import re
+import shutil
 import signal
 import socket
 import subprocess
@@ -151,7 +152,12 @@ class MBReturnValue:
 
 
 class MBPythonVersion:
-    """Capture the Python version and location of the Python executable."""
+    """Capture the Python version and location of the Python executable.
+
+    .. deprecated::
+        Use :class:`MBPythonInfo` instead. ``MBPythonVersion`` will be
+        removed in a future release.
+    """
 
     cli_compatible = True
 
@@ -160,6 +166,29 @@ class MBPythonVersion:
 
     def capture_python_executable(self, bm_data):
         bm_data['python_executable'] = sys.executable
+
+
+class MBPythonInfo:
+    """Capture the Python interpreter version, prefix, and executable path.
+
+    Records a ``python`` dict with three keys:
+
+    - ``version``: the Python version string (e.g. ``"3.12.4"``)
+    - ``prefix``: ``sys.prefix`` — the environment root
+    - ``executable``: ``sys.executable`` — the absolute interpreter path
+
+    This mixin is included in :class:`MicroBench` by default (Python API)
+    and in the CLI default mixin set. It supersedes :class:`MBPythonVersion`.
+    """
+
+    cli_compatible = True
+
+    def capture_python_info(self, bm_data):
+        bm_data['python'] = {
+            'version': platform.python_version(),
+            'prefix': sys.prefix,
+            'executable': sys.executable,
+        }
 
 
 class MBHostInfo:
@@ -334,7 +363,7 @@ def _read_cgroup_v1():
 
 
 class MBCgroupLimits:
-    """Capture CPU quota and memory limit from the Linux cgroup filesystem.
+    """Capture CPU quota and memory limit from Linux cgroups.
 
     Works for SLURM jobs and Kubernetes pods (cgroup v1 and v2). Results
     are stored in the ``cgroup_limits`` field as a dict containing:
@@ -587,10 +616,21 @@ class MBGlobalPackages:
 
 
 class MBCondaPackages:
-    """Capture conda packages using the conda CLI.
+    """Capture conda packages and active environment metadata.
 
-    Requires ``conda`` to be available on ``PATH``. Captures all packages
-    in the active conda environment (determined by ``sys.prefix``).
+    Runs ``conda list --prefix PREFIX`` where PREFIX is taken from the
+    ``CONDA_PREFIX`` environment variable (the active conda environment).
+    Falls back to ``sys.prefix`` when ``CONDA_PREFIX`` is not set (e.g.
+    when running inside the base environment without explicit activation).
+
+    If ``conda`` is not on ``PATH``, the ``CONDA_EXE`` environment variable
+    is tried as a fallback before raising an error.
+
+    Records a single ``conda`` dict with three keys:
+
+    - ``name`` (from ``CONDA_DEFAULT_ENV``) — may be ``None`` if unset.
+    - ``path`` (from ``CONDA_PREFIX``) — may be ``None`` if unset.
+    - ``packages`` — dict mapping package name to version string.
 
     Attributes:
         include_builds (bool): Include the build string in the version.
@@ -604,11 +644,18 @@ class MBCondaPackages:
     include_channels = False
 
     def capture_conda_packages(self, bm_data):
-        pkg_list = subprocess.check_output(
-            ['conda', 'list', '--prefix', sys.prefix]
-        ).decode('utf8')
+        conda_prefix = os.environ.get('CONDA_PREFIX', sys.prefix)
+        bm_data['conda'] = {
+            'name': os.environ.get('CONDA_DEFAULT_ENV'),
+            'path': os.environ.get('CONDA_PREFIX'),
+            'packages': {},
+        }
 
-        bm_data['conda_versions'] = {}
+        conda_prefix = os.environ.get('CONDA_PREFIX', sys.prefix)
+        conda_exe = shutil.which('conda') or os.environ.get('CONDA_EXE', 'conda')
+        pkg_list = subprocess.check_output(
+            [conda_exe, 'list', '--prefix', conda_prefix]
+        ).decode('utf8')
 
         for pkg in pkg_list.splitlines():
             if pkg.startswith('#') or not pkg.strip():
@@ -620,7 +667,7 @@ class MBCondaPackages:
                 pkg_version += pkg_data[2]
             if self.include_channels and len(pkg_data) == 4:
                 pkg_version += '(' + pkg_data[3] + ')'
-            bm_data['conda_versions'][pkg_name] = pkg_version
+            bm_data['conda']['packages'][pkg_name] = pkg_version
 
 
 class MBInstalledPackages:

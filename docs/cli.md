@@ -4,16 +4,19 @@ Microbench can wrap any external command and record host metadata
 alongside timing, without writing any Python code:
 
 ```bash
-python -m microbench --outfile results.jsonl -- ./run_simulation.sh
+microbench --outfile results.jsonl -- ./run_simulation.sh
 ```
 
 This is particularly useful for SLURM jobs, shell scripts, or compiled
 executables where adding a Python decorator is not practical.
 
+`python -m microbench` is equivalent and can be used when you need to
+select a specific Python interpreter explicitly.
+
 ## Usage
 
 ```
-python -m microbench [options] -- COMMAND [ARGS...]
+microbench [options] -- COMMAND [ARGS...]
 ```
 
 | Option | Description |
@@ -46,11 +49,12 @@ Every record contains the standard fields (`start_time`, `finish_time`,
 
 ## Default mixins
 
-When no `--mixin` is specified, `host-info`, `slurm-info`,
+When no `--mixin` is specified, `python-info`, `host-info`, `slurm-info`,
 `loaded-modules`, and `working-dir` are included automatically, capturing
-hostname, operating system, all `SLURM_*` environment variables, the loaded
-Lmod/Environment Modules software stack, and the current working directory.
-All four degrade gracefully or produce stable values outside their respective
+the Python interpreter version, prefix, and executable path; hostname and
+operating system; all `SLURM_*` environment variables; the loaded
+Lmod/Environment Modules software stack; and the current working directory.
+All five degrade gracefully or produce stable values outside their respective
 environments.
 
 Mixin names use a short kebab-case form without the `MB` prefix
@@ -59,19 +63,32 @@ accepted for convenience. Run `--show-mixins` to list all available
 mixins with descriptions:
 
 ```bash
-python -m microbench --show-mixins
+microbench --show-mixins
 ```
 
 Specifying `--mixin` replaces the defaults entirely. Use `--no-mixin` to
 disable all mixins and record only timing and command fields:
 
 ```bash
-# Only Python version — no host info or SLURM
-python -m microbench --mixin python-version -- ./job.sh
+# Only Python info — no host info or SLURM
+microbench --mixin python-info -- ./job.sh
 
 # No mixins at all — timing and command only
-python -m microbench --no-mixin -- ./job.sh
+microbench --no-mixin -- ./job.sh
 ```
+
+!!! note "Python-environment mixins"
+    `python-info` and `installed-packages` capture the **microbench
+    process's** Python interpreter. In typical usage (microbench installed
+    in the same environment as the benchmarked code) this is exactly what
+    you want. If you need to target a different interpreter, invoke
+    microbench via it: `python -m microbench --mixin python-info -- ./job.sh`.
+
+    `conda-packages` queries the environment identified by `CONDA_PREFIX`
+    (the shell's active conda environment), not `sys.prefix`, so it
+    captures the correct environment even when microbench's Python lives
+    elsewhere (e.g. in base). Package versions are stored under
+    `conda.packages` alongside `conda.name` and `conda.path`.
 
 See [Mixins](user-guide/mixins.md) for details on each.
 
@@ -124,7 +141,7 @@ A typical SLURM job script:
 #SBATCH --job-name=my-sim
 #SBATCH --output=slurm-%j.out
 
-python -m microbench \
+microbench \
     --outfile /scratch/$USER/results.jsonl \
     --mixin host-info slurm-info host-cpu-cores \
     --field experiment=baseline \
@@ -151,7 +168,7 @@ This is useful when the command is short-lived and you want to amortise
 per-record overhead or reduce timing noise:
 
 ```bash
-python -m microbench --iterations 10 --warmup 2 -- ./run_simulation.sh
+microbench --iterations 10 --warmup 2 -- ./run_simulation.sh
 ```
 
 With 10 iterations and 2 warmup runs, the record contains:
@@ -172,7 +189,7 @@ Warmup runs are excluded from all three lists. The process exits with
     unbuffering flag (e.g. `python -u`) if you need per-line flushing:
 
     ```bash
-    python -m microbench --stdout -- stdbuf -oL ./run_simulation.sh
+    microbench --stdout -- stdbuf -oL ./run_simulation.sh
     ```
 
 To detect failed iterations when analysing results with pandas:
@@ -186,7 +203,7 @@ results['any_failed'] = results['returncode'].apply(lambda rc: max(rc) != 0)
 Use `--field` to attach experiment labels or other fixed values:
 
 ```bash
-python -m microbench \
+microbench \
     --outfile results.jsonl \
     --field experiment=ablation-1 \
     --field dataset=large \
@@ -202,7 +219,7 @@ while it runs. This requires the [`psutil`](https://psutil.readthedocs.io/)
 package (`pip install psutil`).
 
 ```bash
-python -m microbench \
+microbench \
     --outfile results.jsonl \
     --monitor-interval 5 \
     -- ./run_simulation.sh --steps 10000

@@ -18,6 +18,9 @@ classifiers = [
     "Programming Language :: Python",
 ]
 
+[project.scripts]
+microbench = "microbench.__main__:main"
+
 [project.urls]
 Homepage = "https://github.com/alubbock/microbench"
 

@@ -16,9 +16,9 @@ from microbench import (
     MBFunctionCall,
     MBHostInfo,
     MBLineProfiler,
-    MBPythonVersion,
     MBReturnValue,
     MicroBench,
+    MicroBenchBase,
     Output,
 )
 
@@ -51,6 +51,31 @@ def test_mb_run_id_and_version():
     assert (results['mb_version'] == microbench.__version__).all()
 
 
+def test_microbench_includes_python_info_by_default():
+    """MicroBench records a python dict; MicroBenchBase does not."""
+    import sys
+
+    bench = MicroBench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    result = bench.get_results()[0]
+    assert 'python' in result
+    assert result['python']['executable'] == sys.executable
+
+    base_bench = MicroBenchBase()
+
+    @base_bench
+    def noop_base():
+        pass
+
+    noop_base()
+    assert 'python' not in base_bench.get_results()[0]
+
+
 def test_mb_run_id_shared_across_instances():
     """All MicroBench instances in the same process share the same mb_run_id."""
     bench_a = MicroBench()
@@ -73,7 +98,7 @@ def test_mb_run_id_shared_across_instances():
 
 
 def test_function():
-    class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo):
+    class MyBench(MicroBench, MBFunctionCall, MBHostInfo):
         capture_versions = (pandas, io)
         env_vars = ('TEST_NON_EXISTENT', 'HOME')
 

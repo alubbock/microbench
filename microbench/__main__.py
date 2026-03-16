@@ -33,11 +33,17 @@ def _get_mixin_map():
         _mb_name_to_cli(name): getattr(_mb, name)
         for name in _mb.__all__
         if isinstance(getattr(_mb, name, None), type)
-        and getattr(getattr(_mb, name), 'cli_compatible', False)
+        and getattr(_mb, name).__dict__.get('cli_compatible', False)
     }
 
 
-_DEFAULT_MIXINS = ('host-info', 'slurm-info', 'loaded-modules', 'working-dir')
+_DEFAULT_MIXINS = (
+    'python-info',
+    'host-info',
+    'slurm-info',
+    'loaded-modules',
+    'working-dir',
+)
 
 _CAPTURE_CHOICES = ('capture', 'suppress')
 
