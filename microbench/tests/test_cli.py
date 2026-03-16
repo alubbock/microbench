@@ -40,12 +40,12 @@ def test_cli_records_command_and_timing():
     code, record, _ = _run_main(['--', 'sleep', '1'])
 
     assert code == 0
-    assert record['command'] == ['sleep', '1']
-    assert record['returncode'] == [0]
-    assert 'start_time' in record
-    assert 'finish_time' in record
-    assert 'run_durations' in record
-    assert record['function_name'] == 'sleep'
+    assert record['call']['command'] == ['sleep', '1']
+    assert record['call']['returncode'] == [0]
+    assert 'start_time' in record['call']
+    assert 'finish_time' in record['call']
+    assert 'durations' in record['call']
+    assert record['call']['name'] == 'sleep'
 
 
 def test_cli_nonzero_returncode():
@@ -53,7 +53,7 @@ def test_cli_nonzero_returncode():
     code, record, _ = _run_main(['--', 'false'], mock_returncode=1)
 
     assert code == 1
-    assert record['returncode'] == [1]
+    assert record['call']['returncode'] == [1]
 
 
 def test_cli_custom_field():
@@ -77,8 +77,8 @@ def test_cli_default_mixins_include_host_info():
     """Default configuration includes MBHostInfo fields."""
     _, record, _ = _run_main(['--', 'true'])
 
-    assert 'hostname' in record
-    assert 'operating_system' in record
+    assert 'hostname' in record['host']
+    assert 'os' in record['host']
 
 
 def test_cli_default_mixins_include_slurm():
@@ -99,8 +99,8 @@ def test_cli_default_mixins_include_working_dir():
     """Default configuration includes MBWorkingDir (working_dir field)."""
     _, record, _ = _run_main(['--', 'true'])
 
-    assert 'working_dir' in record
-    assert record['working_dir'] == os.getcwd()
+    assert 'working_dir' in record['call']
+    assert record['call']['working_dir'] == os.getcwd()
 
 
 def test_cli_default_mixins_include_python_info():
@@ -119,7 +119,7 @@ def test_cli_explicit_mixin_replaces_defaults():
 
     assert 'python' in record
     # Default mixins should not be present
-    assert 'hostname' not in record
+    assert 'host' not in record
     assert 'slurm' not in record
 
 
@@ -136,8 +136,8 @@ def test_cli_outfile(tmp_path):
             main(['--outfile', str(outfile), '--', 'true'])
 
     record = json.loads(outfile.read_text())
-    assert record['command'] == ['true']
-    assert record['returncode'] == [0]
+    assert record['call']['command'] == ['true']
+    assert record['call']['returncode'] == [0]
 
 
 def test_cli_no_command_exits_with_error():
@@ -162,7 +162,7 @@ def test_cli_show_mixins():
 
 
 def test_cli_capture_optional_on_by_default():
-    """Capture failures are recorded in mb_capture_errors, not raised."""
+    """Capture failures are recorded in call.capture_errors, not raised."""
 
     def bad_capture(self, bm_data):
         raise RuntimeError('simulated capture failure')
@@ -172,8 +172,10 @@ def test_cli_capture_optional_on_by_default():
     with patch.object(MBHostInfo, 'capture_hostname', bad_capture):
         _, record, _ = _run_main(['--mixin', 'MBHostInfo', '--', 'true'])
 
-    assert 'mb_capture_errors' in record
-    assert any('capture_hostname' in e['method'] for e in record['mb_capture_errors'])
+    assert 'capture_errors' in record['call']
+    assert any(
+        'capture_hostname' in e['method'] for e in record['call']['capture_errors']
+    )
 
 
 def test_cli_all_flag_includes_all_mixins():
@@ -192,12 +194,12 @@ def test_cli_all_flag_includes_all_mixins():
 
     # At minimum the record should be written (even with capture_optional errors)
     record = json.loads(buf.getvalue())
-    assert 'command' in record
+    assert 'command' in record['call']
     assert len(all_names) > 2  # sanity: more than just defaults
 
 
 def test_cli_includes_mb_run_id_and_version():
-    """CLI records mb_run_id and mb_version in every record."""
+    """CLI records mb.run_id and mb.version in every record."""
     import re
 
     import microbench
@@ -207,8 +209,8 @@ def test_cli_includes_mb_run_id_and_version():
     uuid_re = re.compile(
         r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     )
-    assert uuid_re.match(record['mb_run_id'])
-    assert record['mb_version'] == microbench.__version__
+    assert uuid_re.match(record['mb']['run_id'])
+    assert record['mb']['version'] == microbench.__version__
 
 
 def test_cli_double_dash_separator():
@@ -221,12 +223,12 @@ def test_cli_double_dash_separator():
 
 
 def test_cli_iterations():
-    """--iterations N runs the command N times and produces N run_durations entries."""
+    """--iterations N runs the command N times and produces N durations entries."""
     _, record, mock_run = _run_main(['--iterations', '3', '--', 'true'])
 
     assert mock_run.call_count == 3
-    assert len(record['run_durations']) == 3
-    assert len(record['returncode']) == 3
+    assert len(record['call']['durations']) == 3
+    assert len(record['call']['returncode']) == 3
 
 
 def test_cli_warmup():
@@ -235,8 +237,8 @@ def test_cli_warmup():
 
     # 2 warmup calls + 1 timed call
     assert mock_run.call_count == 3
-    assert len(record['run_durations']) == 1
-    assert len(record['returncode']) == 1
+    assert len(record['call']['durations']) == 1
+    assert len(record['call']['returncode']) == 1
 
 
 def test_cli_iterations_and_warmup():
@@ -246,8 +248,8 @@ def test_cli_iterations_and_warmup():
     )
 
     assert mock_run.call_count == 6
-    assert len(record['run_durations']) == 4
-    assert len(record['returncode']) == 4
+    assert len(record['call']['durations']) == 4
+    assert len(record['call']['returncode']) == 4
 
 
 def test_cli_returncode_is_max_across_iterations():
@@ -264,14 +266,14 @@ def test_cli_returncode_is_max_across_iterations():
                 main(['--iterations', '3', '--', 'true'])
 
     assert exc.value.code == 2
-    assert json.loads(buf.getvalue())['returncode'] == [0, 2, 1]
+    assert json.loads(buf.getvalue())['call']['returncode'] == [0, 2, 1]
 
 
 def test_cli_multiple_mixins():
     """Multiple space-separated mixins all take effect."""
     _, record, _ = _run_main(['--mixin', 'MBHostInfo', 'MBPythonVersion', '--', 'true'])
 
-    assert 'hostname' in record
+    assert 'hostname' in record['host']
     assert 'python_version' in record
 
 
@@ -320,8 +322,8 @@ def test_cli_no_stdout_capture_by_default():
     """stdout and stderr fields are absent unless --stdout/--stderr are given."""
     _, record, _ = _run_main(['--', 'echo', 'hello'])
 
-    assert 'stdout' not in record
-    assert 'stderr' not in record
+    assert 'stdout' not in record.get('call', {})
+    assert 'stderr' not in record.get('call', {})
 
 
 def test_cli_capture_stdout_records_output():
@@ -337,8 +339,8 @@ def test_cli_capture_stdout_records_output():
                     main(['--stdout', '--', 'echo', 'hello'])
 
     record = json.loads(buf.getvalue())
-    assert record['stdout'] == ['hello\n']
-    assert 'stderr' not in record
+    assert record['call']['stdout'] == ['hello\n']
+    assert 'stderr' not in record.get('call', {})
     assert terminal.getvalue() == 'hello\n'
     assert mock_popen.call_args[1].get('stdout') == subprocess.PIPE
 
@@ -356,7 +358,7 @@ def test_cli_capture_stdout_suppress():
                     main(['--stdout=suppress', '--', 'echo', 'hello'])
 
     record = json.loads(buf.getvalue())
-    assert record['stdout'] == ['hello\n']
+    assert record['call']['stdout'] == ['hello\n']
     assert terminal.getvalue() == ''  # nothing re-printed
 
 
@@ -373,8 +375,8 @@ def test_cli_capture_stderr_records_output():
                     main(['--stderr', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
-    assert record['stderr'] == ['warning\n']
-    assert 'stdout' not in record
+    assert record['call']['stderr'] == ['warning\n']
+    assert 'stdout' not in record.get('call', {})
     assert terminal_err.getvalue() == 'warning\n'
 
 
@@ -391,7 +393,7 @@ def test_cli_capture_stderr_suppress():
                     main(['--stderr=suppress', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
-    assert record['stderr'] == ['warning\n']
+    assert record['call']['stderr'] == ['warning\n']
     assert terminal_err.getvalue() == ''
 
 
@@ -414,8 +416,8 @@ def test_cli_capture_stdout_multiple_iterations():
                     )
 
     record = json.loads(buf.getvalue())
-    assert record['stdout'] == ['run1\n', 'run2\n', 'run3\n']
-    assert len(record['stdout']) == len(record['run_durations'])
+    assert record['call']['stdout'] == ['run1\n', 'run2\n', 'run3\n']
+    assert len(record['call']['stdout']) == len(record['call']['durations'])
 
 
 def test_cli_capture_stdout_and_stderr():
@@ -433,8 +435,8 @@ def test_cli_capture_stdout_and_stderr():
                         main(['--stdout', '--stderr', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
-    assert record['stdout'] == ['out\n']
-    assert record['stderr'] == ['err\n']
+    assert record['call']['stdout'] == ['out\n']
+    assert record['call']['stderr'] == ['err\n']
 
 
 def test_cli_capture_invalid_value():
@@ -469,20 +471,20 @@ def test_cli_no_mixin_omits_all_metadata():
     """--no-mixin produces a record with no mixin fields."""
     _, record, _ = _run_main(['--no-mixin', '--', 'true'])
 
-    assert 'hostname' not in record
+    assert 'host' not in record
     assert 'slurm' not in record
     assert 'python_version' not in record
     # Core fields still present
-    assert 'command' in record
-    assert 'returncode' in record
-    assert 'run_durations' in record
+    assert 'command' in record['call']
+    assert 'returncode' in record['call']
+    assert 'durations' in record['call']
 
 
 def test_cli_no_mixin_overrides_mixin():
     """--no-mixin takes precedence over --mixin."""
     _, record, _ = _run_main(['--no-mixin', '--mixin', 'MBHostInfo', '--', 'true'])
 
-    assert 'hostname' not in record
+    assert 'host' not in record
 
 
 def test_cli_all_and_no_mixin_are_mutually_exclusive():
@@ -536,22 +538,22 @@ def _run_main_with_monitor(argv, mock_pid=12345, mock_returncode=0, fake_samples
 
 
 def test_cli_monitor_interval_absent_by_default():
-    """subprocess_monitor is absent when --monitor-interval is not given."""
+    """call.monitor is absent when --monitor-interval is not given."""
     _, record, _ = _run_main(['--no-mixin', '--', 'true'])
 
-    assert 'subprocess_monitor' not in record
+    assert 'monitor' not in record.get('call', {})
 
 
 def test_cli_monitor_interval_creates_field():
-    """--monitor-interval produces a subprocess_monitor field with samples."""
+    """--monitor-interval produces a call.monitor field with samples."""
     record, MockThread, mock_thread = _run_main_with_monitor(
         ['--no-mixin', '--monitor-interval', '5', '--', 'sleep', '10']
     )
 
-    assert 'subprocess_monitor' in record
-    assert len(record['subprocess_monitor']) == 1  # one iteration
-    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 12.5
-    assert record['subprocess_monitor'][0][0]['rss_bytes'] == 1048576
+    assert 'monitor' in record['call']
+    assert len(record['call']['monitor']) == 1  # one iteration
+    assert record['call']['monitor'][0][0]['cpu_percent'] == 12.5
+    assert record['call']['monitor'][0][0]['rss_bytes'] == 1048576
 
 
 def test_cli_monitor_interval_thread_constructed_correctly():
@@ -576,7 +578,7 @@ def test_cli_monitor_interval_thread_lifecycle():
 
 
 def test_cli_monitor_interval_empty_samples():
-    """subprocess_monitor field is absent when no samples were collected."""
+    """call.monitor field is absent when no samples were collected."""
     # A very fast process may exit before the first sample interval fires.
     record, _, _ = _run_main_with_monitor(
         ['--no-mixin', '--monitor-interval', '60', '--', 'true'],
@@ -585,11 +587,11 @@ def test_cli_monitor_interval_empty_samples():
 
     # Empty per-iteration lists → outer list is [[]], which is falsy per-element
     # but the field should still be absent (no data to report).
-    assert 'subprocess_monitor' not in record
+    assert 'monitor' not in record.get('call', {})
 
 
 def test_cli_monitor_interval_multiple_iterations():
-    """With --iterations N, subprocess_monitor has N inner lists."""
+    """With --iterations N, call.monitor has N inner lists."""
     mock_proc = _make_mock_popen_for_monitor(pid=42)
 
     samples_per_iter = [
@@ -624,14 +626,14 @@ def test_cli_monitor_interval_multiple_iterations():
                     )
 
     record = json.loads(buf.getvalue())
-    assert len(record['subprocess_monitor']) == 3
-    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 10.0
-    assert record['subprocess_monitor'][1][0]['cpu_percent'] == 20.0
-    assert record['subprocess_monitor'][2][0]['cpu_percent'] == 30.0
+    assert len(record['call']['monitor']) == 3
+    assert record['call']['monitor'][0][0]['cpu_percent'] == 10.0
+    assert record['call']['monitor'][1][0]['cpu_percent'] == 20.0
+    assert record['call']['monitor'][2][0]['cpu_percent'] == 30.0
 
 
 def test_cli_monitor_interval_warmup_excluded():
-    """Warmup iterations not monitored; subprocess_monitor length == --iterations."""
+    """Warmup iterations not monitored; call.monitor length == --iterations."""
     mock_proc = _make_mock_popen_for_monitor(pid=7)
     call_count = {'n': 0}
     # 2 warmup + 2 timed = 4 Popen calls; but only 2 monitor threads should start.
@@ -663,7 +665,7 @@ def test_cli_monitor_interval_warmup_excluded():
                     )
 
     record = json.loads(buf.getvalue())
-    assert len(record['subprocess_monitor']) == 2
+    assert len(record['call']['monitor']) == 2
     assert call_count['n'] == 2  # only timed iterations got a monitor thread
 
 
@@ -717,8 +719,8 @@ def test_cli_monitor_interval_with_stdout_capture():
                         )
 
     record = json.loads(buf.getvalue())
-    assert record['stdout'] == ['hello\n']
-    assert record['subprocess_monitor'][0][0]['cpu_percent'] == 8.0
+    assert record['call']['stdout'] == ['hello\n']
+    assert record['call']['monitor'][0][0]['cpu_percent'] == 8.0
 
 
 # ---------------------------------------------------------------------------
@@ -785,7 +787,7 @@ def test_cli_git_repo_explicit(tmp_path):
         _, record, _ = _run_main(
             ['--mixin', 'git-info', '--git-repo', str(tmp_path), '--', 'true']
         )
-    assert record.get('git_info', {}).get('repo') == str(tmp_path)
+    assert record.get('git', {}).get('repo') == str(tmp_path)
     for call in mock_co.call_args_list:
         assert call.kwargs.get('cwd') == str(tmp_path)
 
@@ -794,7 +796,7 @@ def test_cli_git_repo_default_cwd():
     """git-info defaults to the current working directory when --git-repo is omitted."""
     with patch('subprocess.check_output', side_effect=_fake_git_output):
         _, record, _ = _run_main(['--mixin', 'git-info', '--', 'true'])
-    assert record.get('git_info', {}).get('repo') == os.getcwd()
+    assert record.get('git', {}).get('repo') == os.getcwd()
 
 
 def test_cli_hash_file_explicit(tmp_path):
@@ -828,7 +830,7 @@ def test_cli_hash_file_default_unresolvable_cmd():
     """file-hash records empty file_hashes without error when cmd cannot be resolved."""
     with patch('shutil.which', return_value=None):
         _, record, _ = _run_main(['--mixin', 'file-hash', '--', 'ghost_cmd'])
-    assert 'mb_capture_errors' not in record
+    assert 'capture_errors' not in record.get('call', {})
     assert record.get('file_hashes') == {}
 
 

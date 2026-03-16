@@ -6,6 +6,73 @@ All notable changes to microbench are documented here.
 
 ### Breaking changes (vs v1.1.0)
 
+- **Namespace restructuring of record fields**: All benchmark record fields are
+  now grouped into top-level namespace dicts, making records self-documenting
+  and easier to query. The complete rename table is below.
+
+  **Core fields** move into `mb` (static config) and `call` (per-call data):
+
+  | Old key | New key |
+  |---|---|
+  | `mb_run_id` | `mb.run_id` |
+  | `mb_version` | `mb.version` |
+  | `timestamp_tz` | `mb.timezone` |
+  | `duration_counter` | `mb.duration_counter` |
+  | `start_time` | `call.start_time` |
+  | `finish_time` | `call.finish_time` |
+  | `run_durations` | `call.durations` |
+  | `function_name` | `call.name` |
+  | `mb_timings` | `call.timings` |
+  | `mb_capture_errors` | `call.capture_errors` |
+  | `monitor` | `call.monitor` |
+  | `env_*` (flat keys) | `env.*` (dict) |
+  | `package_versions` (from `capture_versions`) | `python.loaded_packages` |
+
+  **Mixin fields** move to typed namespaces:
+
+  | Old key | New key |
+  |---|---|
+  | `hostname` | `host.hostname` |
+  | `operating_system` | `host.os` |
+  | `cpu_cores_logical` | `host.cpu_cores_logical` |
+  | `cpu_cores_physical` | `host.cpu_cores_physical` |
+  | `ram_total` | `host.ram_total` |
+  | `working_dir` | `call.working_dir` |
+  | `peak_memory_bytes` | `call.peak_memory_bytes` |
+  | `args` | `call.args` |
+  | `kwargs` | `call.kwargs` |
+  | `return_value` | `call.return_value` |
+  | `line_profiler` | `call.line_profiler` |
+  | `package_versions` (MBGlobalPackages) | `python.loaded_packages` |
+  | `package_versions` (MBInstalledPackages) | `python.installed_packages` |
+  | `package_paths` | `python.installed_package_paths` |
+  | `git_info` | `git` |
+  | `cgroup_limits` | `cgroups` (inner keys also renamed: `cpu_cores` → `cpu_cores_limit`, `memory_bytes` → `memory_bytes_limit`, `cgroup_version` → `version`) |
+  | `nvidia_<attr>` (multiple flat dicts) | `nvidia` (list of per-GPU dicts with `uuid` key) |
+
+  **CLI fields** also move into `call`:
+
+  | Old key | New key |
+  |---|---|
+  | `function_name` (basename) | `call.name` |
+  | `command` | `call.command` |
+  | `returncode` | `call.returncode` |
+  | `stdout` | `call.stdout` |
+  | `stderr` | `call.stderr` |
+  | `subprocess_monitor` | `call.monitor` |
+
+  A new `call.invocation` field is always present: `'Python'` for the Python
+  API and `'CLI'` for the command-line interface.
+
+  Unchanged namespaces: `slurm`, `loaded_modules`, `conda`, `file_hashes`,
+  `exception` (top-level), `exit_signal` (top-level).
+
+  **Migration:** Use `get_results(flat=True)` to access fields via dot-notation
+  keys (`call.name`, `mb.run_id`, `host.hostname`, etc.) in pandas or scripts
+  without rewriting nested dict access. Alternatively, update field access to
+  the new nested structure: `result['call']['name']`, `result['mb']['run_id']`,
+  `result['host']['hostname']`, etc.
+
 - **`get_results()` now returns a list of dicts by default**: The default
   `format='dict'` returns a list of plain Python dicts and requires no
   dependencies. Pass `format='df'` to get a pandas DataFrame (previous
@@ -49,12 +116,12 @@ All notable changes to microbench are documented here.
   keyword arguments.
   - `format='dict'` (default) — returns a list of dicts; no pandas required.
   - `format='df'` — returns a pandas DataFrame (previous default behaviour).
-  - `flat=True` — flattens nested dict fields (e.g. `slurm`, `cgroup_limits`,
-    `git_info`) into dot-notation keys (`slurm.job_id`). Works for both
+  - `flat=True` — flattens nested dict fields (e.g. `slurm`, `cgroups`,
+    `git`) into dot-notation keys (`slurm.job_id`, `call.name`). Works for both
     formats without requiring pandas.
 
 - **`summary(results)` / `bench.summary()`**: prints min / mean / median /
-  max / stdev of `run_durations` across all results. No dependencies required
+  max / stdev of `call.durations` across all results. No dependencies required
   beyond the Python standard library. `bench.summary()` is a one-liner
   convenience that calls `bench.get_results()` internally. The module-level
   `summary(results)` accepts any list of dicts and can be composed with other
@@ -81,9 +148,9 @@ All notable changes to microbench are documented here.
 
 - **`MBCgroupLimits`**: captures the CPU quota and memory limit enforced by
   the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
-  v1 and v2). Fields in `cgroup_limits`: `cpu_cores` (float — quota ÷ period,
-  or `null` if unlimited), `memory_bytes` (int or `null` if unlimited),
-  `cgroup_version` (1 or 2). Returns `{}` on non-Linux systems or when the
+  v1 and v2). Fields in `cgroups`: `cpu_cores_limit` (float — quota ÷ period,
+  or `null` if unlimited), `memory_bytes_limit` (int or `null` if unlimited),
+  `version` (1 or 2). Returns `{}` on non-Linux systems or when the
   cgroup filesystem is unavailable.
 
   ```python
@@ -93,20 +160,20 @@ All notable changes to microbench are documented here.
 
   ```json
   {
-    "cgroup_limits": {
-      "cpu_cores": 4.0,
-      "memory_bytes": 17179869184,
-      "cgroup_version": 2
+    "cgroups": {
+      "cpu_cores_limit": 4.0,
+      "memory_bytes_limit": 17179869184,
+      "version": 2
     }
   }
   ```
 
 - **`bench.time(name)` sub-timing API**: label phases inside a single benchmark
-  record with named timing sections. Sub-timings accumulate in `mb_timings` as
+  record with named timing sections. Sub-timings accumulate in `call.timings` as
   `[{"name": ..., "duration": ...}, ...]` in call order. Compatible with
   `bench.record()`, `bench.arecord()`, `@bench` (sync and async), and
   `bench.record_on_exit()`. Calling outside an active benchmark is a silent
-  no-op; `mb_timings` is absent when `bench.time()` is never called.
+  no-op; `call.timings` is absent when `bench.time()` is never called.
 
   ```python
   with bench.record('pipeline'):
@@ -223,8 +290,8 @@ All notable changes to microbench are documented here.
 
 - **CLI subprocess monitoring** (`--monitor-interval SECONDS`): periodically
   sample the child process's CPU usage and resident memory (RSS) while it
-  runs and record the time series in `subprocess_monitor`. Requires
-  `psutil`. Each element of `subprocess_monitor` is a list of
+  runs and record the time series in `call.monitor`. Requires
+  `psutil`. Each element of `call.monitor` is a list of
   `{"timestamp", "cpu_percent", "rss_bytes"}` dicts for one timed
   iteration; warmup iterations are excluded. Works on Linux, macOS, and
   Windows. If the process exits before the first sample fires, the field is
@@ -233,7 +300,7 @@ All notable changes to microbench are documented here.
 - **`capture_optional` class attribute**: set `capture_optional = True` on
   a benchmark class to catch exceptions from `capture_` and `capturepost_`
   methods instead of aborting the benchmark call. Failures are recorded in
-  `mb_capture_errors` (a list of `{"method": ..., "error": ...}` dicts);
+  `call.capture_errors` (a list of `{"method": ..., "error": ...}` dicts);
   the field is absent when all captures succeed. Designed for production
   jobs on heterogeneous cluster nodes where optional dependencies may not
   be present on every node.
@@ -246,17 +313,17 @@ All notable changes to microbench are documented here.
   the CLI defaults alongside `MBHostInfo`, `MBSlurmInfo`, and `MBWorkingDir`.
 
 - **`MBWorkingDir` mixin**: captures the absolute path of the working
-  directory at benchmark time into `working_dir`. No dependencies. Included
-  in the CLI defaults — useful for reproducibility when comparing results
-  across nodes or directories.
+  directory at benchmark time into `call.working_dir`. No dependencies.
+  Included in the CLI defaults — useful for reproducibility when comparing
+  results across nodes or directories.
 
 - **`MBGitInfo` mixin**: captures the repository root path, current commit
   hash, branch name, and dirty flag (uncommitted changes present) via
-  `git` ≥ 2.11 on PATH. Stored in `git_info`. Set `git_repo` to inspect
+  `git` ≥ 2.11 on PATH. Stored in `git`. Set `git_repo` to inspect
   a specific repository directory.
 
 - **`MBPeakMemory` mixin**: captures peak Python memory allocation during the
-  benchmarked function as `peak_memory_bytes` (bytes), using
+  benchmarked function as `call.peak_memory_bytes` (bytes), using
   `tracemalloc` from the standard library. No extra dependencies required.
 
 - **`MBSlurmInfo` mixin**: captures all `SLURM_*` environment variables into

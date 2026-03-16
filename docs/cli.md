@@ -37,15 +37,15 @@ Use `--` to separate microbench options from the command being benchmarked.
 
 ## Fields recorded
 
-Every record contains the standard fields (`start_time`, `finish_time`,
-`run_durations`, etc.) plus:
+Every record contains the standard `mb.*` and `call.*` fields plus:
 
 | Field | Description |
 |---|---|
-| `command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
-| `returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
-| `function_name` | Basename of the executable, e.g. `"run_sim.sh"`. |
-| `subprocess_monitor` | *(present only with `--monitor-interval`)* List of per-iteration sample lists. See [Subprocess monitoring](#subprocess-monitoring). |
+| `call.invocation` | Always `'CLI'` for records produced by the CLI. |
+| `call.name` | Basename of the executable, e.g. `"run_sim.sh"`. |
+| `call.command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
+| `call.returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
+| `call.monitor` | *(present only with `--monitor-interval`)* List of per-iteration sample lists. See [Subprocess monitoring](#subprocess-monitoring). |
 
 ## Default mixins
 
@@ -129,7 +129,7 @@ command being benchmarked instead.
 
 Metadata capture failures (e.g. `nvidia-smi` not installed on this node,
 script not in a git repository) are caught automatically and recorded in
-`mb_capture_errors` rather than aborting the run. This makes the CLI safe
+`call.capture_errors` rather than aborting the run. This makes the CLI safe
 to use across heterogeneous cluster nodes.
 
 ## SLURM example
@@ -157,8 +157,14 @@ Read the results with pandas:
 ```python
 import pandas
 results = pandas.read_json('/scratch/user/results.jsonl', lines=True)
-results['total_duration'] = results['run_durations'].apply(sum)
-results.groupby('slurm.job_id')['total_duration'].describe()
+results = results.apply(lambda r: pandas.Series(r), axis=1)  # flatten if needed
+# Or use get_results(flat=True) when reading via microbench:
+from microbench import FileOutput
+flat = FileOutput('/scratch/user/results.jsonl').get_results(flat=True)
+import pandas
+df = pandas.DataFrame(flat)
+df['total_duration'] = df['call.durations'].apply(sum)
+df.groupby('slurm.job_id')['total_duration'].describe()
 ```
 
 ## Repeated runs
@@ -173,9 +179,9 @@ microbench --iterations 10 --warmup 2 -- ./run_simulation.sh
 
 With 10 iterations and 2 warmup runs, the record contains:
 
-- `run_durations` — list of 10 wall-clock durations in seconds
-- `returncode` — list of 10 exit codes (one per timed iteration)
-- `stdout` / `stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
+- `call.durations` — list of 10 wall-clock durations in seconds
+- `call.returncode` — list of 10 exit codes (one per timed iteration)
+- `call.stdout` / `call.stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
 
 Warmup runs are excluded from all three lists. The process exits with
 `max(returncode)` so any failing iteration propagates to the shell.
@@ -192,10 +198,10 @@ Warmup runs are excluded from all three lists. The process exits with
     microbench --stdout -- stdbuf -oL ./run_simulation.sh
     ```
 
-To detect failed iterations when analysing results with pandas:
+To detect failed iterations when analysing results with pandas (using `flat=True`):
 
 ```python
-results['any_failed'] = results['returncode'].apply(lambda rc: max(rc) != 0)
+df['any_failed'] = df['call.returncode'].apply(lambda rc: max(rc) != 0)
 ```
 
 ## Extra metadata
@@ -225,7 +231,7 @@ microbench \
     -- ./run_simulation.sh --steps 10000
 ```
 
-The record gains a `subprocess_monitor` field: a list of per-iteration
+The record gains a `call.monitor` field: a list of per-iteration
 sample lists (one inner list per `--iterations` call, warmup excluded).
 Each sample is a dict with three keys:
 
@@ -239,12 +245,14 @@ Example record (single iteration, two samples):
 
 ```json
 {
-  "subprocess_monitor": [
-    [
-      {"timestamp": "2025-01-01T12:00:05Z", "cpu_percent": 0.0,  "rss_bytes": 52428800},
-      {"timestamp": "2025-01-01T12:00:10Z", "cpu_percent": 87.3, "rss_bytes": 61865984}
+  "call": {
+    "monitor": [
+      [
+        {"timestamp": "2025-01-01T12:00:05Z", "cpu_percent": 0.0,  "rss_bytes": 52428800},
+        {"timestamp": "2025-01-01T12:00:10Z", "cpu_percent": 87.3, "rss_bytes": 61865984}
+      ]
     ]
-  ]
+  }
 }
 ```
 
@@ -253,20 +261,20 @@ subprocesses, their CPU and memory usage are not included.
 
 If the process exits before the first sample interval fires (e.g. a very
 short-lived command with a long `--monitor-interval`), the inner list will
-be empty and `subprocess_monitor` is omitted from the record.
+be empty and `call.monitor` is omitted from the record.
 
-Analyse with pandas:
+Analyse with `get_results()`:
 
 ```python
-import pandas, json
-
-results = pandas.read_json('results.jsonl', lines=True)
+from microbench import FileOutput
+results = FileOutput('results.jsonl').get_results()
 
 # Flatten all samples for the first iteration across all records
+import pandas
 samples = pandas.DataFrame([
     s
-    for row in results['subprocess_monitor']
-    for s in row[0]          # row[0] = first iteration
+    for r in results
+    for s in r['call']['monitor'][0]   # [0] = first iteration
 ])
 samples['rss_mb'] = samples['rss_bytes'] / 1024 / 1024
 print(samples[['timestamp', 'cpu_percent', 'rss_mb']])

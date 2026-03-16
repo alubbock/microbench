@@ -30,7 +30,7 @@ result, the metadata shows exactly what was running.
   multiple processes
 - **Sub-timings** — label named phases inside a single record with
   `bench.time(name)`; all phases share one metadata capture pass and results
-  accumulate in `mb_timings` in call order
+  accumulate in `call.timings` in call order
 
 ## Installation
 
@@ -65,12 +65,12 @@ results = bench.get_results(format='df')
 bench.summary()
 ```
 
-Each call produces one record. `results` from `get_results(format='df')` is
-a pandas DataFrame:
+Each call produces one record. With `get_results(flat=True)` the record looks
+like:
 
 ```
-   mb_run_id                             mb_version  function_name  run_durations  experiment
-0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function    [0.049823]     baseline
+   mb.run_id                             mb.version  call.name   call.durations  experiment
+0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function  [0.049823]     baseline
 ```
 
 ## Extended example
@@ -100,14 +100,14 @@ myfunction(x, y)
 Mixins used:
 - `MBFunctionCall` records the supplied arguments `x` and `y`.
 - `MBPythonVersion` captures the Python version.
-- `MBHostInfo` captures `hostname` and `operating_system`.
+- `MBHostInfo` captures `host.hostname` and `host.os`.
 - `MBSlurmInfo` captures all `SLURM_` environment variables
   (used by the [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
 
 Class variables:
 - `outfile` saves results to a file (one JSON object per line).
 - `capture_versions` records the versions of specified packages.
-- `env_vars` captures environment variables as `env_<NAME>` fields.
+- `env_vars` captures environment variables as `env.<NAME>` fields.
 
 Constructor arguments:
 - `iterations=3` runs the function three times, recording all three durations.

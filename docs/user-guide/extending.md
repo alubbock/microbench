@@ -103,13 +103,13 @@ class MyBench(MicroBench):
         bm_data['machine'] = platform.machine()  # e.g. 'x86_64'
 
     def capturepost_slow_call(self, bm_data):
-        # run_durations and finish_time are available in capturepost_ methods
-        if sum(bm_data['run_durations']) > 1.0:
+        # call.durations and call.finish_time are available in capturepost_ methods
+        if sum(bm_data['call']['durations']) > 1.0:
             bm_data['slow_call'] = True
 ```
 
-Avoid key names that clash with built-in fields (e.g. `start_time`,
-`function_name`). The `mb_` prefix is reserved for microbench internals.
+Avoid key names that clash with built-in fields (e.g. `call.start_time`,
+`call.name`). The `mb` and `call` top-level keys are reserved for microbench internals.
 
 For more advanced extension patterns — custom JSON encoding, writing
 reusable mixins, and tools for consuming benchmark output — see

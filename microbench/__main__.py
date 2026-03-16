@@ -151,7 +151,7 @@ def _build_parser(mixin_map):
             'By default captures host-info, slurm-info, and loaded-modules. '
             'Specifying --mixin replaces the defaults; use --show-mixins to '
             'list all available mixins. '
-            'Metadata capture failures are recorded in mb_capture_errors '
+            'Metadata capture failures are recorded in call.capture_errors '
             'rather than aborting the run.'
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -346,14 +346,16 @@ def main(argv=None):
             self._subprocess_timed_phase = True
 
         def capturepost_subprocess_result(self, bm_data):
-            bm_data['command'] = self._subprocess_command
-            bm_data['returncode'] = self._subprocess_returncodes
+            call = bm_data.setdefault('call', {})
+            call['invocation'] = 'CLI'
+            call['command'] = self._subprocess_command
+            call['returncode'] = self._subprocess_returncodes
             if self._subprocess_stdout:
-                bm_data['stdout'] = self._subprocess_stdout
+                call['stdout'] = self._subprocess_stdout
             if self._subprocess_stderr:
-                bm_data['stderr'] = self._subprocess_stderr
+                call['stderr'] = self._subprocess_stderr
             if any(self._subprocess_monitor):
-                bm_data['subprocess_monitor'] = self._subprocess_monitor
+                call['monitor'] = self._subprocess_monitor
 
     BenchClass = type(
         'CLIBench',

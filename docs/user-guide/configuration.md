@@ -9,7 +9,7 @@
 | `tz` | `timezone.utc` | Timezone for `start_time` / `finish_time`. |
 | `iterations` | `1` | Number of times to run the decorated function. |
 | `warmup` | `0` | Number of unrecorded calls before timing begins. Useful for priming caches or JIT compilation. |
-| `duration_counter` | `time.perf_counter` | Callable used for `run_durations`. |
+| `duration_counter` | `time.perf_counter` | Callable used for `call.durations`. |
 
 Any additional keyword arguments are stored as extra fields in every record:
 
@@ -20,7 +20,7 @@ bench = MicroBench(experiment='run-42', node='gpu-node-03')
 ## Environment variables
 
 Set `env_vars` as a class attribute to capture specific environment
-variables into every record. Each variable is stored as `env_<NAME>`; if
+variables into every record. Each variable is stored as `env.<NAME>`; if
 the variable is unset it is recorded as `null`:
 
 ```python
@@ -44,12 +44,12 @@ class SlurmBench(MicroBench):
     )
 ```
 
-Fields are stored as `env_SLURM_JOB_ID`, `env_SLURM_ARRAY_TASK_ID`, etc.
-Combined with `mb_run_id`, this lets you group and compare results across
+Fields are stored as `env.SLURM_JOB_ID`, `env.SLURM_ARRAY_TASK_ID`, etc.
+Combined with `mb.run_id`, this lets you group and compare results across
 all tasks in a job array:
 
 ```python
-results.groupby(['mb_run_id', 'env_SLURM_ARRAY_TASK_ID'])['run_durations'].mean()
+results.groupby(['mb.run_id', 'env.SLURM_ARRAY_TASK_ID'])['call.durations'].mean()
 ```
 
 Run `env | grep SLURM` inside a job to see which variables are available
@@ -57,7 +57,7 @@ in your cluster's environment.
 
 ## Duration timings
 
-`run_durations` are measured using `time.perf_counter` by default, which
+`call.durations` are measured using `time.perf_counter` by default, which
 gives wall-clock time in fractional seconds. Override with any callable that
 returns a numeric value:
 
@@ -72,10 +72,10 @@ bench = MicroBench(duration_counter=time.perf_counter_ns)
 bench = MicroBench(duration_counter=time.monotonic)
 ```
 
-The name of the counter function is recorded in the `duration_counter` field
+The name of the counter function is recorded in the `mb.duration_counter` field
 so results remain interpretable after the code changes.
 
-When `iterations > 1`, `run_durations` is a list with one entry per
+When `iterations > 1`, `call.durations` is a list with one entry per
 iteration. The function's return value is always taken from the final
 iteration.
 
@@ -93,7 +93,7 @@ bench = MicroBench(tz=datetime.datetime.now().astimezone().tzinfo)
 ```
 
 UTC is recommended when comparing results across machines in different
-locations. The timezone is also recorded in the `timestamp_tz` field.
+locations. The timezone is also recorded in the `mb.timezone` field.
 
 ## Runtime impact
 

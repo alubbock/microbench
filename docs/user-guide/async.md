@@ -20,7 +20,7 @@ async def fetch_data(url):
     return {'rows': 42}
 
 asyncio.run(fetch_data('https://example.com/api'))
-print(bench.get_results()[['function_name', 'start_time', 'run_durations']])
+print(bench.get_results(format='df')[['call.name', 'call.start_time', 'call.durations']])
 ```
 
 The wrapper is a true `async def`, so you can `await` it, pass it to
@@ -49,7 +49,7 @@ print(bench.get_results())
 ```
 
 This is the async counterpart of `bench.record()`. All mixins and output
-sinks work identically. The `function_name` field defaults to `'<record>'`
+sinks work identically. The `call.name` field defaults to `'<record>'`
 when no name is given.
 
 ## Timing caveat
