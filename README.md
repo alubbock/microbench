@@ -50,7 +50,7 @@ The fastest way to use microbench is from the command line. Wrap any command
 and capture host metadata alongside timing, with no Python code required:
 
 ```bash
-python -m microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
+microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
 ```
 
 This records one JSONL record per invocation with timing, hostname, Python
@@ -58,13 +58,13 @@ version, SLURM variables, and more. Use `--monitor-interval` to sample CPU
 and memory usage over time:
 
 ```bash
-python -m microbench --outfile results.jsonl --monitor-interval 30 -- ./train_model.py
+microbench --outfile results.jsonl --monitor-interval 30 -- ./train_model.py
 ```
 
 Add `--field` to tag runs with custom metadata:
 
 ```bash
-python -m microbench --outfile results.jsonl --field experiment=run-42 -- ./run.sh
+microbench --outfile results.jsonl --field experiment=run-42 -- ./run.sh
 ```
 
 See the [CLI documentation](https://alubbock.github.io/microbench/cli/) for the
@@ -112,7 +112,7 @@ like:
 | One-off timing with host metadata | CLI | Zero setup |
 | Python functions with sub-timings (`bench.time()`) | Python API | Sub-timings require the `@bench` decorator or `bench.record()` context manager |
 | Custom capture logic (subclassing mixins) | Python API | Mixins are Python classes |
-| Capturing loaded Python package versions | Python API | `capture_versions` inspects live Python module objects |
+| Capturing loaded Python package versions | Python API | `capture_versions` inspects live Python module versions, not just installed |
 | Async Python functions | Python API | Requires `@bench` async decorator or `bench.arecord()` |
 
 ## Extended example
