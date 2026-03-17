@@ -1142,8 +1142,9 @@ alongside timing, without writing any Python code:</p>
 </code></pre></div>
 <p>This is particularly useful for SLURM jobs, shell scripts, or compiled
 executables where adding a Python decorator is not practical.</p>
-<p><code>python -m microbench</code> is equivalent and can be used when you need to
-select a specific Python interpreter explicitly.</p>
+<p><code>python -m microbench</code> is equivalent to the <code>microbench</code> entry point
+and can be used when you need to target a specific Python interpreter
+explicitly (e.g. <code>python3.12 -m microbench ...</code>).</p>
 <h2 id="usage">Usage</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench [options] -- COMMAND [ARGS...]
 </code></pre></div>

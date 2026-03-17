@@ -326,6 +326,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#two-ways-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two ways to use it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -352,17 +363,6 @@
     <span class="md-ellipsis">
       
         Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick example
       
     </span>
   </a>
@@ -794,6 +794,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#two-ways-to-use-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two ways to use it
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -826,17 +837,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick example
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -859,32 +859,63 @@
 
 <h1 id="microbench">microbench</h1>
 <p><img alt="Microbench: Benchmarking and reproducibility metadata capture for Python" src="https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png" /></p>
-<p>Microbench is a small Python package for benchmarking Python functions and
-capturing reproducibility metadata. It is most useful in clustered and
-distributed environments where the same function runs across different
-machines, and is designed to be extended with new functionality through
-mixins.</p>
+<p>Running the same script on a laptop, cloud VM, or cluster can produce
+different results. Maybe some nodes have twice the RAM, or you're running
+a different git commit without realising it.</p>
+<p>Microbench records the context alongside your timings: Python version,
+package versions, hostname, hardware, environment variables, git commit,
+and more. When performance varies, the metadata tells you why. When you
+need to reproduce a result, it shows exactly what was running.</p>
+<h2 id="two-ways-to-use-it">Two ways to use it</h2>
+<p><strong>CLI</strong> — wrap any command with a single line, no code changes required:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
+</code></pre></div>
+<p><strong>Python API</strong> — decorate functions or wrap code blocks for richer capture:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nd">@bench</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">my_function</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">)</span>
+</code></pre></div>
+<p>Both modes produce JSONL records like this:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;mb&quot;</span><span class="p">:</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;8a3d213a...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UTC&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_function&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;durations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.0498</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;start_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;python&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.13.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/opt/conda/envs/myenv&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;hostname&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cluster-node-04&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;os&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;linux&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;ram_total&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">137438953472</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;slurm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;job_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;12345&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpus_on_node&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;16&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
+</code></pre></div>
+<p>→ <a href="getting-started/">Getting started</a> for a full walkthrough.<br />
+→ <a href="cli/">CLI reference</a> for all command-line options.</p>
 <h2 id="key-features">Key features</h2>
 <ul>
-<li><strong>Zero-config timing</strong> — decorate a function and get start/finish timestamps and run durations immediately, with no setup</li>
-<li><strong>Command-line interface</strong> — wrap any shell command or compiled executable with <code>python -m microbench -- COMMAND</code> and capture host metadata alongside timing without writing Python code; ideal for SLURM jobs</li>
-<li><strong>Extensible via mixins</strong> — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more</li>
-<li><strong>Cluster and HPC ready</strong> — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes</li>
-<li><strong>JSONL output</strong> — one JSON object per call; load directly into pandas with <code>read_json(..., lines=True)</code>; no schema lock-in</li>
-<li><strong>Automatic run correlation</strong> — <code>mb.run_id</code> is a UUID generated once per process; all bench suites in the same run share it, enabling <code>groupby('mb.run_id')</code> across independent suites</li>
-<li><strong>Flexible output</strong> — write to a local file, an in-memory buffer, Redis, or an HTTP endpoint; concurrent writers safe via <code>O_APPEND</code></li>
-<li><strong>Sub-timings</strong> — label named phases inside a single record with <code>bench.time(name)</code></li>
-<li><strong>Context managers</strong> — <code>bench.record(name)</code> and <code>bench.record_on_exit(name)</code> for timing code blocks without decorators</li>
-<li><strong>Async support</strong> — native <code>async def</code> decorator support and <code>bench.arecord()</code> async context manager</li>
-<li><strong>Quick stats</strong> — <code>bench.summary()</code> prints min/mean/median/max/stdev with no extra dependencies</li>
+<li><strong>CLI and Python API</strong> — wrap any script or decorate any function; both
+  produce the same JSONL format</li>
+<li><strong>Captures what matters</strong> — Python version, hostname, CPU/RAM, SLURM
+  variables, conda/pip packages, NVIDIA GPU info, git commit, file hashes,
+  and more, via composable <em>mixins</em></li>
+<li><strong>Cluster and HPC ready</strong> — captures SLURM environment variables; safe for
+  concurrent writes from many nodes via <code>O_APPEND</code>; <code>mb.run_id</code> correlates
+  records across independent bench suites in the same process</li>
+<li><strong>Flexible output</strong> — JSONL file, in-memory buffer, Redis, or HTTP endpoint;
+  load results directly into pandas with <code>read_json(..., lines=True)</code></li>
+<li><strong>Python API extras</strong> — sub-timings (<code>bench.time()</code>), context managers
+  (<code>bench.record()</code>), <code>record_on_exit()</code> for full-script timing, async
+  support, line-level profiling</li>
+<li><strong>No mandatory dependencies</strong> — works with the standard library alone;
+  optional extras unlock pandas, psutil, Redis, and line profiling</li>
 </ul>
 <h2 id="installation">Installation</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install microbench
+<p>Requires Python 3.10+.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pip install microbench
 </code></pre></div>
 <h2 id="requirements">Requirements</h2>
-<p>Microbench has no required dependencies outside the Python standard library.
-<a href="https://pandas.pydata.org/">pandas</a> is recommended for analysing results.
-Some mixins have optional requirements:</p>
+<p>Some mixins have optional requirements:</p>
 <table>
 <thead>
 <tr>
@@ -894,7 +925,7 @@ Some mixins have optional requirements:</p>
 </thead>
 <tbody>
 <tr>
-<td><code>MBHostInfo</code> (cpu/ram fields), periodic monitoring</td>
+<td><code>MBHostInfo</code> (CPU/RAM fields), <code>--monitor-interval</code></td>
 <td><a href="https://pypi.org/project/psutil/">psutil</a></td>
 </tr>
 <tr>
@@ -911,64 +942,15 @@ Some mixins have optional requirements:</p>
 </tr>
 <tr>
 <td><code>RedisOutput</code></td>
-<td><a href="https://github.com/andymccurdy/redis-py">redis-py</a></td>
+<td><a href="https://github.com/andymccurdy/redis-py">redis-py</a> (<code>pip install microbench[redis]</code>)</td>
 </tr>
 <tr>
 <td><code>HttpOutput</code></td>
 <td>no extra dependencies (uses stdlib <code>urllib</code>)</td>
 </tr>
-<tr>
-<td><code>LiveStream</code></td>
-<td>no extra dependencies (uses stdlib <code>datetime</code>)</td>
-</tr>
-<tr>
-<td><code>envdiff</code></td>
-<td><a href="https://ipython.org/">IPython</a></td>
-</tr>
 </tbody>
 </table>
-<h2 id="quick-example">Quick example</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outfile</span><span class="o">=</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">experiment</span><span class="o">=</span><span class="s1">&#39;baseline&#39;</span><span class="p">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nd">@bench</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">my_function</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">)</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-</code></pre></div>
-<p>Each call produces one record. With <code>get_results(flat=True)</code> the record looks
-like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>   mb.run_id                             mb.version  call.name   call.durations  experiment
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function  [0.049823]     baseline
-</code></pre></div>
-<p>The underlying JSON for a single record looks like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&quot;run_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2.0.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">&quot;duration_counter&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;perf_counter&quot;</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">&quot;invocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Python&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_function&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&quot;start_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.123456+00:00&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&quot;finish_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-15T10:30:00.172279+00:00&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="nt">&quot;durations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.049823</span><span class="p">]</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="nt">&quot;python&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.12.4&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="nt">&quot;prefix&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/opt/conda/envs/myenv&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="nt">&quot;executable&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/opt/conda/envs/myenv/bin/python&quot;</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span><span class="nt">&quot;experiment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;baseline&quot;</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="p">}</span>
-</code></pre></div>
-<p>See <a href="getting-started/">Getting started</a> for a full walkthrough.</p>
+<p>See <a href="getting-started/">Getting started</a> to dive in.</p>
 
 
 
