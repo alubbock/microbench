@@ -41,6 +41,7 @@ def test_cli_records_command_and_timing():
     code, record, _ = _run_main(['--', 'sleep', '1'])
 
     assert code == 0
+    assert record['call']['invocation'] == 'CLI'
     assert record['call']['command'] == ['sleep', '1']
     assert record['call']['returncode'] == [0]
     assert 'start_time' in record['call']
@@ -253,8 +254,8 @@ def test_cli_iterations_and_warmup():
     assert len(record['call']['returncode']) == 4
 
 
-def test_cli_returncode_is_max_across_iterations():
-    """Process exits with the highest returncode seen across all iterations."""
+def test_cli_returncode_is_first_nonzero_across_iterations():
+    """Process exits with the first non-zero returncode seen across timed iterations."""
     mock_results = [
         MagicMock(returncode=0, stdout=None, stderr=None),
         MagicMock(returncode=2, stdout=None, stderr=None),
@@ -268,6 +269,40 @@ def test_cli_returncode_is_max_across_iterations():
 
     assert exc.value.code == 2
     assert json.loads(buf.getvalue())['call']['returncode'] == [0, 2, 1]
+
+
+def test_cli_returncode_preserves_first_nonzero_even_if_later_is_larger():
+    """A later larger returncode does not override the first failure."""
+    mock_results = [
+        MagicMock(returncode=0, stdout=None, stderr=None),
+        MagicMock(returncode=1, stdout=None, stderr=None),
+        MagicMock(returncode=2, stdout=None, stderr=None),
+    ]
+    buf = io.StringIO()
+    with patch('subprocess.run', side_effect=mock_results):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit) as exc:
+                main(['--iterations', '3', '--', 'true'])
+
+    assert exc.value.code == 1
+    assert json.loads(buf.getvalue())['call']['returncode'] == [0, 1, 2]
+
+
+def test_cli_returncode_preserves_first_nonzero_signal_code():
+    """Negative subprocess returncodes are also returned if they are first non-zero."""
+    mock_results = [
+        MagicMock(returncode=0, stdout=None, stderr=None),
+        MagicMock(returncode=-15, stdout=None, stderr=None),
+        MagicMock(returncode=1, stdout=None, stderr=None),
+    ]
+    buf = io.StringIO()
+    with patch('subprocess.run', side_effect=mock_results):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit) as exc:
+                main(['--iterations', '3', '--', 'true'])
+
+    assert exc.value.code == -15
+    assert json.loads(buf.getvalue())['call']['returncode'] == [0, -15, 1]
 
 
 def test_cli_multiple_mixins():
@@ -1253,6 +1288,42 @@ def test_cli_timeout_sigkill_required():
     assert record['call']['timed_out'] is True
     mock_proc.terminate.assert_called_once()
     mock_proc.kill.assert_called_once()
+
+
+def test_cli_timeout_during_warmup_does_not_set_timed_out():
+    """A timeout in warmup is discarded along with other warmup-only state."""
+    warmup_proc = _make_mock_popen()
+    warmup_proc.returncode = -15
+    warmup_proc.wait.side_effect = [
+        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),
+        None,
+        None,
+    ]
+
+    timed_proc = _make_mock_popen()
+    timed_proc.returncode = 0
+
+    buf = io.StringIO()
+    with patch('subprocess.Popen', side_effect=[warmup_proc, timed_proc]):
+        with patch('sys.stdout', buf):
+            with pytest.raises(SystemExit) as exc:
+                main(
+                    [
+                        '--no-mixin',
+                        '--warmup',
+                        '1',
+                        '--timeout',
+                        '5',
+                        '--',
+                        'sleep',
+                        '100',
+                    ]
+                )
+
+    assert exc.value.code == 0
+    record = json.loads(buf.getvalue())
+    assert record['call']['returncode'] == [0]
+    assert 'timed_out' not in record['call']
 
 
 def test_cli_version(capsys):

@@ -381,6 +381,28 @@ def test_monitor_multiple_samples():
     )
 
 
+def test_monitor_preserved_when_exception_raised():
+    """Monitor samples are still written when the benchmarked call raises."""
+
+    class MonitorBench(MicroBench):
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    bench = MonitorBench()
+
+    @bench
+    def boom():
+        raise RuntimeError('boom')
+
+    with pytest.raises(RuntimeError, match='boom'):
+        boom()
+
+    results = bench.get_results()
+    assert len(results[0]['call']['monitor']) > 0
+    assert results[0]['exception']['type'] == 'RuntimeError'
+
+
 def test_functioncall_args_not_double_encoded():
     """MBFunctionCall must store raw values, not JSON strings (B5 fix).
 
@@ -781,6 +803,57 @@ def test_record_on_exit_sigterm_writes_record():
     assert results[0]['exit_signal'] == 'SIGTERM'
 
 
+def test_record_on_exit_sigterm_chains_previous_handler():
+    """The SIGTERM wrapper calls any previously installed SIGTERM handler."""
+    bench = MicroBench()
+    orig_excepthook = sys.excepthook
+    orig_sigterm = _signal.getsignal(_signal.SIGTERM)
+    calls = []
+
+    def previous_handler(signum, frame):
+        calls.append((signum, frame))
+
+    try:
+        _signal.signal(_signal.SIGTERM, previous_handler)
+        bench.record_on_exit('sim', handle_sigterm=True)
+        handler = _signal.getsignal(_signal.SIGTERM)
+        with patch('os.kill'), patch('signal.signal'):
+            handler(_signal.SIGTERM, None)
+        results = bench.get_results()
+    finally:
+        sys.excepthook = orig_excepthook
+        _signal.signal(_signal.SIGTERM, orig_sigterm)
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    assert calls == [(_signal.SIGTERM, None)]
+    assert results[0]['exit_signal'] == 'SIGTERM'
+
+
+def test_record_on_exit_capture_optional_records_capture_errors():
+    """capture_optional=True also protects failing capture methods at exit time."""
+
+    class Bench(MicroBench):
+        capture_optional = True
+
+        def capture_will_fail(self, bm_data):
+            raise RuntimeError('exit capture failed')
+
+    bench = Bench()
+    orig_excepthook = sys.excepthook
+    try:
+        bench.record_on_exit('sim')
+        results = _invoke_record_on_exit(bench)
+    finally:
+        sys.excepthook = orig_excepthook
+        _atexit.unregister(bench._record_on_exit_handler)
+
+    errors = results[0]['call']['capture_errors']
+    assert len(errors) == 1
+    assert errors[0]['method'] == 'capture_will_fail'
+    assert 'RuntimeError' in errors[0]['error']
+    assert 'exit capture failed' in errors[0]['error']
+
+
 def test_record_on_exit_handle_sigterm_false():
     """handle_sigterm=False leaves the SIGTERM handler unchanged."""
     bench = MicroBench()
@@ -1003,6 +1076,34 @@ async def test_async_decorator_functioncall():
 
 
 @pytest.mark.asyncio
+async def test_async_decorator_concurrent_calls_isolated():
+    """Concurrent async decorated calls keep per-task timing and arg state isolated."""
+
+    class Bench(MicroBench, MBFunctionCall):
+        pass
+
+    bench = Bench()
+
+    @bench
+    async def async_pipeline(name):
+        with bench.time(f'{name}_step'):
+            await asyncio.sleep(0)
+        return name
+
+    results = await asyncio.gather(async_pipeline('a'), async_pipeline('b'))
+    assert results == ['a', 'b']
+
+    records = bench.get_results()
+    assert len(records) == 2
+    by_arg = {r['call']['args'][0]: r for r in records}
+
+    assert by_arg['a']['call']['timings'][0]['name'] == 'a_step'
+    assert by_arg['b']['call']['timings'][0]['name'] == 'b_step'
+    assert by_arg['a']['call']['kwargs'] == {}
+    assert by_arg['b']['call']['kwargs'] == {}
+
+
+@pytest.mark.asyncio
 async def test_async_arecord_standard_fields():
     """bench.arecord() works as an async context manager with standard fields."""
     bench = MicroBench()
@@ -1082,6 +1183,30 @@ async def test_async_monitor_thread():
     assert not monitor_bench._monitor_thread.is_alive()
     results = monitor_bench.get_results()
     assert len(results[0]['call']['monitor']) > 0
+
+
+@pytest.mark.asyncio
+async def test_async_monitor_preserved_when_exception_raised():
+    """Async monitor samples are still written when the benchmarked call raises."""
+
+    class MonitorBench(MicroBench):
+        @staticmethod
+        def monitor(process):
+            return {'rss': process.memory_info().rss}
+
+    bench = MonitorBench()
+
+    @bench
+    async def boom():
+        await asyncio.sleep(0)
+        raise RuntimeError('async boom')
+
+    with pytest.raises(RuntimeError, match='async boom'):
+        await boom()
+
+    results = bench.get_results()
+    assert len(results[0]['call']['monitor']) > 0
+    assert results[0]['exception']['type'] == 'RuntimeError'
 
 
 @pytest.mark.asyncio
