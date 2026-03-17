@@ -749,6 +749,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -844,6 +855,17 @@
     <span class="md-ellipsis">
       
         New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Refactoring
       
     </span>
   </a>
@@ -1420,6 +1442,40 @@
 <p><code>get_results()</code> delegates to the first sink that supports reading back
   results (<code>FileOutput</code> and <code>RedisOutput</code> both do).</p>
 <p>Also includes all changes from v1.1.0.</p>
+<h3 id="refactoring">Refactoring</h3>
+<ul>
+<li><strong>Module structure split</strong>: the <code>microbench/__init__.py</code> god-module and the
+  <code>microbench/__main__.py</code> CLI monolith have been broken into focused
+  subpackages:</li>
+<li><code>microbench/core/</code> — <code>bench.py</code>, <code>contexts.py</code>, <code>encoding.py</code>,
+    <code>monitoring.py</code></li>
+<li><code>microbench/mixins/</code> — <code>base.py</code>, <code>call.py</code>, <code>python.py</code>, <code>system.py</code>,
+    <code>vcs.py</code>, <code>profiling.py</code>, <code>gpu.py</code></li>
+<li><code>microbench/outputs/</code> — <code>base.py</code>, <code>file.py</code>, <code>http.py</code>, <code>redis.py</code>,
+    <code>utils.py</code></li>
+<li><code>microbench/cli/</code> — <code>main.py</code>, <code>parser.py</code>, <code>registry.py</code>, <code>runner.py</code></li>
+<li><code>microbench/version.py</code> — <code>__version__</code> in its own module</li>
+</ul>
+<p>The <strong>public import surface is preserved</strong>: <code>from microbench import
+  MicroBench</code>, all <code>MB*</code> mixins, output classes, <code>JSONEncoder</code>, <code>summary</code>, and
+  <code>__version__</code> all continue to work unchanged.</p>
+<p>The old <em>private</em> module paths (<code>microbench._mixins</code>, <code>microbench._output</code>,
+  <code>microbench._encoding</code>) are deprecated and no longer re-export every symbol
+  they previously exposed. If your code imports from these private paths,
+  migrate to direct <code>from microbench import ...</code> imports.</p>
+<ul>
+<li>
+<p><strong><code>_apply_default_mixin()</code> removed</strong>: the runtime class-construction hack
+  that deferred <code>MBPythonInfo</code> inclusion to avoid a circular import has been
+  replaced with a direct <code>class MicroBench(MBPythonInfo, MicroBenchBase)</code>
+  definition. No circular import occurs with the new layout.</p>
+</li>
+<li>
+<p><strong><code>_is_microbench_internal()</code> circular import fixed</strong>: <code>mixins/python.py</code>
+  now resolves the package directory from <code>__file__</code> directly instead of
+  importing from <code>__init__</code>.</p>
+</li>
+</ul>
 <h2 id="110-2026-03-13">[1.1.0] - 2026-03-13</h2>
 <h3 id="new-features_1">New features</h3>
 <ul>
