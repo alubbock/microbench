@@ -1,11 +1,43 @@
 # Getting started
 
-## Minimal example
+## CLI quick start
 
-Microbench works by adding a Python decorator (e.g. `@bench`) to the function
-you want to benchmark. To benchmark `my_function`, you create the
-benchmark suite `bench`, add the decorator to your function, and simply
-call it as normal:
+The fastest way to use microbench is from the command line. Wrap any command
+and capture timing and host metadata with no code changes:
+
+```bash
+microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
+```
+
+Host information and SLURM environment variables are captured by default.
+Use `--field KEY=VALUE` to attach labels and `--iterations N` to run the
+command multiple times:
+
+```bash
+microbench \
+    --outfile results.jsonl \
+    --field experiment=baseline \
+    --iterations 5 \
+    -- ./run_simulation.sh
+```
+
+Add `--monitor-interval` to sample CPU and RSS memory over time (requires
+`psutil`):
+
+```bash
+microbench --outfile results.jsonl --monitor-interval 30 -- python train_model.py
+```
+
+See the [CLI reference](cli.md) for all options and `microbench --show-mixins`
+to list all available metadata mixins.
+
+---
+
+## Python API quick start
+
+### Minimal example
+
+Decorate the function you want to benchmark and call it normally:
 
 ```python
 from microbench import MicroBench
@@ -48,7 +80,7 @@ Every record contains these fields automatically (all nested under `mb` or `call
 | `call.finish_time` | ISO-8601 timestamp when the function returned. |
 | `call.durations` | List of per-iteration durations in seconds. |
 
-## Extended example
+### Extended example
 
 Here's an extended example to give you an idea of real-world usage.
 
@@ -75,7 +107,7 @@ myfunction(x, y)
 Mixins used:
 - `MBFunctionCall` records the supplied arguments `x` and `y`.
 - `MBHostInfo` captures `host.hostname` and `host.os`.
-- `MBSlurmInfo` captures all `SLURM_` environment variables (used by the
+- `MBSlurmInfo` captures all `SLURM_*` environment variables (used by the
   [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
 
 Note: `MBPythonInfo` is already included in `MicroBench` by default — there is
@@ -248,27 +280,3 @@ The exception is still printed and the process still exits non-zero.
 
 **Limitations:** SIGKILL and `os._exit()` cannot be caught; no record
 will be written in those cases.
-
-## Benchmarking external commands
-
-Microbench can also wrap shell commands, scripts, and compiled executables
-without writing any Python code. This is useful for SLURM jobs or any
-workload where adding a Python decorator is not practical:
-
-```bash
-python -m microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
-```
-
-Host information and SLURM environment variables are captured by default.
-Use `--field KEY=VALUE` to attach labels and `--iterations N` to run the
-command multiple times:
-
-```bash
-python -m microbench \
-    --outfile results.jsonl \
-    --field experiment=baseline \
-    --iterations 5 \
-    -- ./run_simulation.sh
-```
-
-See the [CLI reference](cli.md) for all options.

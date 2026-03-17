@@ -10,8 +10,9 @@ microbench --outfile results.jsonl -- ./run_simulation.sh
 This is particularly useful for SLURM jobs, shell scripts, or compiled
 executables where adding a Python decorator is not practical.
 
-`python -m microbench` is equivalent and can be used when you need to
-select a specific Python interpreter explicitly.
+`python -m microbench` is equivalent to the `microbench` entry point
+and can be used when you need to target a specific Python interpreter
+explicitly (e.g. `python3.12 -m microbench ...`).
 
 ## Usage
 

@@ -2,43 +2,63 @@
 
 ![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
 
-Microbench benchmarks Python functions and automatically records the context
-alongside the timings: Python version, package versions, hostname, hardware,
-environment variables, and more. When performance varies across machines, runs,
-or environments, the metadata tells you why — and when you need to reproduce a
-result, the metadata shows exactly what was running.
+Running the same script on a laptop, cloud VM, or cluster can produce
+different results. Maybe some nodes have different GPUs, or you're running
+a different git commit without realising it.
 
-## Key features
+Microbench records the context alongside your timings: Python version,
+package versions, hostname, hardware, environment variables, git commit,
+and more. When performance varies across machines or runs, the metadata
+tell you why. When you need to reproduce a result, it shows exactly what
+was running.
 
-- **Zero-config timing** — decorate a function, get timestamps and run
-  durations immediately, no setup required
-- **Command-line interface** — wrap any shell command, script, or compiled
-  executable with `python -m microbench -- COMMAND` and capture host
-  metadata alongside timing without writing Python code; ideal for SLURM
-  jobs; use `--monitor-interval` to record CPU and memory usage over time
-- **Extensible via _mixins_** — capture Python version, hostname, CPU/RAM
-  specs, conda/pip package versions, NVIDIA GPU info, line-level profiles,
-  peak memory usage, and more by adding mixin classes
-- **Cluster and HPC ready** — capture SLURM environment variables, psutil
-  resource metrics, and per-process run IDs for correlating results across
-  nodes
-- **JSONL output** — one JSON object per call; load into pandas with
-  `read_json(..., lines=True)`; flexibility to add any extra fields you
-  need
-- **Flexible output** — write to a local file, in-memory buffer, Redis, HTTP
-  endpoint, or custom destinations; file writes are safe for simultaneous
-  writes from multiple processes
-- **Sub-timings** — label named phases inside a single record with
-  `bench.time(name)`; all phases share one metadata capture pass and results
-  accumulate in `call.timings` in call order
-- **Context managers** — `bench.record(name)` and `bench.record_on_exit(name)`
-  for timing code blocks without decorators
-- **Async support** — native `async def` decorator support and `bench.arecord()`
-  async context manager
-- **Quick stats** — `bench.summary()` prints min/mean/median/max/stdev with no
-  extra dependencies
+Unlike other benchmarking tools, Microbench focuses on **reproducibility
+metadata** — capturing these details is cheap and routine, so you can do
+it for every run, not just when something goes wrong.
+
+## Two ways to use it
+
+Microbench has two modes:
+
+- **CLI** — wraps any command (Python or not) with a single line; no code
+  changes required. Ideal for SLURM jobs and shell scripts.
+- **Python API** — decorates functions or wraps code blocks for richer
+  capture: sub-timings, return values, live package versions, async support.
+
+Results are saved to a JSONL file, Redis, or an HTTP endpoint. File writes
+use `O_APPEND` and are safe for concurrent writes from multiple processes.
+
+See [CLI vs Python API](#cli-vs-python-api) below to help decide which to use.
+
+## What metadata can be captured?
+
+Metadata are captured through _mixins_ — small, composable modules that can
+be enabled from the CLI or mixed into a Python class. A sensible default set
+is active out of the box.
+
+| Metadata | CLI flag | Python mixin |
+|---|---|---|
+| Run ID, version, timezone, duration(s), start/finish times, invocation method | _(default)_ | _(default)_ |
+| Python version, prefix, and executable | _(default)_ | _(default: included in `MicroBench`)_ |
+| Hostname, OS; CPU core count and total RAM (requires psutil) | _(default)_ | `MBHostInfo` |
+| All `SLURM_*` environment variables | _(default)_ | `MBSlurmInfo` |
+| Loaded Environment Modules / Lmod stack | _(default)_ | `MBLoadedModules` |
+| Current working directory | _(default)_ | `MBWorkingDir` |
+| Git repo, commit hash, branch, dirty flag | `--mixin git-info` | `MBGitInfo` |
+| SHA-256 (or other) hash of specified files | `--mixin file-hash` | `MBFileHash` |
+| Installed Python packages and versions | `--mixin installed-packages` | `MBInstalledPackages` |
+| Installed Conda packages and versions | `--mixin conda-packages` | `MBCondaPackages` |
+| NVIDIA GPU names, memory, and attributes | `--mixin nvidia-smi` | `MBNvidiaSmi` |
+| Cgroup CPU/RAM limits (containers, Linux only) | `--mixin cgroup-limits` | `MBCgroupLimits` |
+| Function call arguments | — | `MBFunctionCall` |
+| Function return value | — | `MBReturnValue` |
+| Peak RSS memory over a function call | — | `MBPeakMemory` |
+| Python packages loaded into the caller's globals | — | `MBGlobalPackages` |
+| Line-by-line performance profile | — | `MBLineProfiler` |
 
 ## Installation
+
+Requires Python 3.10+. No mandatory dependencies outside the standard library.
 
 ```
 pip install microbench
@@ -46,28 +66,73 @@ pip install microbench
 
 ## Quick start — CLI
 
-The fastest way to use microbench is from the command line. Wrap any command
-and capture host metadata alongside timing, with no Python code required:
+Wrap any command and capture host metadata alongside timing, with no code
+changes required:
 
 ```bash
 microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
 ```
 
-This records one JSONL record per invocation with timing, hostname, Python
-version, SLURM variables, and more. Use `--monitor-interval` to sample CPU
-and memory usage over time:
+This records one JSONL record per invocation. By default it captures timing,
+hostname, Python version, SLURM variables, loaded modules, and working
+directory. Add `--monitor-interval` to sample CPU and RSS memory over time:
 
 ```bash
-microbench --outfile results.jsonl --monitor-interval 30 -- ./train_model.py
+microbench --outfile results.jsonl --monitor-interval 30 -- python train_model.py
 ```
 
-Add `--field` to tag runs with custom metadata:
+Tag runs with custom fields:
 
 ```bash
 microbench --outfile results.jsonl --field experiment=run-42 -- ./run.sh
 ```
 
-See the [CLI documentation](https://alubbock.github.io/microbench/cli/) for the
+Run `microbench --help` or `microbench --show-mixins` to see all options.
+
+### Example output
+
+```bash
+microbench -- echo "hello"
+```
+
+Output (written to stdout when `--outfile` is omitted):
+
+```json
+{
+  "mb": {
+    "run_id": "8a3d213a-d7c2-44cb-a42f-1b68e6e0180e",
+    "version": "2.0.0",
+    "timezone": "UTC",
+    "duration_counter": "perf_counter"
+  },
+  "call": {
+    "invocation": "CLI",
+    "name": "echo",
+    "working_dir": "/home/user",
+    "command": ["echo", "hello"],
+    "durations": [0.004],
+    "start_time": "2026-03-17T14:36:08.140607+00:00",
+    "finish_time": "2026-03-17T14:36:08.144707+00:00",
+    "returncode": [0]
+  },
+  "host": {
+    "hostname": "cluster-node-04",
+    "os": "linux",
+    "cpu_cores_logical": 32,
+    "cpu_cores_physical": 16,
+    "ram_total": 137438953472
+  },
+  "python": {
+    "version": "3.13.1",
+    "prefix": "/opt/conda/envs/myenv",
+    "executable": "/opt/conda/envs/myenv/bin/python3.13"
+  },
+  "slurm": {},
+  "loaded_modules": {}
+}
+```
+
+The CLI supports additional options including capturing stdout/stderr, setting timeouts, and repeat iterations for benchmarking. See the [CLI documentation](https://alubbock.github.io/microbench/cli/) for the
 full option reference.
 
 ## Quick start — Python API
@@ -85,14 +150,9 @@ def my_function(n):
 
 my_function(1_000_000)
 
-# list of dicts — no extra dependencies:
-results = bench.get_results()
-
-# pandas DataFrame:
-results = bench.get_results(format='df')
-
-# quick stats printout — no dependencies:
-bench.summary()
+results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results(format='df')  # pandas DataFrame
+bench.summary()                           # quick stats printout
 ```
 
 Each call produces one record. With `get_results(flat=True)` the record looks
@@ -105,27 +165,26 @@ like:
 
 ## CLI vs Python API
 
-| Use case | Recommended | Why |
-|---|---|---|
-| Benchmarking shell scripts, compiled executables, or non-Python programs | CLI | Works with any language; no code changes needed |
-| SLURM jobs or batch scripts | CLI | Drop-in wrapper; captures SLURM metadata automatically |
-| One-off timing with host metadata | CLI | Zero setup |
-| Python functions with sub-timings (`bench.time()`) | Python API | Sub-timings require the `@bench` decorator or `bench.record()` context manager |
-| Custom capture logic (subclassing mixins) | Python API | Mixins are Python classes |
-| Capturing loaded Python package versions | Python API | `capture_versions` inspects live Python module versions, not just installed |
-| Async Python functions | Python API | Requires `@bench` async decorator or `bench.arecord()` |
+| Use case | Recommended |
+|---|---|
+| Shell scripts, compiled executables, or non-Python programs | CLI |
+| SLURM jobs or batch scripts | CLI |
+| One-off timing with host metadata, no code changes | CLI |
+| Python functions needing sub-timings (`bench.time()`),return-value capture, or line-by-line profiling | Python API |
+| Custom capture logic (subclassing mixins) | Python API |
+| Capturing live Python module versions (not just what's installed) | Python API |
+| Async Python functions | Python API |
 
-## Extended example
+## Python API — extended example
 
 ```python
-from microbench import MicroBench, MBFunctionCall, \
-  MBHostInfo, MBSlurmInfo
+from microbench import MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo
 import numpy, pandas, time
 
 class MyBench(MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
-    capture_versions = (numpy, pandas)
-    env_vars = ('CUDA_VISIBLE_DEVICES',)
+    capture_versions = (numpy, pandas)   # record live module versions
+    env_vars = ('CUDA_VISIBLE_DEVICES',) # capture env vars as env.<NAME>
 
 benchmark = MyBench(experiment='run-1', iterations=3,
                     duration_counter=time.monotonic)
@@ -137,29 +196,21 @@ def myfunction(arg1, arg2):
 myfunction(x, y)
 ```
 
-Mixins used:
-- `MBFunctionCall` records the supplied arguments `x` and `y`.
-- `MBHostInfo` captures `host.hostname` and `host.os`.
-- `MBSlurmInfo` captures all `SLURM_` environment variables
-  (used by the [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
+Mixins added here:
+- `MBFunctionCall` records the arguments `arg1` and `arg2`.
+- `MBHostInfo` captures `host.hostname`, `host.os`, CPU cores, and RAM.
+- `MBSlurmInfo` captures all `SLURM_*` environment variables.
 
-Class variables:
-- `outfile` saves results to a file (one JSON object per line).
-- `capture_versions` records the versions of specified packages.
-- `env_vars` captures environment variables as `env.<NAME>` fields.
+`MBPythonInfo` is included in `MicroBench` by default — no need to list it
+explicitly.
 
-Constructor arguments:
-- `iterations=3` runs the function three times, recording all three durations.
-- `duration_counter` overrides the timer function, if you need precise timing.
-- `experiment='run-1'` adds a custom `experiment` field to every record.
-
-Note: `MBPythonInfo` is included in `MicroBench` by default, so it does not
-need to be listed explicitly.
+See the [full documentation](https://alubbock.github.io/microbench/) for
+context managers, async support, sub-timings, output sinks, and more.
 
 ## Documentation
 
 Full documentation, including a getting-started guide, mixin reference, and
-API docs, is at **https://alubbock.github.io/microbench/**.
+API reference, is at **https://alubbock.github.io/microbench/**.
 
 ## Citing microbench
 

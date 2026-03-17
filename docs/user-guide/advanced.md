@@ -308,6 +308,7 @@ Requires [IPython](https://ipython.org/): `pip install ipython`.
 
 ```python
 from microbench.diff import envdiff
+from microbench import FileOutput
 import pandas
 
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
