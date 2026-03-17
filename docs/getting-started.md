@@ -53,11 +53,11 @@ Every record contains these fields automatically (all nested under `mb` or `call
 Here's an extended example to give you an idea of real-world usage.
 
 ```python
-from microbench import MicroBench, MBFunctionCall, MBPythonVersion, \
+from microbench import MicroBench, MBFunctionCall, MBPythonInfo, \
     MBHostInfo, MBSlurmInfo
 import numpy, pandas, time
 
-class MyBench(MicroBench, MBFunctionCall, MBPythonVersion, MBHostInfo, MBSlurmInfo):
+class MyBench(MicroBench, MBFunctionCall, MBPythonInfo, MBHostInfo, MBSlurmInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
     capture_versions = (numpy, pandas)
     env_vars = ('CUDA_VISIBLE_DEVICES',)
@@ -74,7 +74,7 @@ myfunction(x, y)
 
 Mixins used:
 - `MBFunctionCall` records the supplied arguments `x` and `y`.
-- `MBPythonVersion` captures the Python version.
+- `MBPythonInfo` captures the Python version, prefix, and executable.
 - `MBHostInfo` captures `host.hostname` and `host.os`.
 - `MBSlurmInfo` captures all `SLURM_` environment variables (used by the
   [SLURM](https://slurm.schedmd.com/overview.html) cluster system).

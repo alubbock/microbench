@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 import microbench
+import microbench.core.bench
 from microbench import MBLineProfiler, MicroBench
 
 
@@ -18,7 +19,7 @@ def test_line_profiler_missing_package():
     def noop():
         pass
 
-    with patch.object(microbench, 'line_profiler', None):
+    with patch.object(microbench.core.bench, 'line_profiler', None):
         with pytest.raises(ImportError, match='line_profiler'):
             noop()
 

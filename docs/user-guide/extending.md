@@ -15,7 +15,7 @@ class MBMachineType:
         bm_data['machine_type'] = platform.machine()
 
 
-class MyBench(MicroBench, MBMachineType, MBPythonVersion):
+class MyBench(MicroBench, MBMachineType, MBPythonInfo):
     pass
 ```
 

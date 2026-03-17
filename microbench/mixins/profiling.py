@@ -23,6 +23,8 @@ class MBPeakMemory:
         NumPy arrays) is not tracked.
     """
 
+    cli_compatible = True
+
     def capture_peak_memory(self, bm_data):
         import tracemalloc
 
