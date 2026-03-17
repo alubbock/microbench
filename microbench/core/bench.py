@@ -68,7 +68,7 @@ def summary(results):
 
     n = len(durations)
     if n == 0:
-        print('No run_durations found in results.')
+        print('No call.durations found in results.')
         return
 
     stdev = _statistics.stdev(durations) if n > 1 else float('nan')
@@ -270,7 +270,7 @@ class MicroBenchBase:
         ] = ver
 
     def to_json(self, bm_data):
-        bm_str = f'{json.dumps(bm_data, cls=self._json_encoder)}'
+        bm_str = json.dumps(bm_data, cls=self._json_encoder)
 
         return bm_str
 
@@ -395,6 +395,7 @@ class MicroBenchBase:
 
         from microbench.mixins.profiling import MBLineProfiler
 
+        @functools.wraps(func)
         def inner(*args, **kwargs):
             bm_data = dict()
             bm_data.update(self._bm_static)

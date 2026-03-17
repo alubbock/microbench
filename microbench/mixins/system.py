@@ -13,15 +13,6 @@ except ImportError:
     psutil = None
 
 
-def _existing_dir(value):
-    """argparse type: accept an existing directory path."""
-    import argparse
-
-    if not os.path.isdir(value):
-        raise argparse.ArgumentTypeError(f'directory not found: {value!r}')
-    return value
-
-
 class MBHostInfo:
     """Capture hostname, operating system, and (optionally) CPU and RAM info.
 

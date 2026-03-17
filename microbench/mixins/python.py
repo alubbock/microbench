@@ -112,7 +112,7 @@ class MBInstalledPackages:
 
         for pkg in importlib.metadata.distributions():
             python['installed_packages'][pkg.name] = pkg.version
-            if self.capture_paths:
+            if self.capture_paths and pkg.files:
                 python['installed_package_paths'][pkg.name] = os.path.dirname(
                     pkg.locate_file(pkg.files[0])
                 )
@@ -153,8 +153,6 @@ class MBCondaPackages:
             'path': os.environ.get('CONDA_PREFIX'),
             'packages': {},
         }
-
-        conda_prefix = os.environ.get('CONDA_PREFIX', sys.prefix)
         conda_exe = shutil.which('conda') or os.environ.get('CONDA_EXE', 'conda')
         pkg_list = subprocess.check_output(
             [conda_exe, 'list', '--prefix', conda_prefix]
@@ -167,7 +165,7 @@ class MBCondaPackages:
             pkg_name = pkg_data[0]
             pkg_version = pkg_data[1]
             if self.include_builds:
-                pkg_version += pkg_data[2]
+                pkg_version += ' ' + pkg_data[2]
             if self.include_channels and len(pkg_data) == 4:
                 pkg_version += '(' + pkg_data[3] + ')'
             bm_data['conda']['packages'][pkg_name] = pkg_version

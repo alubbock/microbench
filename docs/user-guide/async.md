@@ -20,7 +20,7 @@ async def fetch_data(url):
     return {'rows': 42}
 
 asyncio.run(fetch_data('https://example.com/api'))
-print(bench.get_results(format='df')[['call.name', 'call.start_time', 'call.durations']])
+print(bench.get_results(format='df', flat=True)[['call.name', 'call.start_time', 'call.durations']])
 ```
 
 The wrapper is a true `async def`, so you can `await` it, pass it to

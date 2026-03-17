@@ -2,6 +2,8 @@
 
 ## Core
 
+::: microbench.MicroBenchBase
+
 ::: microbench.MicroBench
 
 ::: microbench.summary
@@ -12,6 +14,8 @@
 
 ::: microbench.FileOutput
 
+::: microbench.HttpOutput
+
 ::: microbench.RedisOutput
 
 ## Mixins
@@ -20,9 +24,23 @@
 
 ::: microbench.MBReturnValue
 
+::: microbench.MBPythonInfo
+
 ::: microbench.MBHostInfo
 
+::: microbench.MBPeakMemory
+
 ::: microbench.MBSlurmInfo
+
+::: microbench.MBLoadedModules
+
+::: microbench.MBWorkingDir
+
+::: microbench.MBCgroupLimits
+
+::: microbench.MBGitInfo
+
+::: microbench.MBFileHash
 
 ::: microbench.MBGlobalPackages
 
@@ -33,6 +51,10 @@
 ::: microbench.MBNvidiaSmi
 
 ::: microbench.MBLineProfiler
+
+## CLI
+
+::: microbench.CLIArg
 
 ## JSON encoding
 

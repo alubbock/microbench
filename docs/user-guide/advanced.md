@@ -173,7 +173,7 @@ contains durations for all iterations up to and including the failing one.
 By default, an exception in any `capture_` or `capturepost_` method
 propagates and aborts the benchmark call. Set `capture_optional = True` as
 a class attribute to catch failures instead and record them in
-`mb_capture_errors`:
+`call.capture_errors`:
 
 ```python
 from microbench import MicroBench, MBNvidiaSmi, MBCondaPackages

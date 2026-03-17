@@ -121,6 +121,46 @@ Results are appended to a Redis list using `RPUSH` and read back with
 
 The CLI exposes the same sink via `--redis-output KEY` (see the [CLI reference](../cli.md#redis-output)).
 
+## HTTP output
+
+`HttpOutput` POSTs each benchmark record as JSON to an HTTP/HTTPS endpoint.
+Useful for webhooks and real-time notifications (Slack, Teams, custom event
+pipelines). Uses only the Python standard library (`urllib`).
+
+```python
+from microbench import MicroBench, HttpOutput
+
+bench = MicroBench(outputs=[HttpOutput('https://example.com/events')])
+```
+
+Add authentication headers:
+
+```python
+bench = MicroBench(outputs=[HttpOutput(
+    'https://api.example.com/benchmarks',
+    headers={'Authorization': 'Bearer my-secret-token'},
+)])
+```
+
+Override `format_payload()` to customize the body shape (e.g. for Slack):
+
+```python
+import json
+from microbench import HttpOutput
+
+class SlackOutput(HttpOutput):
+    def format_payload(self, record):
+        name = record.get('call', {}).get('name', '?')
+        return json.dumps({'text': f'Benchmark `{name}` finished.'}).encode()
+
+bench = MicroBench(outputs=[SlackOutput('https://hooks.slack.com/services/...')])
+```
+
+`HttpOutput` raises on non-2xx responses or network failures — no silent
+dropping, no automatic retry.
+
+The CLI exposes the same sink via `--http-output URL` (see the [CLI reference](../cli.md#http-output)).
+
 ## Custom output sinks
 
 Subclass `Output` and implement `write` to send results anywhere:

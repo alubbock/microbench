@@ -38,16 +38,18 @@ def my_function():
     pass
 ```
 
-Samples are stored as a list in the `monitor` field of each result record,
+Samples are stored as a list in the `call.monitor` field of each result record,
 each entry including a `timestamp` and whatever your `monitor` method
 returns:
 
 ```json
 {
-  "monitor": [
-    {"timestamp": "2024-01-01T00:00:00+00:00", "rss": 104857600, "vms": 536870912},
-    {"timestamp": "2024-01-01T00:01:30+00:00", "rss": 209715200, "vms": 536870912}
-  ]
+  "call": {
+    "monitor": [
+      {"timestamp": "2024-01-01T00:00:00+00:00", "rss": 104857600, "vms": 536870912},
+      {"timestamp": "2024-01-01T00:01:30+00:00", "rss": 209715200, "vms": 536870912}
+    ]
+  }
 }
 ```
 

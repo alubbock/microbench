@@ -43,12 +43,12 @@ def test_conda_no_channel_doubling():
     """include_channels=True must not double the version string (B1 fix)."""
     results = _run_conda_bench(include_builds=True, include_channels=True)
     packages = results['conda'][0]['packages']
-    # numpy has a channel: expect "version+build(channel)", not doubled version
-    assert packages['numpy'] == '1.24.3py311ha0bc626_0(conda-forge)', (
+    # numpy has a channel: expect "version build(channel)" with a space before build
+    assert packages['numpy'] == '1.24.3 py311ha0bc626_0(conda-forge)', (
         f'Got: {packages["numpy"]!r}'
     )
-    # pandas has no channel: expect "version+build"
-    assert packages['pandas'] == '2.0.3py311h9a0d8c7_0', f'Got: {packages["pandas"]!r}'
+    # pandas has no channel: expect "version build" with a space before build
+    assert packages['pandas'] == '2.0.3 py311h9a0d8c7_0', f'Got: {packages["pandas"]!r}'
 
 
 def test_conda_include_builds_false():
