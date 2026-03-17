@@ -2,27 +2,73 @@
 
 ![Microbench: Benchmarking and reproducibility metadata capture for Python](https://raw.githubusercontent.com/alubbock/microbench/master/microbench.png)
 
-Microbench is a small Python package for benchmarking Python functions and
-capturing reproducibility metadata. It is most useful in clustered and
-distributed environments where the same function runs across different
-machines, and is designed to be extended with new functionality through
-mixins.
+Running the same script on a laptop, cloud VM, or cluster can produce
+different results. Maybe some nodes have twice the RAM, or you're running
+a different git commit without realising it.
+
+Microbench records the context alongside your timings: Python version,
+package versions, hostname, hardware, environment variables, git commit,
+and more. When performance varies, the metadata tells you why. When you
+need to reproduce a result, it shows exactly what was running.
+
+## Two ways to use it
+
+**CLI** — wrap any command with a single line, no code changes required:
+
+```bash
+microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
+```
+
+**Python API** — decorate functions or wrap code blocks for richer capture:
+
+```python
+from microbench import MicroBench
+
+bench = MicroBench(outfile='results.jsonl')
+
+@bench
+def my_function(n):
+    return sum(range(n))
+
+my_function(1_000_000)
+```
+
+Both modes produce JSONL records like this:
+
+```json
+{
+  "mb":   { "run_id": "8a3d213a...", "version": "2.0.0", "timezone": "UTC" },
+  "call": { "name": "my_function", "durations": [0.0498], "start_time": "..." },
+  "python": { "version": "3.13.1", "prefix": "/opt/conda/envs/myenv", ... },
+  "host": { "hostname": "cluster-node-04", "os": "linux", "ram_total": 137438953472, ... },
+  "slurm": { "job_id": "12345", "cpus_on_node": "16", ... }
+}
+```
+
+→ [Getting started](getting-started.md) for a full walkthrough.  
+→ [CLI reference](cli.md) for all command-line options.
 
 ## Key features
 
-- **Zero-config timing** — decorate a function and get start/finish timestamps and run durations immediately, with no setup
-- **Command-line interface** — wrap any shell command or compiled executable with `python -m microbench -- COMMAND` and capture host metadata alongside timing without writing Python code; ideal for SLURM jobs
-- **Extensible via mixins** — mix in exactly what you need: Python version, hostname, CPU/RAM specs, conda/pip packages, NVIDIA GPU info, line-level profiling, and more
-- **Cluster and HPC ready** — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes
-- **JSONL output** — one JSON object per call; load directly into pandas with `read_json(..., lines=True)`; no schema lock-in
-- **Automatic run correlation** — `mb.run_id` is a UUID generated once per process; all bench suites in the same run share it, enabling `groupby('mb.run_id')` across independent suites
-- **Flexible output** — write to a local file, an in-memory buffer, Redis, or an HTTP endpoint; concurrent writers safe via `O_APPEND`
-- **Sub-timings** — label named phases inside a single record with `bench.time(name)`
-- **Context managers** — `bench.record(name)` and `bench.record_on_exit(name)` for timing code blocks without decorators
-- **Async support** — native `async def` decorator support and `bench.arecord()` async context manager
-- **Quick stats** — `bench.summary()` prints min/mean/median/max/stdev with no extra dependencies
+- **CLI and Python API** — wrap any script or decorate any function; both
+  produce the same JSONL format
+- **Captures what matters** — Python version, hostname, CPU/RAM, SLURM
+  variables, conda/pip packages, NVIDIA GPU info, git commit, file hashes,
+  and more, via composable _mixins_
+- **Cluster and HPC ready** — captures SLURM environment variables; safe for
+  concurrent writes from many nodes via `O_APPEND`; `mb.run_id` correlates
+  records across independent bench suites in the same process
+- **Flexible output** — JSONL file, in-memory buffer, Redis, or HTTP endpoint;
+  load results directly into pandas with `read_json(..., lines=True)`
+- **Python API extras** — sub-timings (`bench.time()`), context managers
+  (`bench.record()`), `record_on_exit()` for full-script timing, async
+  support, line-level profiling
+- **No mandatory dependencies** — works with the standard library alone;
+  optional extras unlock pandas, psutil, Redis, and line profiling
 
 ## Installation
+
+Requires Python 3.10+.
 
 ```
 pip install microbench
@@ -30,69 +76,15 @@ pip install microbench
 
 ## Requirements
 
-Microbench has no required dependencies outside the Python standard library.
-[pandas](https://pandas.pydata.org/) is recommended for analysing results.
 Some mixins have optional requirements:
 
 | Mixin / feature | Requires |
 |---|---|
-| `MBHostInfo` (cpu/ram fields), periodic monitoring | [psutil](https://pypi.org/project/psutil/) |
+| `MBHostInfo` (CPU/RAM fields), `--monitor-interval` | [psutil](https://pypi.org/project/psutil/) |
 | `MBLineProfiler` | [line_profiler](https://github.com/rkern/line_profiler) |
 | `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
 | `MBCondaPackages` | `conda` on `PATH` |
-| `RedisOutput` | [redis-py](https://github.com/andymccurdy/redis-py) |
+| `RedisOutput` | [redis-py](https://github.com/andymccurdy/redis-py) (`pip install microbench[redis]`) |
 | `HttpOutput` | no extra dependencies (uses stdlib `urllib`) |
-| `LiveStream` | no extra dependencies (uses stdlib `datetime`) |
-| `envdiff` | [IPython](https://ipython.org/) |
 
-## Quick example
-
-```python
-from microbench import MicroBench
-
-bench = MicroBench(outfile='/home/user/results.jsonl', experiment='baseline')
-
-@bench
-def my_function(n):
-    return sum(range(n))
-
-my_function(1_000_000)
-
-results = bench.get_results()
-```
-
-Each call produces one record. With `get_results(flat=True)` the record looks
-like:
-
-```
-   mb.run_id                             mb.version  call.name   call.durations  experiment
-0  3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9  2.0.0      my_function  [0.049823]     baseline
-```
-
-The underlying JSON for a single record looks like:
-
-```json
-{
-  "mb": {
-    "run_id": "3f2a1b4c-8d9e-4f2a-b1c3-d4e5f6a7b8c9",
-    "version": "2.0.0",
-    "timezone": "UTC",
-    "duration_counter": "perf_counter"
-  },
-  "call": {
-    "invocation": "Python",
-    "name": "my_function",
-    "start_time": "2024-01-15T10:30:00.123456+00:00",
-    "finish_time": "2024-01-15T10:30:00.172279+00:00",
-    "durations": [0.049823]
-  },
-  "python": {
-    "version": "3.12.4",
-    "prefix": "/opt/conda/envs/myenv",
-    "executable": "/opt/conda/envs/myenv/bin/python"
-  },
-  "experiment": "baseline"
-}
-```
-
-See [Getting started](getting-started.md) for a full walkthrough.
+See [Getting started](getting-started.md) to dive in.
