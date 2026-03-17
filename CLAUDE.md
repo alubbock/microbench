@@ -5,5 +5,5 @@
 Use the `microbench` conda environment:
 
 ```
-conda run -n microbench pytest microbench/tests/
+conda run -n microbench pytest tests/
 ```

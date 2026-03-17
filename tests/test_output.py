@@ -219,9 +219,9 @@ def test_redis_output_get_results_without_pandas():
     with patch.dict('sys.modules', {'redis': mock_redis}):
         bench = MicroBench(outputs=[RedisOutput('test:bench')])
 
-    with patch.object(microbench.outputs.redis, 'pandas', None):
-        with pytest.raises(ImportError, match='pandas'):
-            bench.get_results(format='df')
+        with patch.object(microbench.outputs.redis, 'pandas', None):
+            with pytest.raises(ImportError, match='pandas'):
+                bench.get_results(format='df')
 
 
 def test_redis_output_multiple_results():

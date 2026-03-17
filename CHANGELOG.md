@@ -410,6 +410,12 @@ Also includes all changes from v1.1.0.
   now resolves the package directory from `__file__` directly instead of
   importing from `__init__`.
 
+- **Tests moved out of package tree**: `microbench/tests/` relocated to
+  top-level `tests/`. The test suite was previously installed as part of the
+  package, inflating wheel sizes and polluting the installed namespace.
+  `pyproject.toml` updated (`testpaths`, `per-file-ignores`, package
+  `exclude`). All tests continue to pass.
+
 ## [1.1.0] - 2026-03-13
 
 ### New features
