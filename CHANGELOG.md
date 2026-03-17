@@ -212,6 +212,7 @@ Be sure to review the breaking changes before upgrading.
   - `FileOutput` — writes JSONL to a file path or file-like object (wraps the
     previous default behaviour).
   - `RedisOutput` — writes to a Redis list.
+  - `HttpOutput` - New for v2 - POST each benchmark result to an HTTP/HTTPS endpoint.
 
   The existing `outfile` parameter and class-level `outfile` attribute continue
   to work as shorthand for a single `FileOutput`. Passing both `outfile` and
