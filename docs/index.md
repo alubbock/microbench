@@ -16,7 +16,11 @@ mixins.
 - **Cluster and HPC ready** — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes
 - **JSONL output** — one JSON object per call; load directly into pandas with `read_json(..., lines=True)`; no schema lock-in
 - **Automatic run correlation** — `mb.run_id` is a UUID generated once per process; all bench suites in the same run share it, enabling `groupby('mb.run_id')` across independent suites
-- **Flexible output** — write to a local file, an in-memory buffer, or Redis; concurrent writers safe via `O_APPEND`
+- **Flexible output** — write to a local file, an in-memory buffer, Redis, or an HTTP endpoint; concurrent writers safe via `O_APPEND`
+- **Sub-timings** — label named phases inside a single record with `bench.time(name)`
+- **Context managers** — `bench.record(name)` and `bench.record_on_exit(name)` for timing code blocks without decorators
+- **Async support** — native `async def` decorator support and `bench.arecord()` async context manager
+- **Quick stats** — `bench.summary()` prints min/mean/median/max/stdev with no extra dependencies
 
 ## Installation
 
@@ -37,6 +41,7 @@ Some mixins have optional requirements:
 | `MBNvidiaSmi` | `nvidia-smi` on `PATH` (ships with NVIDIA drivers) |
 | `MBCondaPackages` | `conda` on `PATH` |
 | `RedisOutput` | [redis-py](https://github.com/andymccurdy/redis-py) |
+| `HttpOutput` | no extra dependencies (uses stdlib `urllib`) |
 | `LiveStream` | no extra dependencies (uses stdlib `datetime`) |
 | `envdiff` | [IPython](https://ipython.org/) |
 

@@ -248,8 +248,8 @@ All notable changes to microbench are documented here.
 - **`MBPythonInfo` mixin** replaces `MBPythonVersion`: records a `python` dict
   with `version`, `prefix` (`sys.prefix`), and `executable` (`sys.executable`),
   giving a complete picture of the running interpreter in one field. `MBPythonVersion`
-  is deprecated and will be removed in a future release. `MBPythonInfo` is included
-  in :class:`MicroBench` by default (Python API) and in the CLI default mixin set;
+  has been removed (see breaking changes above). `MBPythonInfo` is included
+  in `MicroBench` by default (Python API) and in the CLI default mixin set;
   `--no-mixin` suppresses it on the CLI as usual.
 
 - **`MicroBenchBase`**: the core benchmarking machinery is now exposed as
@@ -426,8 +426,8 @@ Also includes all changes from v1.1.0.
   v2 schema migration documented in the breaking changes section above.
 
 - **`python-dateutil` dependency removed from `LiveStream`**: timestamp
-  parsing now uses `datetime.fromisoformat()` from the standard library
-  (Python 3.7+). Remove `python-dateutil` from your environment if it was
+  parsing now uses `datetime.fromisoformat()` from the standard library.
+  Remove `python-dateutil` from your environment if it was
   only installed for microbench.
 
 ## [1.1.0] - 2026-03-13

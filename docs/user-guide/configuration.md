@@ -5,6 +5,7 @@
 | Parameter | Default | Description |
 |---|---|---|
 | `outfile` | `None` | File path or file-like object to write results to. |
+| `outputs` | `None` | List of `Output` instances for multi-sink output. Mutually exclusive with `outfile`. |
 | `json_encoder` | `JSONEncoder` | Custom JSON encoder class. |
 | `tz` | `timezone.utc` | Timezone for `start_time` / `finish_time`. |
 | `iterations` | `1` | Number of times to run the decorated function. |
