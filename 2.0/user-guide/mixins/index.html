@@ -1,0 +1,2093 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Micro-benchmarking and reproducibility metadata capture for Python">
+      
+      
+      
+        <link rel="canonical" href="https://alubbock.github.io/microbench/latest/user-guide/mixins/">
+      
+      
+        <link rel="prev" href="../configuration/">
+      
+      
+        <link rel="next" href="../output/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Mixins - microbench</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mixins" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="microbench" class="md-header__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            microbench
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Mixins
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="microbench" class="md-nav__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    microbench
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixins
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#function-calls-and-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Function calls and return values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Function calls and return values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbfunctioncall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBFunctionCall
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbreturnvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBReturnValue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host resources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Host resources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbhostinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBHostInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#job-resource-utilisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job resource utilisation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job resource utilisation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbpeakmemory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBPeakMemory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hpc-and-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HPC and containers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HPC and containers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbslurminfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBSlurmInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbloadedmodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBLoadedModules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbworkingdir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBWorkingDir
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbcgrouplimits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBCgroupLimits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code provenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code provenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbgitinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBGitInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbfilehash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBFileHash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#package-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package versions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Package versions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbglobalpackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBGlobalPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbinstalledpackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBInstalledPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbcondapackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBCondaPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capture_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capture_versions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nvidia-gpu-mbnvidiasmi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NVIDIA GPU — MBNvidiaSmi
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NVIDIA GPU — MBNvidiaSmi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selecting-specific-gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting specific GPUs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#line-profiler-mblineprofiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Line profiler — MBLineProfiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Periodic monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extending/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extending microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#function-calls-and-return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Function calls and return values
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Function calls and return values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbfunctioncall" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBFunctionCall
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbreturnvalue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBReturnValue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#host-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host resources
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Host resources">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbhostinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBHostInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#job-resource-utilisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job resource utilisation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Job resource utilisation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbpeakmemory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBPeakMemory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hpc-and-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HPC and containers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="HPC and containers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbslurminfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBSlurmInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbloadedmodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBLoadedModules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbworkingdir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBWorkingDir
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbcgrouplimits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBCgroupLimits
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code provenance
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code provenance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbgitinfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBGitInfo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbfilehash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBFileHash
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#package-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Package versions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Package versions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mbglobalpackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBGlobalPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbinstalledpackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBInstalledPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mbcondapackages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBCondaPackages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#capture_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        capture_versions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nvidia-gpu-mbnvidiasmi" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NVIDIA GPU — MBNvidiaSmi
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NVIDIA GPU — MBNvidiaSmi">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#choosing-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selecting-specific-gpus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selecting specific GPUs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#line-profiler-mblineprofiler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Line profiler — MBLineProfiler
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mixins">Mixins</h1>
+<p>Mixins add metadata capture to a benchmark suite. The same set of mixins is
+available from both the CLI and the Python API.</p>
+<h2 id="cli">CLI</h2>
+<p>Select mixins with <code>--mixin</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>git-info<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<p>Mixin names use kebab-case without the <code>MB</code> prefix (<code>host-info</code> for
+<code>MBHostInfo</code>, etc.). MB-prefixed names are also accepted. Run <code>--show-mixins</code>
+to list all available mixins with descriptions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench<span class="w"> </span>--show-mixins
+</code></pre></div>
+<p>By default, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, and
+<code>working-dir</code> are included automatically. Specifying <code>--mixin</code> replaces the
+defaults entirely. Use <code>--no-mixin</code> to disable all mixins:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Only peak-memory — no host info or SLURM</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>peak-memory<span class="w"> </span>--<span class="w"> </span>./job.sh
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># No mixins at all — timing and command fields only</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
+</code></pre></div>
+<p><code>MBFunctionCall</code>, <code>MBReturnValue</code>, <code>MBGlobalPackages</code>, and <code>MBLineProfiler</code>
+have no CLI equivalent — they are Python API only.</p>
+<h2 id="python-api">Python API</h2>
+<p>Combine any number of mixins with <code>MicroBench</code> via multiple inheritance:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">):</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p><code>MicroBench</code> already includes <code>MBPythonInfo</code> by default, so a <code>python</code> dict
+is present in every record without any extra mixin. Subclass
+<code>MicroBenchBase</code> instead if you want a completely bare benchmark class with
+no default captures.</p>
+<p>Python resolves method calls across multiple base classes using the <strong>Method
+Resolution Order (MRO)</strong> — a deterministic left-to-right search that ensures
+each class in the hierarchy is visited exactly once. This means you can
+combine any number of microbench mixins without conflicts, and their
+<code>capture_*</code> methods will all be called.</p>
+<h2 id="reference">Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Mixin</th>
+<th>CLI name</th>
+<th>Fields captured</th>
+<th>Extra requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>(none)</em></td>
+<td>—</td>
+<td><code>mb.run_id</code>, <code>mb.version</code>, <code>mb.timezone</code>, <code>mb.duration_counter</code>, <code>call.invocation</code>, <code>call.name</code>, <code>call.start_time</code>, <code>call.finish_time</code>, <code>call.durations</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBFunctionCall</code></td>
+<td>Python only</td>
+<td><code>call.args</code>, <code>call.kwargs</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBReturnValue</code></td>
+<td>Python only</td>
+<td><code>call.return_value</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBPythonInfo</code></td>
+<td><code>python-info</code> <em>(default)</em></td>
+<td><code>python.version</code>, <code>python.prefix</code>, <code>python.executable</code> — <strong>included in <code>MicroBench</code> by default</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBHostInfo</code></td>
+<td><code>host-info</code> <em>(default)</em></td>
+<td><code>host.hostname</code>, <code>host.os</code>; also <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes) when psutil is installed (silently omitted otherwise)</td>
+<td>psutil (optional)</td>
+</tr>
+<tr>
+<td><code>MBPeakMemory</code></td>
+<td><code>peak-memory</code></td>
+<td><code>call.peak_memory_bytes</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBSlurmInfo</code></td>
+<td><code>slurm-info</code> <em>(default)</em></td>
+<td><code>slurm</code> dict of all <code>SLURM_*</code> env vars (empty dict if not in a SLURM job)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBLoadedModules</code></td>
+<td><code>loaded-modules</code> <em>(default)</em></td>
+<td><code>loaded_modules</code> dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded)</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBWorkingDir</code></td>
+<td><code>working-dir</code> <em>(default)</em></td>
+<td><code>call.working_dir</code> — absolute path of the working directory at benchmark time</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBCgroupLimits</code></td>
+<td><code>cgroup-limits</code></td>
+<td><code>cgroups</code> dict with <code>cpu_cores_limit</code>, <code>memory_bytes_limit</code>, <code>version</code> (empty dict if not on Linux or cgroup fs unavailable)</td>
+<td>Linux only</td>
+</tr>
+<tr>
+<td><code>MBGitInfo</code></td>
+<td><code>git-info</code></td>
+<td><code>git</code> dict with <code>repo</code>, <code>commit</code>, <code>branch</code>, <code>dirty</code></td>
+<td><code>git</code> ≥ 2.11 on PATH</td>
+</tr>
+<tr>
+<td><code>MBGlobalPackages</code></td>
+<td>Python only</td>
+<td><code>python.loaded_packages</code> for every package in the caller's global scope</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBInstalledPackages</code></td>
+<td><code>installed-packages</code></td>
+<td><code>python.installed_packages</code> (and optionally <code>python.installed_package_paths</code>) for every installed package</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>MBCondaPackages</code></td>
+<td><code>conda-packages</code></td>
+<td><code>conda</code> dict with <code>name</code>, <code>path</code>, and <code>packages</code> (version dict)</td>
+<td><code>conda</code> on PATH or <code>CONDA_EXE</code> set</td>
+</tr>
+<tr>
+<td><code>MBNvidiaSmi</code></td>
+<td><code>nvidia-smi</code></td>
+<td><code>nvidia</code> — list of per-GPU dicts (see below)</td>
+<td><code>nvidia-smi</code> on PATH</td>
+</tr>
+<tr>
+<td><code>MBLineProfiler</code></td>
+<td>Python only</td>
+<td><code>call.line_profiler</code> (base64-encoded profile, see below)</td>
+<td>line_profiler</td>
+</tr>
+<tr>
+<td><code>MBFileHash</code></td>
+<td><code>file-hash</code></td>
+<td><code>file_hashes</code> — SHA-256 checksum of each specified file</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="function-calls-and-return-values">Function calls and return values</h2>
+<h3 id="mbfunctioncall"><code>MBFunctionCall</code></h3>
+<p>Captures the positional and keyword arguments passed to the decorated
+function as <code>args</code> (list) and <code>kwargs</code> (dict):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="n">add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;args&quot;: [1], &quot;kwargs&quot;: {&quot;b&quot;: 2}}, ...}</span>
+</code></pre></div>
+<h3 id="mbreturnvalue"><code>MBReturnValue</code></h3>
+<p>Captures the return value of the decorated function as <code>return_value</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBReturnValue</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBReturnValue</span><span class="p">):</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">compute</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;return_value&quot;: 4950}, ...}</span>
+</code></pre></div>
+<p>The return value must be JSON-serialisable. If it is not, a
+<code>JSONEncodeWarning</code> is issued and a placeholder is stored. See
+<a href="../extending/#custom-json-encoding">Custom JSON encoding</a> to handle
+custom types.</p>
+<h2 id="host-resources">Host resources</h2>
+<h3 id="mbhostinfo"><code>MBHostInfo</code></h3>
+<p>Captures hostname, operating system, and (when <a href="https://pypi.org/project/psutil/">psutil</a>
+is installed) CPU core counts and total RAM.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">):</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p>Always-present fields: <code>host.hostname</code>, <code>host.os</code>.</p>
+<p>Fields added when psutil is installed (silently omitted otherwise):
+<code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, <code>host.ram_total</code> (bytes).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>MBHostCpuCores</code> and <code>MBHostRamTotal</code> have been removed. Use <code>MBHostInfo</code>,
+which captures all host fields including the psutil-dependent ones.</p>
+</div>
+<h2 id="job-resource-utilisation">Job resource utilisation</h2>
+<h3 id="mbpeakmemory"><code>MBPeakMemory</code></h3>
+<p>Captures the peak Python memory allocation during the benchmarked function
+(across all iterations when <code>iterations &gt; 1</code>) as <code>call.peak_memory_bytes</code> (bytes).
+Uses <a href="https://docs.python.org/3/library/tracemalloc.html"><code>tracemalloc</code></a> from
+the standard library — no extra dependencies required.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBPeakMemory</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBPeakMemory</span><span class="p">):</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">process</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="c1"># record contains: {&quot;call&quot;: {&quot;peak_memory_bytes&quot;: 8056968}, ...}</span>
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code>tracemalloc</code> tracks memory that goes through Python's allocator, which
+covers Python objects and most C-extension allocations. Memory allocated
+directly via <code>malloc</code> in C extensions (e.g. some large NumPy operations)
+is not tracked.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Continuous resource monitoring</p>
+<p><code>MBPeakMemory</code> gives a single high-water mark per call. For time-series
+sampling of memory, CPU, and other metrics <em>while the function runs</em>,
+see <a href="../monitoring/">Periodic monitoring</a>.</p>
+</div>
+<h2 id="hpc-and-containers">HPC and containers</h2>
+<h3 id="mbslurminfo"><code>MBSlurmInfo</code></h3>
+<p>Captures all <code>SLURM_*</code> environment variables into a <code>slurm</code> dict. Keys are
+lowercased with the <code>SLURM_</code> prefix stripped, so <code>SLURM_JOB_ID</code> becomes
+<code>slurm['job_id']</code>. If the benchmark runs outside a SLURM job, <code>slurm</code> is
+an empty dict.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">{</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="nt">&quot;slurm&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="nt">&quot;job_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;12345&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">    </span><span class="nt">&quot;array_task_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">&quot;nodelist&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpu-node-[01-04]&quot;</span><span class="p">,</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">    </span><span class="nt">&quot;cpus_per_task&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4&quot;</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>Access individual values in pandas with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">results</span><span class="p">[</span><span class="s1">&#39;slurm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;job_id&#39;</span><span class="p">))</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p><code>MBSlurmInfo</code> supersedes the manual <code>env_vars = ('SLURM_JOB_ID', ...)</code>
+pattern — it captures every <code>SLURM_*</code> variable automatically with no
+configuration.</p>
+</div>
+<h3 id="mbloadedmodules"><code>MBLoadedModules</code></h3>
+<p>Captures the currently loaded <a href="https://lmod.readthedocs.io/">Lmod</a> or
+<a href="https://modules.readthedocs.io/">Environment Modules</a> software stack into a
+<code>loaded_modules</code> dict, mapping each module name to its version string. If no
+modules are loaded, or the benchmark is not running in a module-enabled
+environment, <code>loaded_modules</code> is an empty dict.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLoadedModules</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLoadedModules</span><span class="p">):</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="p">{</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span><span class="nt">&quot;loaded_modules&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span><span class="nt">&quot;gcc&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;12.2.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span><span class="nt">&quot;openmpi&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;4.1.5&quot;</span><span class="p">,</span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="w">    </span><span class="nt">&quot;python&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.10.4&quot;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">}</span>
+</code></pre></div>
+<p>Module entries without a version (e.g. <code>null</code>) are stored with an empty
+string as the version. Hierarchical module names such as
+<code>GCC/12.2.0-GCCcore-12.2.0</code> are split on the first <code>/</code>, so the name is
+<code>GCC</code> and the version is <code>12.2.0-GCCcore-12.2.0</code>.</p>
+<p>This mixin reads the <code>LOADEDMODULES</code> environment variable, which is the
+standard set by both Lmod and Environment Modules. No subprocess is
+required and there are no extra dependencies.</p>
+<h3 id="mbworkingdir"><code>MBWorkingDir</code></h3>
+<p>Captures the absolute path of the working directory at benchmark time into <code>call.working_dir</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBWorkingDir</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBWorkingDir</span><span class="p">):</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="p">{</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="nt">&quot;working_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/experiments/run-42&quot;</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="p">}</span>
+</code></pre></div>
+<p>Useful for reproducibility — records exactly which directory was current when
+the benchmark ran, so results from different nodes or directories can be
+distinguished. Included in the CLI defaults.</p>
+<h3 id="mbcgrouplimits"><code>MBCgroupLimits</code></h3>
+<p>Captures the CPU quota and memory limit enforced by the Linux control groups
+(cgroups). Works for SLURM jobs and Kubernetes pods, on both cgroup v1 and
+cgroup v2 systems, with no external dependencies. Unlike <code>MBHostInfo</code> (which reports the physical node's total resources),
+<code>MBCgroupLimits</code> reports what the scheduler actually allocated to this job or
+container — the number that determines your benchmark's resource budget.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span><span class="p">):</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="p">}</span>
+</code></pre></div>
+<p><strong><code>cpu_cores_limit</code></strong> is derived from the cgroup CPU quota and period
+(<code>quota_us / period_us</code>), so it represents effective CPU parallelism rather than
+a physical core count. A SLURM job launched with <code>--cpus-per-task=4</code> will
+typically report <code>cpu_cores_limit: 4.0</code>.</p>
+<p><strong><code>memory_bytes_limit</code></strong> is the hard memory limit in bytes. A job allocated <code>--mem=16G</code>
+will typically report <code>memory_bytes_limit: 17179869184</code>.</p>
+<p>Both fields are <code>null</code> when no limit is set (the scheduler granted unlimited
+access to that resource). <code>cgroups</code> is an empty dict on non-Linux
+platforms or when the cgroup filesystem is unavailable.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Pair with <code>MBSlurmInfo</code> for full HPC context — <code>MBSlurmInfo</code> captures
+scheduler metadata (job ID, node list, etc.) while <code>MBCgroupLimits</code> captures
+the kernel-enforced resource limits.</p>
+</div>
+<h2 id="code-provenance">Code provenance</h2>
+<h3 id="mbgitinfo"><code>MBGitInfo</code></h3>
+<p>Captures the current git repo, commit hash, branch name, and dirty flag
+(whether there are uncommitted changes in the working tree). Requires
+<code>git</code> ≥ 2.11 on <code>PATH</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p>Each record will contain:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;git&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/project&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="nt">&quot;dirty&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>dirty</code> is <code>True</code> if there are any staged or unstaged changes to tracked
+files. <code>branch</code> is an empty string in detached HEAD state.</p>
+<p>By default the repository is located from the running script's directory
+(<code>sys.argv[0]</code>), which works correctly even when a script is launched by
+absolute path from a different working directory (e.g. cluster job
+submission). Falls back to the shell's working directory in interactive
+Python sessions. Set <code>git_repo</code> to target a specific directory explicitly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">git_repo</span> <span class="o">=</span> <span class="s1">&#39;/path/to/repo&#39;</span>
+</code></pre></div>
+<p>Use <code>capture_optional = True</code> to silently skip git capture on machines
+without git or when running outside a repository.</p>
+<p><strong>CLI:</strong> use <code>--git-repo DIR</code> to specify the repository directory (defaults
+to the current working directory):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>git-info<span class="w"> </span>--git-repo<span class="w"> </span>/path/to/repo<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<h3 id="mbfilehash"><code>MBFileHash</code></h3>
+<p>Records a cryptographic checksum of one or more files alongside benchmark
+results. This ties a result to the exact version of the script that produced
+it — useful when benchmarks evolve over time and you need to know which code
+generated which numbers.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+</code></pre></div>
+<p>By default, <code>MBFileHash</code> hashes <code>sys.argv[0]</code> — the script that was run. To
+hash specific files instead, set <code>hash_files</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;run_experiment.py&#39;</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">]</span>
+</code></pre></div>
+<p>Relative paths in <code>hash_files</code> are resolved against the <strong>working directory
+at the time the benchmarked function is called</strong>, which may differ from the
+script's location (especially on clusters where a job scheduler launches
+scripts from a scratch directory). Use absolute paths to be safe:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">SCRIPT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;run_experiment.py&#39;</span><span class="p">),</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">),</span>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="p">]</span>
+</code></pre></div>
+<p>Each record will contain a <code>file_hashes</code> dict mapping each path to its
+hex digest:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">&quot;file_hashes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="nt">&quot;run_experiment.py&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;</span><span class="p">,</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span><span class="nt">&quot;config.yaml&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824&quot;</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="p">}</span>
+</code></pre></div>
+<p>The default algorithm is SHA-256. Use <code>hash_algorithm</code> to select a different
+algorithm from Python's <a href="https://docs.python.org/3/library/hashlib.html"><code>hashlib</code></a>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;large_model_weights.bin&#39;</span><span class="p">]</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="n">hash_algorithm</span> <span class="o">=</span> <span class="s1">&#39;md5&#39;</span>   <span class="c1"># faster for large files</span>
+</code></pre></div>
+<p>Any algorithm name accepted by <code>hashlib.new()</code> works: <code>'sha256'</code> (default),
+<code>'md5'</code>, <code>'sha1'</code>, <code>'blake2b'</code>, etc.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Pair <code>MBFileHash</code> with <code>capture_optional = True</code> if the script path
+may not always be available (e.g. interactive Python sessions):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sometimes_missing.dat&#39;</span><span class="p">]</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">capture_optional</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div>
+</div>
+<p><strong>CLI:</strong> use <code>--hash-file FILE [FILE ...]</code> and <code>--hash-algorithm ALGORITHM</code>.
+The CLI defaults to hashing the benchmarked command executable rather than
+<code>sys.argv[0]</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-file<span class="w"> </span>run_experiment.py<span class="w"> </span>config.yaml<span class="w"> </span>--<span class="w"> </span>./run.sh
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-algorithm<span class="w"> </span>md5<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<h2 id="package-versions">Package versions</h2>
+<h3 id="mbglobalpackages"><code>MBGlobalPackages</code></h3>
+<p>Captures the version of every module imported in the caller's global
+namespace:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>    <span class="k">pass</span>
+</code></pre></div>
+<p>The <code>python.loaded_packages</code> field will contain <code>{"numpy": "1.26.0", "pandas": "2.1.0", ...}</code>.</p>
+<h3 id="mbinstalledpackages"><code>MBInstalledPackages</code></h3>
+<p>Captures every package available for import (from <code>importlib.metadata</code>).
+Results are stored in <code>python.installed_packages</code>. Useful for full
+reproducibility audits. Can be slow on environments with many packages.</p>
+<p>Set <code>capture_paths = True</code> to also record installation paths in
+<code>python.installed_package_paths</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div>
+<h3 id="mbcondapackages"><code>MBCondaPackages</code></h3>
+<p>Captures the active conda environment's identity and package list using the
+<code>conda</code> CLI. The active environment is determined by the <code>CONDA_PREFIX</code>
+environment variable, falling back to <code>sys.prefix</code> when it is unset.
+If <code>conda</code> is not on <code>PATH</code>, the <code>CONDA_EXE</code> environment variable is tried.</p>
+<p>Records two fields:</p>
+<p>A single <code>conda</code> dict with three keys:</p>
+<ul>
+<li><code>name</code> (<code>CONDA_DEFAULT_ENV</code>) — may be <code>None</code> if unset.</li>
+<li><code>path</code> (<code>CONDA_PREFIX</code>) — may be <code>None</code> if unset.</li>
+<li><code>packages</code> — dict mapping package name to version string.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>
+</code></pre></div>
+<h3 id="capture_versions"><code>capture_versions</code></h3>
+<p>To capture specific package versions without a mixin, list them on the
+class. Results are stored in <code>python.loaded_packages</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="nvidia-gpu-mbnvidiasmi">NVIDIA GPU — <code>MBNvidiaSmi</code></h2>
+<p>Captures attributes for each installed GPU via <code>nvidia-smi</code>. Results are stored
+in <code>nvidia</code> as a list of per-GPU dicts, each containing a <code>uuid</code> key plus one
+key per queried attribute:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="p">{</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">  </span><span class="nt">&quot;nvidia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GPU-abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;gpu_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NVIDIA A100&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;memory.total&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;40960 MiB&quot;</span><span class="p">}</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="choosing-attributes">Choosing attributes</h3>
+<p>By default, <code>gpu_name</code> and <code>memory.total</code> are captured. To record additional
+attributes — power draw, temperature, utilisation, etc. — set <code>nvidia_attributes</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;power.draw&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.gpu&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p>Run <code>nvidia-smi --help-query-gpu</code> for the full list of available attribute names.</p>
+<p><strong>CLI:</strong> use <code>--nvidia-attributes ATTR [ATTR ...]</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span>temperature.gpu<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<h3 id="selecting-specific-gpus">Selecting specific GPUs</h3>
+<p>By default all installed GPUs are captured. To restrict to a subset, set
+<code>nvidia_gpus</code> to a list of GPU identifiers. Three formats are accepted:</p>
+<ul>
+<li><strong>Zero-based index</strong> — <code>0</code>, <code>1</code>, etc. Simple but can change after a reboot or
+  driver reset.</li>
+<li><strong>UUID</strong> — <code>GPU-abc123...</code> as reported by <code>nvidia-smi -L</code>. Stable across
+  reboots and recommended for reproducible results.</li>
+<li><strong>PCI bus ID</strong> — <code>00000000:01:00.0</code> format. Stable and unique when multiple
+  GPUs share the same model name.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123def456&#39;</span><span class="p">,)</span>   <span class="c1"># single GPU by UUID</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># first two GPUs by index</span>
+</code></pre></div>
+<p>Omit <code>nvidia_gpus</code> entirely to capture all GPUs.</p>
+<p><strong>CLI:</strong> use <code>--nvidia-gpus GPU [GPU ...]</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--<span class="w"> </span>./run.sh
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span>GPU-abc123def456<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<h2 id="line-profiler-mblineprofiler">Line profiler — <code>MBLineProfiler</code></h2>
+<p>Captures a line-by-line timing profile of the decorated function using
+<a href="https://github.com/rkern/line_profiler">line_profiler</a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>
+<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
+<a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
+<a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a>    <span class="k">return</span> <span class="n">acc</span>
+<a id="__codelineno-38-14" name="__codelineno-38-14" href="#__codelineno-38-14"></a>
+<a id="__codelineno-38-15" name="__codelineno-38-15" href="#__codelineno-38-15"></a><span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-38-16" name="__codelineno-38-16" href="#__codelineno-38-16"></a>
+<a id="__codelineno-38-17" name="__codelineno-38-17" href="#__codelineno-38-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-38-18" name="__codelineno-38-18" href="#__codelineno-38-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">])</span>
+</code></pre></div>
+<p>The profile is stored as a base64-encoded pickle in the <code>call.line_profiler</code> field.
+Use <code>MBLineProfiler.decode_line_profile()</code> to deserialise it, or
+<code>MBLineProfiler.print_line_profile()</code> to print it directly.</p>
+<div class="admonition warning">
+<p class="admonition-title">Security</p>
+<p><code>decode_line_profile()</code> uses <code>pickle.loads</code>. Only decode profiles from
+trusted sources (your own benchmark output). Never decode data received
+over a network or from an untrusted file.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.sections", "navigation.top", "toc.follow", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
