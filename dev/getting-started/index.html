@@ -965,7 +965,9 @@
 and capture timing and host metadata with no code changes:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
 </code></pre></div>
-<p>Host information and SLURM environment variables are captured by default.
+<p>Default information captured includes timing, the Python interpreter, host
+information, SLURM environment variables, loaded modules, and the current
+working directory.
 Use <code>--field KEY=VALUE</code> to attach labels and <code>--iterations N</code> to run the
 command multiple times:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench<span class="w"> </span><span class="se">\</span>
@@ -1071,7 +1073,7 @@ a list of dicts:</p>
 <a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="n">myfunction</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 </code></pre></div>
 <p>Mixins used:
-- <code>MBFunctionCall</code> records the supplied arguments <code>x</code> and <code>y</code>.
+- <code>MBFunctionCall</code> records the supplied argument values.
 - <code>MBHostInfo</code> captures <code>host.hostname</code> and <code>host.os</code>.
 - <code>MBSlurmInfo</code> captures all <code>SLURM_*</code> environment variables (used by the
   <a href="https://slurm.schedmd.com/overview.html">SLURM</a> cluster system).</p>

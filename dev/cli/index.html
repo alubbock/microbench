@@ -1294,7 +1294,7 @@ explicitly (e.g. <code>python3.12 -m microbench ...</code>).</p>
 </tr>
 <tr>
 <td><code>call.returncode</code></td>
-<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value.</td>
+<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the first non-zero return code, if present, or zero (success) otherwise.</td>
 </tr>
 <tr>
 <td><code>call.timed_out</code></td>
@@ -1438,17 +1438,11 @@ capturing hostname, OS, CPU count, RAM, and all SLURM variables (job ID, array
 task ID, node list, etc.) alongside the wall-clock time of the simulation.
 CPU and RAM fields are included automatically by <code>host-info</code> when psutil is
 installed.</p>
-<p>Read the results with pandas:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># flatten if needed</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Or use get_results(flat=True) when reading via microbench:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">flat</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">flat</span><span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+<p>Read the results:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">df</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
 </code></pre></div>
 <h2 id="repeated-runs">Repeated runs</h2>
 <p>Use <code>--iterations</code> to run the command multiple times within a single record.
@@ -1463,7 +1457,8 @@ per-record overhead or reduce timing noise:</p>
 <li><code>call.stdout</code> / <code>call.stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
 </ul>
 <p>Warmup runs are excluded from all three lists. The process exits with
-<code>max(returncode)</code> so any failing iteration propagates to the shell.</p>
+the first non-zero return code, if present, so any failing iteration
+propagates to the shell.</p>
 <div class="admonition note">
 <p class="admonition-title">Subprocess-side buffering</p>
 <p>When stdout or stderr is captured via a pipe, many programs switch from
@@ -1476,7 +1471,7 @@ unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p
 </code></pre></div>
 </div>
 <p>To detect failed iterations when analysing results with pandas (using <code>flat=True</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">any</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span>
 </code></pre></div>
 <h2 id="timeout">Timeout</h2>
 <p>Use <code>--timeout SECONDS</code> to limit how long each iteration is allowed to run:</p>
@@ -1491,7 +1486,8 @@ to adjust the gap between SIGTERM and SIGKILL:</p>
 </code></pre></div>
 <p>The record is always written, even for timed-out iterations. Detect timeouts in
 analysis with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_timed_out&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.timed_out&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">timed_out</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;call.timed_out&#39;</span><span class="p">)</span>  <span class="c1"># Check if column if present</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_timed_out&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="n">timed_out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">timed_out</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
 </code></pre></div>
 <p>The <code>call.returncode</code> for a SIGTERM-killed process will be <code>-15</code>; for SIGKILL, <code>-9</code>.</p>
 <h2 id="http-output">HTTP output</h2>
@@ -1622,7 +1618,7 @@ Each sample is a dict with three keys:</p>
 </tr>
 <tr>
 <td><code>cpu_percent</code></td>
-<td>CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines). The first sample is always <code>0.0</code> — this is a psutil limitation where two successive calls are needed to compute a ratio.</td>
+<td>CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines).</td>
 </tr>
 <tr>
 <td><code>rss_bytes</code></td>

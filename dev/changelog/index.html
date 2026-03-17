@@ -728,17 +728,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes-vs-v110" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Breaking changes (vs v1.1.0)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#new-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -750,21 +739,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#refactoring" class="md-nav__link">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refactoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bug-fixes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bug fixes
+        Breaking changes (vs v1.1.0)
       
     </span>
   </a>
@@ -851,17 +829,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes-vs-v110" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Breaking changes (vs v1.1.0)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#new-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -873,21 +840,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#refactoring" class="md-nav__link">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Refactoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bug-fixes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bug fixes
+        Breaking changes (vs v1.1.0)
       
     </span>
   </a>
@@ -950,6 +906,266 @@
 <h1 id="changelog">Changelog</h1>
 <p>All notable changes to microbench are documented here.</p>
 <h2 id="200-unreleased">[2.0.0] - unreleased</h2>
+<p>Microbench v2 is a significant upgrade with many new features versus v1.1.0.
+Be sure to review the breaking changes before upgrading.</p>
+<h3 id="new-features">New features</h3>
+<ul>
+<li>
+<p><strong>Command-line interface</strong> (<code>microbench -- COMMAND</code>): wrap any external
+  command and record host metadata alongside timing without writing Python
+  code. Useful for SLURM jobs, shell scripts, and compiled executables.
+  Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
+  alongside the standard timing fields. Mixins are specified by short
+  kebab-case names without the <code>MB</code> prefix (e.g. <code>host-info</code>);
+  original MB-prefixed names are also accepted. Use
+  <code>--mixin MIXIN [MIXIN ...]</code> to select metadata to capture (defaults to
+  <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, <code>python-info</code>
+  and <code>working-dir</code>); use <code>--show-mixins</code> to
+  list all available mixins with descriptions; use <code>--field KEY=VALUE</code> to
+  attach extra labels; use <code>--iterations N</code> and <code>--warmup N</code> for repeat
+  timing; use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture
+  subprocess output into the record (output is re-printed to the terminal
+  unless <code>=suppress</code> is given); use <code>--monitor-interval SECONDS</code> to sample
+  child process CPU and memory over time. Some mixins expose
+  their own configuration flags (shown in <code>--show-mixins</code> and <code>--help</code>).
+  Capture failures are non-fatal by default
+  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
+  cluster nodes. The process exits with the first non-zero returncode seen
+  across all timed iterations if present, or zero (success) otherwise.</p>
+</li>
+<li>
+<p><strong><code>summary(results)</code> / <code>bench.summary()</code></strong>: prints min / mean / median /
+  max / stdev of <code>call.durations</code> across all results. No dependencies required
+  beyond the Python standard library. <code>bench.summary()</code> is a one-liner
+  convenience that calls <code>bench.get_results()</code> internally. The module-level
+  <code>summary(results)</code> accepts any list of dicts and can be composed with other
+  results-processing steps.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">summary</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">()</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@bench</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">...</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">bench</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># or with explicit results list:</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">summary</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">())</span>
+</code></pre></div>
+<ul>
+<li><strong><code>bench.time(name)</code> sub-timing</strong>: [Python API] label phases inside a single benchmark
+  record with named timing sections. Sub-timings accumulate in <code>call.timings</code> as
+  <code>[{"name": ..., "duration": ...}, ...]</code> in call order. Compatible with
+  <code>bench.record()</code>, <code>bench.arecord()</code>, <code>@bench</code> (sync and async), and
+  <code>bench.record_on_exit()</code>. Calling outside an active benchmark is a silent
+  no-op; <code>call.timings</code> is absent when <code>bench.time()</code> is never called.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;pipeline&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;parse&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li><strong>Async support</strong>: [Python API] the <code>@bench</code> decorator now detects <code>async def</code> functions
+  and returns an <code>async def</code> wrapper that must be awaited. A new
+  <code>bench.arecord(name)</code> method provides the async counterpart of
+  <code>bench.record()</code> for use with <code>async with</code>. All mixins, static fields,
+  output sinks, <code>iterations</code>, and <code>warmup</code> work identically to the sync path.
+  <code>MBLineProfiler</code> raises <code>NotImplementedError</code> at decoration time when used
+  with an async function (line profiling of coroutines is not supported).</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nd">@bench</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch</span><span class="p">():</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">fetch</span><span class="p">())</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">async</span> <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">arecord</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">):</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">await</span> <span class="n">load_data</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>Note:</strong> elapsed time includes event-loop interleaving from other concurrent
+  tasks; run in an otherwise-idle event loop for repeatable results.</p>
+<ul>
+<li><strong><code>bench.record_on_exit(name, handle_sigterm=True)</code></strong>: [Python API]
+  registers a
+  process-exit handler that writes one benchmark record when the script
+  terminates. Captures wall-clock duration from the call site to exit plus
+  all mixin fields. Designed for SLURM jobs and batch scripts where
+  restructuring code around a decorator is impractical. Key behaviours:</li>
+<li>By default installs a SIGTERM handler (main thread only) that writes
+    the record, chains to any existing SIGTERM handler, then re-delivers
+    SIGTERM so the process exits with the conventional code 143 (128 + 15).</li>
+<li>Wraps <code>sys.excepthook</code> to capture unhandled exceptions into an
+    <code>exception</code> field before the process exits.</li>
+<li>Adds an <code>exit_signal</code> field when the exit was triggered by SIGTERM.</li>
+<li>Falls back to writing the record to <code>sys.stderr</code> if the primary output
+    sink raises (e.g. filesystem unmounted at exit time).</li>
+<li>
+<p>Calling a second time on the same instance replaces the first
+    registration and resets the start time.</p>
+</li>
+<li>
+<p><strong><code>bench.record(name)</code> context manager</strong>: [Python API] times an arbitrary code block
+  and writes one record, without requiring the code to be in a named
+  function. All mixins, static fields, and output sinks behave identically
+  to the decorator form.</p>
+</li>
+<li>
+<p><strong>Exception capture</strong>: [Python API] when a benchmarked block raises — via
+  <code>bench.record()</code> or a <code>@bench</code>-decorated function — the record is
+  written before the exception propagates. An <code>exception</code> field is added
+  containing <code>{"type": ..., "message": ...}</code>. The exception is always
+  re-raised. With <code>--iterations N</code>, timing stops at the first exception.</p>
+</li>
+<li>
+<p><strong><code>MBPythonInfo</code> mixin</strong> replaces <code>MBPythonVersion</code>: records a <code>python</code> dict
+  with <code>version</code>, <code>prefix</code> (<code>sys.prefix</code>), and <code>executable</code> (<code>sys.executable</code>),
+  giving a complete picture of the running interpreter in one field. <code>MBPythonVersion</code>
+  has been removed (see breaking changes above). <code>MBPythonInfo</code> is included
+  in <code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
+  <code>--no-mixin</code> suppresses it on the CLI as usual.</p>
+</li>
+<li>
+<p><strong><code>MBLoadedModules</code> mixin</strong>: captures the loaded Lmod / Environment
+  Modules software stack into a <code>loaded_modules</code> dict mapping module name
+  to version string (e.g. <code>{"gcc": "12.2.0", "openmpi": "4.1.5"}</code>). Reads
+  the standard <code>LOADEDMODULES</code> environment variable — no subprocess, no
+  extra dependencies. Empty dict when no modules are loaded. Included in
+  the CLI defaults alongside <code>MBHostInfo</code>, <code>MBSlurmInfo</code>, and <code>MBWorkingDir</code>.</p>
+</li>
+<li>
+<p><strong><code>MBWorkingDir</code> mixin</strong>: captures the absolute path of the working
+  directory at benchmark time into <code>call.working_dir</code>. No dependencies.
+  Included in the CLI defaults — useful for reproducibility when comparing
+  results across nodes or directories.</p>
+</li>
+<li>
+<p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
+  hash, branch name, and dirty flag (uncommitted changes present) via
+  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git</code>. Set <code>git_repo</code> to inspect
+  a specific repository directory.</p>
+</li>
+<li>
+<p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
+  benchmarked function as <code>call.peak_memory_bytes</code> (bytes), using
+  <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
+</li>
+<li>
+<p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
+  a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
+  when running outside a SLURM job. Supersedes the manual
+  <code>env_vars = ('SLURM_JOB_ID', ...)</code> pattern.</p>
+</li>
+<li>
+<p><strong><code>MBFileHash</code> mixin</strong>: records a cryptographic checksum of specified files
+  in the <code>file_hashes</code> field (a dict mapping path to hex digest). Defaults to
+  hashing <code>sys.argv[0]</code> — the running script. Set <code>hash_files</code> to an iterable
+  of paths to hash specific files instead. Set <code>hash_algorithm</code> to any
+  algorithm accepted by <code>hashlib.new</code> (default: <code>'sha256'</code>).</p>
+</li>
+<li>
+<p><strong><code>MBCgroupLimits</code> mixin</strong>: captures the CPU quota and memory limit enforced by
+  the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
+  v1 and v2). Fields in <code>cgroups</code>: <code>cpu_cores_limit</code> (float — quota ÷ period,
+  or <code>null</code> if unlimited), <code>memory_bytes_limit</code> (int or <code>null</code> if unlimited),
+  <code>version</code> (1 or 2). Returns <code>{}</code> on non-Linux systems or when the
+  cgroup filesystem is unavailable.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">pass</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong><code>MBCondaPackages</code> improvements</strong>:</li>
+<li>Queries the environment identified by <code>CONDA_PREFIX</code> (the shell's active conda
+    environment) rather than <code>sys.prefix</code>. Falls back to <code>sys.prefix</code> when
+    <code>CONDA_PREFIX</code> is not set.</li>
+<li>Falls back to <code>CONDA_EXE</code> if <code>conda</code> is not on <code>PATH</code> (common in non-interactive
+    SLURM batch scripts where conda is activated but its <code>bin/</code> is not on <code>PATH</code>).</li>
+<li>
+<p>Replaces the separate <code>conda_versions</code> field with a unified <code>conda</code> dict
+    containing <code>name</code> (<code>CONDA_DEFAULT_ENV</code>), <code>path</code> (<code>CONDA_PREFIX</code>), and
+    <code>packages</code> (the version dict). Either of <code>name</code>/<code>path</code> may be <code>None</code> if
+    the corresponding variable is unset. With <code>get_results(flat=True)</code> these
+    expand to <code>conda.name</code>, <code>conda.path</code>, <code>conda.packages.&lt;pkg&gt;</code> etc.</p>
+</li>
+<li>
+<p><strong><code>MicroBenchBase</code></strong>: the core benchmarking machinery is now exposed as
+  <code>MicroBenchBase</code> (no default mixins). <code>MicroBench</code> inherits from both
+  <code>MicroBenchBase</code> and <code>MBPythonInfo</code>. Subclass <code>MicroBenchBase</code> directly when
+  you need a completely bare benchmark class with no automatic captures.</p>
+</li>
+<li>
+<p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
+  before timing begins, priming caches or JIT compilation without affecting
+  results. Warmup calls are unrecorded and do not interact with the monitor
+  thread or capture triggers.</p>
+</li>
+<li>
+<p><strong>Multi-sink output architecture</strong> (#52): Results can now be written to
+  multiple destinations simultaneously by passing an <code>outputs</code> list to
+  <code>MicroBench</code>. Three classes make up the new output API:</p>
+</li>
+<li><code>Output</code> — abstract base class; subclass this to implement custom sinks.</li>
+<li><code>FileOutput</code> — writes JSONL to a file path or file-like object (wraps the
+    previous default behaviour).</li>
+<li><code>RedisOutput</code> — writes to a Redis list.</li>
+</ul>
+<p>The existing <code>outfile</code> parameter and class-level <code>outfile</code> attribute continue
+  to work as shorthand for a single <code>FileOutput</code>. Passing both <code>outfile</code> and
+  <code>outputs</code> raises <code>ValueError</code>.</p>
+<p>Example — write to a file and Redis simultaneously:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">FileOutput</span><span class="p">,</span> <span class="n">RedisOutput</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis-host&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">),</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">])</span>
+</code></pre></div>
+<p><code>get_results()</code> delegates to the first sink that supports reading back
+  results (<code>FileOutput</code> and <code>RedisOutput</code> both do).</p>
+<ul>
+<li><strong><code>get_results(format=..., flat=...)</code></strong>: <code>get_results</code> now accepts two
+  keyword arguments.</li>
+<li><code>format='dict'</code> (default) — returns a list of dicts; no pandas required.</li>
+<li><code>format='df'</code> — returns a pandas DataFrame (previous default behaviour).</li>
+<li>
+<p><code>flat=True</code> — flattens nested dict fields (e.g. <code>slurm</code>, <code>cgroups</code>,
+    <code>git</code>) into dot-notation keys (<code>slurm.job_id</code>, <code>call.name</code>). Works for both
+    formats without requiring pandas.</p>
+</li>
+<li>
+<p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
+  a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
+  methods instead of aborting the benchmark call. Failures are recorded in
+  <code>call.capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
+  the field is absent when all captures succeed. Designed for production
+  jobs on heterogeneous cluster nodes where optional dependencies may not
+  be present on every node.</p>
+</li>
+<li>
+<p><strong><code>python-dateutil</code> dependency removed from <code>LiveStream</code></strong>: timestamp
+  parsing now uses <code>datetime.fromisoformat()</code> from the standard library.
+  Remove <code>python-dateutil</code> from your environment if it was
+  only installed for microbench.</p>
+</li>
+</ul>
 <h3 id="breaking-changes-vs-v110">Breaking changes (vs v1.1.0)</h3>
 <ul>
 <li><strong>Removed deprecated mixins</strong>: <code>MBPythonVersion</code>, <code>MBHostCpuCores</code>, and
@@ -1179,348 +1395,27 @@
 </li>
 </ul>
 <p>Before:
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBenchRedis</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">RedisBench</span><span class="p">(</span><span class="n">MicroBenchRedis</span><span class="p">):</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">redis_connection</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;host&#39;</span><span class="p">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="mi">6379</span><span class="p">}</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">redis_key</span> <span class="o">=</span> <span class="s1">&#39;microbench:mykey&#39;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">RedisBench</span><span class="p">()</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBenchRedis</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">RedisBench</span><span class="p">(</span><span class="n">MicroBenchRedis</span><span class="p">):</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">redis_connection</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;host&#39;</span><span class="p">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="mi">6379</span><span class="p">}</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">redis_key</span> <span class="o">=</span> <span class="s1">&#39;microbench:mykey&#39;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">RedisBench</span><span class="p">()</span>
 </code></pre></div></p>
 <p>After:
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">RedisOutput</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>                                         <span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)])</span>
-</code></pre></div></p>
-<h3 id="new-features">New features</h3>
-<ul>
-<li><strong><code>get_results(format=..., flat=...)</code></strong>: <code>get_results</code> now accepts two
-  keyword arguments.</li>
-<li><code>format='dict'</code> (default) — returns a list of dicts; no pandas required.</li>
-<li><code>format='df'</code> — returns a pandas DataFrame (previous default behaviour).</li>
-<li>
-<p><code>flat=True</code> — flattens nested dict fields (e.g. <code>slurm</code>, <code>cgroups</code>,
-    <code>git</code>) into dot-notation keys (<code>slurm.job_id</code>, <code>call.name</code>). Works for both
-    formats without requiring pandas.</p>
-</li>
-<li>
-<p><strong><code>summary(results)</code> / <code>bench.summary()</code></strong>: prints min / mean / median /
-  max / stdev of <code>call.durations</code> across all results. No dependencies required
-  beyond the Python standard library. <code>bench.summary()</code> is a one-liner
-  convenience that calls <code>bench.get_results()</code> internally. The module-level
-  <code>summary(results)</code> accepts any list of dicts and can be composed with other
-  results-processing steps.</p>
-</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">summary</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">()</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nd">@bench</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="o">...</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">my_function</span><span class="p">()</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">bench</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1"># or with explicit results list:</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="n">summary</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">())</span>
-</code></pre></div>
-<ul>
-<li><strong><code>MBCgroupLimits</code></strong>: captures the CPU quota and memory limit enforced by
-  the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
-  v1 and v2). Fields in <code>cgroups</code>: <code>cpu_cores_limit</code> (float — quota ÷ period,
-  or <code>null</code> if unlimited), <code>memory_bytes_limit</code> (int or <code>null</code> if unlimited),
-  <code>version</code> (1 or 2). Returns <code>{}</code> on non-Linux systems or when the
-  cgroup filesystem is unavailable.</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span><span class="p">):</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">pass</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
-</code></pre></div>
-<ul>
-<li><strong><code>bench.time(name)</code> sub-timing API</strong>: label phases inside a single benchmark
-  record with named timing sections. Sub-timings accumulate in <code>call.timings</code> as
-  <code>[{"name": ..., "duration": ...}, ...]</code> in call order. Compatible with
-  <code>bench.record()</code>, <code>bench.arecord()</code>, <code>@bench</code> (sync and async), and
-  <code>bench.record_on_exit()</code>. Calling outside an active benchmark is a silent
-  no-op; <code>call.timings</code> is absent when <code>bench.time()</code> is never called.</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;pipeline&#39;</span><span class="p">):</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;parse&#39;</span><span class="p">):</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-</code></pre></div>
-<ul>
-<li><strong>Async support</strong>: the <code>@bench</code> decorator now detects <code>async def</code> functions
-  and returns an <code>async def</code> wrapper that must be awaited. A new
-  <code>bench.arecord(name)</code> method provides the async counterpart of
-  <code>bench.record()</code> for use with <code>async with</code>. All mixins, static fields,
-  output sinks, <code>iterations</code>, and <code>warmup</code> work identically to the sync path.
-  <code>MBLineProfiler</code> raises <code>NotImplementedError</code> at decoration time when used
-  with an async function (line profiling of coroutines is not supported).</li>
-</ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nd">@bench</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch</span><span class="p">():</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">fetch</span><span class="p">())</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="k">async</span> <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">arecord</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">):</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">await</span> <span class="n">load_data</span><span class="p">()</span>
-</code></pre></div>
-<p><strong>Note:</strong> elapsed time includes event-loop interleaving from other concurrent
-  tasks; run in an otherwise-idle event loop for repeatable results.</p>
-<ul>
-<li><strong><code>bench.record_on_exit(name, handle_sigterm=True)</code></strong>: registers a
-  process-exit handler that writes one benchmark record when the script
-  terminates. Captures wall-clock duration from the call site to exit plus
-  all mixin fields. Designed for SLURM jobs and batch scripts where
-  restructuring code around a decorator is impractical. Key behaviours:</li>
-<li>By default installs a SIGTERM handler (main thread only) that writes
-    the record, chains to any existing SIGTERM handler, then re-delivers
-    SIGTERM so the process exits with the conventional code 143 (128 + 15).</li>
-<li>Wraps <code>sys.excepthook</code> to capture unhandled exceptions into an
-    <code>exception</code> field before the process exits.</li>
-<li>Adds an <code>exit_signal</code> field when the exit was triggered by SIGTERM.</li>
-<li>Falls back to writing the record to <code>sys.stderr</code> if the primary output
-    sink raises (e.g. filesystem unmounted at exit time).</li>
-<li>
-<p>Calling a second time on the same instance replaces the first
-    registration and resets the start time.</p>
-</li>
-<li>
-<p><strong><code>bench.record(name)</code> context manager</strong>: times an arbitrary code block
-  and writes one record, without requiring the code to be in a named
-  function. All mixins, static fields, and output sinks behave identically
-  to the decorator form.</p>
-</li>
-<li>
-<p><strong>Exception capture</strong>: when a benchmarked block raises — via
-  <code>bench.record()</code> or a <code>@bench</code>-decorated function — the record is
-  written before the exception propagates. An <code>exception</code> field is added
-  containing <code>{"type": ..., "message": ...}</code>. The exception is always
-  re-raised. With <code>--iterations N</code>, timing stops at the first exception.</p>
-</li>
-<li>
-<p><strong><code>microbench</code> console entry point</strong>: <code>microbench</code> is now available as a
-  shell command after installation — no need to spell out <code>python -m microbench</code>.
-  <code>python -m microbench</code> remains fully equivalent and is still the recommended
-  form when you need to select a specific Python interpreter explicitly.</p>
-</li>
-<li>
-<p><strong><code>MBPythonInfo</code> mixin</strong> replaces <code>MBPythonVersion</code>: records a <code>python</code> dict
-  with <code>version</code>, <code>prefix</code> (<code>sys.prefix</code>), and <code>executable</code> (<code>sys.executable</code>),
-  giving a complete picture of the running interpreter in one field. <code>MBPythonVersion</code>
-  has been removed (see breaking changes above). <code>MBPythonInfo</code> is included
-  in <code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
-  <code>--no-mixin</code> suppresses it on the CLI as usual.</p>
-</li>
-<li>
-<p><strong><code>MicroBenchBase</code></strong>: the core benchmarking machinery is now exposed as
-  <code>MicroBenchBase</code> (no default mixins). <code>MicroBench</code> inherits from both
-  <code>MicroBenchBase</code> and <code>MBPythonInfo</code>. Subclass <code>MicroBenchBase</code> directly when
-  you need a completely bare benchmark class with no automatic captures.</p>
-</li>
-<li>
-<p><strong><code>MBCondaPackages</code> improvements</strong>:</p>
-</li>
-<li>Queries the environment identified by <code>CONDA_PREFIX</code> (the shell's active conda
-    environment) rather than <code>sys.prefix</code>. Falls back to <code>sys.prefix</code> when
-    <code>CONDA_PREFIX</code> is not set.</li>
-<li>Falls back to <code>CONDA_EXE</code> if <code>conda</code> is not on <code>PATH</code> (common in non-interactive
-    SLURM batch scripts where conda is activated but its <code>bin/</code> is not on <code>PATH</code>).</li>
-<li>
-<p>Replaces the separate <code>conda_versions</code> field with a unified <code>conda</code> dict
-    containing <code>name</code> (<code>CONDA_DEFAULT_ENV</code>), <code>path</code> (<code>CONDA_PREFIX</code>), and
-    <code>packages</code> (the version dict). Either of <code>name</code>/<code>path</code> may be <code>None</code> if
-    the corresponding variable is unset. With <code>get_results(flat=True)</code> these
-    expand to <code>conda.name</code>, <code>conda.path</code>, <code>conda.packages.&lt;pkg&gt;</code> etc.</p>
-</li>
-<li>
-<p><strong>Command-line interface</strong> (<code>python -m microbench</code>): wrap any external
-  command and record host metadata alongside timing without writing Python
-  code. Useful for SLURM jobs, shell scripts, and compiled executables.
-  Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
-  alongside the standard timing fields. Mixins are specified by short
-  kebab-case names without the <code>MB</code> prefix (e.g. <code>host-info</code>,
-  <code>python-version</code>); original MB-prefixed names are also accepted. Use
-  <code>--mixin MIXIN [MIXIN ...]</code> to select metadata to capture (defaults to
-  <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, and <code>working-dir</code>); use <code>--show-mixins</code> to
-  list all available mixins with descriptions; use <code>--field KEY=VALUE</code> to
-  attach extra labels; use <code>--iterations N</code> and <code>--warmup N</code> for repeat
-  timing; use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture
-  subprocess output into the record (output is re-printed to the terminal
-  unless <code>=suppress</code> is given); use <code>--monitor-interval SECONDS</code> to sample
-  child process CPU and memory over time (see below). Some mixins expose
-  their own configuration flags (shown in <code>--show-mixins</code> and <code>--help</code>):
-  <code>git-info</code> adds <code>--git-repo DIR</code> (default: current working directory),
-  and <code>file-hash</code> adds <code>--hash-file FILE [FILE ...]</code> (default: the
-  benchmarked command) and <code>--hash-algorithm ALGORITHM</code> (default:
-  <code>sha256</code>). Mixin flags are validated before the subprocess runs — passing
-  a non-existent path or a directory where a file is expected is caught
-  immediately. Supplying a mixin flag without loading the corresponding
-  mixin is an error. Capture failures are non-fatal by default
-  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
-  cluster nodes. The process exits with the highest returncode seen across
-  all timed iterations.</p>
-</li>
-<li>
-<p><strong>CLI subprocess monitoring</strong> (<code>--monitor-interval SECONDS</code>): periodically
-  sample the child process's CPU usage and resident memory (RSS) while it
-  runs and record the time series in <code>call.monitor</code>. Requires
-  <code>psutil</code>. Each element of <code>call.monitor</code> is a list of
-  <code>{"timestamp", "cpu_percent", "rss_bytes"}</code> dicts for one timed
-  iteration; warmup iterations are excluded. Works on Linux, macOS, and
-  Windows. If the process exits before the first sample fires, the field is
-  omitted rather than written as empty.</p>
-</li>
-<li>
-<p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
-  a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
-  methods instead of aborting the benchmark call. Failures are recorded in
-  <code>call.capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
-  the field is absent when all captures succeed. Designed for production
-  jobs on heterogeneous cluster nodes where optional dependencies may not
-  be present on every node.</p>
-</li>
-<li>
-<p><strong><code>MBLoadedModules</code> mixin</strong>: captures the loaded Lmod / Environment
-  Modules software stack into a <code>loaded_modules</code> dict mapping module name
-  to version string (e.g. <code>{"gcc": "12.2.0", "openmpi": "4.1.5"}</code>). Reads
-  the standard <code>LOADEDMODULES</code> environment variable — no subprocess, no
-  extra dependencies. Empty dict when no modules are loaded. Included in
-  the CLI defaults alongside <code>MBHostInfo</code>, <code>MBSlurmInfo</code>, and <code>MBWorkingDir</code>.</p>
-</li>
-<li>
-<p><strong><code>MBWorkingDir</code> mixin</strong>: captures the absolute path of the working
-  directory at benchmark time into <code>call.working_dir</code>. No dependencies.
-  Included in the CLI defaults — useful for reproducibility when comparing
-  results across nodes or directories.</p>
-</li>
-<li>
-<p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
-  hash, branch name, and dirty flag (uncommitted changes present) via
-  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git</code>. Set <code>git_repo</code> to inspect
-  a specific repository directory.</p>
-</li>
-<li>
-<p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
-  benchmarked function as <code>call.peak_memory_bytes</code> (bytes), using
-  <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
-</li>
-<li>
-<p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
-  a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
-  when running outside a SLURM job. Supersedes the manual
-  <code>env_vars = ('SLURM_JOB_ID', ...)</code> pattern.</p>
-</li>
-<li>
-<p><strong><code>MBFileHash</code> mixin</strong>: records a cryptographic checksum of specified files
-  in the <code>file_hashes</code> field (a dict mapping path to hex digest). Defaults to
-  hashing <code>sys.argv[0]</code> — the running script. Set <code>hash_files</code> to an iterable
-  of paths to hash specific files instead. Set <code>hash_algorithm</code> to any
-  algorithm accepted by <code>hashlib.new</code> (default: <code>'sha256'</code>).</p>
-</li>
-<li>
-<p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
-  before timing begins, priming caches or JIT compilation without affecting
-  results. Warmup calls are unrecorded and do not interact with the monitor
-  thread or capture triggers.</p>
-</li>
-<li>
-<p><strong>Multi-sink output architecture</strong> (#52): Results can now be written to
-  multiple destinations simultaneously by passing an <code>outputs</code> list to
-  <code>MicroBench</code>. Three classes make up the new output API:</p>
-</li>
-<li><code>Output</code> — abstract base class; subclass this to implement custom sinks.</li>
-<li><code>FileOutput</code> — writes JSONL to a file path or file-like object (wraps the
-    previous default behaviour).</li>
-<li><code>RedisOutput</code> — writes to a Redis list.</li>
-</ul>
-<p>The existing <code>outfile</code> parameter and class-level <code>outfile</code> attribute continue
-  to work as shorthand for a single <code>FileOutput</code>. Passing both <code>outfile</code> and
-  <code>outputs</code> raises <code>ValueError</code>.</p>
-<p>Example — write to a file and Redis simultaneously:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">FileOutput</span><span class="p">,</span> <span class="n">RedisOutput</span>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">RedisOutput</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">),</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis-host&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">),</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">])</span>
-</code></pre></div>
-<p><code>get_results()</code> delegates to the first sink that supports reading back
-  results (<code>FileOutput</code> and <code>RedisOutput</code> both do).</p>
-<p>Also includes all changes from v1.1.0.</p>
-<h3 id="refactoring">Refactoring</h3>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                                         <span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)])</span>
+</code></pre></div></p>
 <ul>
-<li><strong>Module structure split</strong>: the <code>microbench/__init__.py</code> god-module and the
-  <code>microbench/__main__.py</code> CLI monolith have been broken into focused
-  subpackages:</li>
-<li><code>microbench/core/</code> — <code>bench.py</code>, <code>contexts.py</code>, <code>encoding.py</code>,
-    <code>monitoring.py</code></li>
-<li><code>microbench/mixins/</code> — <code>base.py</code>, <code>call.py</code>, <code>python.py</code>, <code>system.py</code>,
-    <code>vcs.py</code>, <code>profiling.py</code>, <code>gpu.py</code></li>
-<li><code>microbench/outputs/</code> — <code>base.py</code>, <code>file.py</code>, <code>http.py</code>, <code>redis.py</code>,
-    <code>utils.py</code></li>
-<li><code>microbench/cli/</code> — <code>main.py</code>, <code>parser.py</code>, <code>registry.py</code>, <code>runner.py</code></li>
-<li><code>microbench/version.py</code> — <code>__version__</code> in its own module</li>
-</ul>
-<p>The <strong>public import surface is preserved</strong>: <code>from microbench import
-  MicroBench</code>, all <code>MB*</code> mixins, output classes, <code>JSONEncoder</code>, <code>summary</code>, and
-  <code>__version__</code> all continue to work unchanged.</p>
-<p>The old <em>private</em> module paths (<code>microbench._mixins</code>, <code>microbench._output</code>,
-  <code>microbench._encoding</code>) are deprecated and no longer re-export every symbol
-  they previously exposed. If your code imports from these private paths,
-  migrate to direct <code>from microbench import ...</code> imports.</p>
-<ul>
-<li>
-<p><strong><code>_apply_default_mixin()</code> removed</strong>: the runtime class-construction hack
-  that deferred <code>MBPythonInfo</code> inclusion to avoid a circular import has been
-  replaced with a direct <code>class MicroBench(MBPythonInfo, MicroBenchBase)</code>
-  definition. No circular import occurs with the new layout.</p>
-</li>
-<li>
-<p><strong><code>_is_microbench_internal()</code> circular import fixed</strong>: <code>mixins/python.py</code>
-  now resolves the package directory from <code>__file__</code> directly instead of
-  importing from <code>__init__</code>.</p>
-</li>
-<li>
-<p><strong>Tests moved out of package tree</strong>: <code>microbench/tests/</code> relocated to
-  top-level <code>tests/</code>. The test suite was previously installed as part of the
-  package, inflating wheel sizes and polluting the installed namespace.
-  <code>pyproject.toml</code> updated (<code>testpaths</code>, <code>per-file-ignores</code>, package
-  <code>exclude</code>). All tests continue to pass.</p>
-</li>
-</ul>
-<h3 id="bug-fixes">Bug fixes</h3>
-<ul>
-<li>
-<p><strong><code>LiveStream</code> updated for v2 record schema</strong>: field references updated from
+<li><strong><code>LiveStream</code> updated for v2 record schema</strong>: field references updated from
   the v1 flat schema (<code>function_name</code>, <code>hostname</code>, <code>start_time</code>,
   <code>finish_time</code>) to the v2 nested schema (<code>call.name</code>, <code>host.hostname</code>,
   <code>call.start_time</code>, <code>call.finish_time</code>). Records produced by microbench v1
   are no longer parsed correctly by <code>LiveStream</code>; this is expected given the
-  v2 schema migration documented in the breaking changes section above.</p>
-</li>
-<li>
-<p><strong><code>python-dateutil</code> dependency removed from <code>LiveStream</code></strong>: timestamp
-  parsing now uses <code>datetime.fromisoformat()</code> from the standard library.
-  Remove <code>python-dateutil</code> from your environment if it was
-  only installed for microbench.</p>
-</li>
+  v2 schema migration documented in the breaking changes section above.</li>
 </ul>
 <h2 id="110-2026-03-13">[1.1.0] - 2026-03-13</h2>
 <h3 id="new-features_1">New features</h3>
