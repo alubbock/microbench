@@ -1,6 +1,82 @@
 # Output
 
-## Saving to a file
+## CLI
+
+### File output
+
+Pass `--outfile FILE` to append records in [JSONL](https://jsonlines.org/)
+format. Defaults to stdout when omitted:
+
+```bash
+microbench --outfile results.jsonl -- ./run.sh
+
+# or pipe to another tool:
+microbench -- ./run.sh | jq .
+```
+
+### Redis output
+
+Use `--redis-output KEY` to RPUSH each record to a Redis list. Useful for
+SLURM array jobs where many nodes write concurrently and a shared filesystem
+is impractical. Requires the [redis-py](https://github.com/andymccurdy/redis-py)
+package (`pip install redis`).
+
+```bash
+microbench \
+    --redis-output bench:results \
+    --redis-host redis.example.com \
+    -- ./run_simulation.sh
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--redis-host HOST` | `localhost` | Redis server hostname |
+| `--redis-port PORT` | `6379` | Redis server port |
+| `--redis-db DB` | `0` | Redis database index |
+| `--redis-password PASSWORD` | — | AUTH password |
+
+### HTTP output
+
+Use `--http-output URL` to POST each record as JSON to an HTTP endpoint.
+Useful for webhooks and real-time notifications:
+
+```bash
+microbench --http-output https://api.example.com/benchmarks -- ./run.sh
+```
+
+Pass `--http-output-header KEY:VALUE` for authentication (repeatable):
+
+```bash
+microbench \
+    --http-output https://api.example.com/benchmarks \
+    --http-output-header "Authorization:Bearer $MY_TOKEN" \
+    -- ./run.sh
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--http-output-header KEY:VALUE` | — | Extra request header; repeatable |
+| `--http-output-method METHOD` | `POST` | HTTP method |
+
+The CLI always sends the raw record JSON. To customise the payload shape
+(e.g. a Slack `{"text": "..."}` envelope), use the Python API with a
+`HttpOutput` subclass that overrides `format_payload`.
+
+### Combining outputs
+
+All three destinations can be combined:
+
+```bash
+microbench \
+    --outfile /scratch/$USER/results.jsonl \
+    --redis-output bench:results \
+    --http-output https://hooks.example.com/events \
+    -- ./run_simulation.sh
+```
+
+## Python API
+
+### Saving to a file
 
 Pass `outfile` as a constructor argument or set it as a class attribute:
 
@@ -21,42 +97,7 @@ file with `O_APPEND`, which guarantees atomic appends on POSIX filesystems.
 Multiple processes can safely write to the same file simultaneously — a
 common pattern when running benchmark jobs across cluster nodes.
 
-Read results back via `get_results()`:
-
-```python
-results = bench.get_results()              # list of dicts — no extra dependencies
-results = bench.get_results(format='df')  # pandas DataFrame
-
-# or read directly with pandas:
-import pandas
-results = pandas.read_json('/home/user/results.jsonl', lines=True)
-```
-
-Pass `flat=True` to flatten nested fields (e.g. `mb`, `call`, `slurm`, `git`,
-`cgroups`) into dot-notation keys:
-
-```python
-results = bench.get_results(flat=True)
-# {'call.name': 'noop', 'mb.run_id': '...', 'slurm.job_id': '12345', ...}
-```
-
-## Quick summary
-
-Print min/mean/median/max/stdev of `call.durations` with no extra dependencies:
-
-```python
-bench.summary()
-# n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008
-```
-
-The module-level `summary()` accepts any list of result dicts:
-
-```python
-from microbench import summary
-summary(bench.get_results())
-```
-
-## In-memory buffer
+### In-memory buffer
 
 If no `outfile` is specified, results are written to an in-memory
 `io.StringIO` buffer. This is the default and is useful for interactive
@@ -75,7 +116,7 @@ results = bench.get_results()              # list of dicts
 results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
-## Multiple output sinks
+### Multiple output sinks
 
 Pass an `outputs` list to write to several destinations simultaneously.
 Each element must be an `Output` subclass instance. `outfile` and `outputs`
@@ -93,7 +134,7 @@ bench = MicroBench(outputs=[
 `get_results()` reads from the first sink that supports it. The `format` and
 `flat` arguments work the same as with `FileOutput`.
 
-## Redis output
+### Redis output
 
 [Redis](https://redis.io) is useful when a shared filesystem is not
 available, such as on cloud or HPC clusters. Requires
@@ -119,9 +160,7 @@ results = bench.get_results(format='df')  # pandas DataFrame
 Results are appended to a Redis list using `RPUSH` and read back with
 `LRANGE`.
 
-The CLI exposes the same sink via `--redis-output KEY` (see the [CLI reference](../cli.md#redis-output)).
-
-## HTTP output
+### HTTP output
 
 `HttpOutput` POSTs each benchmark record as JSON to an HTTP/HTTPS endpoint.
 Useful for webhooks and real-time notifications (Slack, Teams, custom event
@@ -159,9 +198,7 @@ bench = MicroBench(outputs=[SlackOutput('https://hooks.slack.com/services/...')]
 `HttpOutput` raises on non-2xx responses or network failures — no silent
 dropping, no automatic retry.
 
-The CLI exposes the same sink via `--http-output URL` (see the [CLI reference](../cli.md#http-output)).
-
-## Custom output sinks
+### Custom output sinks
 
 Subclass `Output` and implement `write` to send results anywhere:
 
@@ -173,4 +210,41 @@ class MyOutput(Output):
         send_to_my_system(bm_json_str)
 
 bench = MicroBench(outputs=[MyOutput()])
+```
+
+## Reading results
+
+Read results back via `get_results()`:
+
+```python
+results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results(format='df')  # pandas DataFrame
+
+# or read directly with pandas:
+import pandas
+results = pandas.read_json('/home/user/results.jsonl', lines=True)
+```
+
+Pass `flat=True` to flatten nested fields (e.g. `mb`, `call`, `slurm`, `git`,
+`cgroups`) into dot-notation keys:
+
+```python
+results = bench.get_results(flat=True)
+# {'call.name': 'noop', 'mb.run_id': '...', 'slurm.job_id': '12345', ...}
+```
+
+### Quick summary
+
+Print min/mean/median/max/stdev of `call.durations` with no extra dependencies:
+
+```python
+bench.summary()
+# n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008
+```
+
+The module-level `summary()` accepts any list of result dicts:
+
+```python
+from microbench import summary
+summary(bench.get_results())
 ```

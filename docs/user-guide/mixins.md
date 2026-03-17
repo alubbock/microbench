@@ -1,7 +1,42 @@
 # Mixins
 
-Mixins are classes that add metadata capture to a benchmark suite via
-multiple inheritance. Combine any number of mixins with `MicroBench`:
+Mixins add metadata capture to a benchmark suite. The same set of mixins is
+available from both the CLI and the Python API.
+
+## CLI
+
+Select mixins with `--mixin`:
+
+```bash
+microbench --mixin host-info slurm-info git-info -- ./run.sh
+```
+
+Mixin names use kebab-case without the `MB` prefix (`host-info` for
+`MBHostInfo`, etc.). MB-prefixed names are also accepted. Run `--show-mixins`
+to list all available mixins with descriptions:
+
+```bash
+microbench --show-mixins
+```
+
+By default, `python-info`, `host-info`, `slurm-info`, `loaded-modules`, and
+`working-dir` are included automatically. Specifying `--mixin` replaces the
+defaults entirely. Use `--no-mixin` to disable all mixins:
+
+```bash
+# Only peak-memory — no host info or SLURM
+microbench --mixin peak-memory -- ./job.sh
+
+# No mixins at all — timing and command fields only
+microbench --no-mixin -- ./job.sh
+```
+
+`MBFunctionCall`, `MBReturnValue`, `MBGlobalPackages`, and `MBLineProfiler`
+have no CLI equivalent — they are Python API only.
+
+## Python API
+
+Combine any number of mixins with `MicroBench` via multiple inheritance:
 
 ```python
 from microbench import MicroBench, MBHostInfo
@@ -23,25 +58,25 @@ combine any number of microbench mixins without conflicts, and their
 
 ## Reference
 
-| Mixin | Fields captured | Extra requirements |
-|---|---|---|
-| *(none)* | `mb.run_id`, `mb.version`, `mb.timezone`, `mb.duration_counter`, `call.invocation`, `call.name`, `call.start_time`, `call.finish_time`, `call.durations` | — |
-| `MBFunctionCall` | `call.args`, `call.kwargs` | — |
-| `MBReturnValue` | `call.return_value` | — |
-| `MBPythonInfo` | `python.version`, `python.prefix`, `python.executable` — **included in `MicroBench` by default** | — |
-| `MBHostInfo` | `host.hostname`, `host.os`; also `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes) when psutil is installed (silently omitted otherwise) | psutil (optional) |
-| `MBPeakMemory` | `call.peak_memory_bytes` | — |
-| `MBSlurmInfo` | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
-| `MBLoadedModules` | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
-| `MBWorkingDir` | `call.working_dir` — absolute path of the working directory at benchmark time | — |
-| `MBCgroupLimits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
-| `MBGitInfo` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
-| `MBGlobalPackages` | `python.loaded_packages` for every package in the caller's global scope | — |
-| `MBInstalledPackages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
-| `MBCondaPackages` | `conda` dict with `name`, `path`, and `packages` (version dict) | `conda` on PATH or `CONDA_EXE` set |
-| `MBNvidiaSmi` | `nvidia` — list of per-GPU dicts (see below) | `nvidia-smi` on PATH |
-| `MBLineProfiler` | `call.line_profiler` (base64-encoded profile, see below) | line_profiler |
-| `MBFileHash` | `file_hashes` — SHA-256 checksum of each specified file | — |
+| Mixin | CLI name | Fields captured | Extra requirements |
+|---|---|---|---|
+| *(none)* | — | `mb.run_id`, `mb.version`, `mb.timezone`, `mb.duration_counter`, `call.invocation`, `call.name`, `call.start_time`, `call.finish_time`, `call.durations` | — |
+| `MBFunctionCall` | Python only | `call.args`, `call.kwargs` | — |
+| `MBReturnValue` | Python only | `call.return_value` | — |
+| `MBPythonInfo` | `python-info` *(default)* | `python.version`, `python.prefix`, `python.executable` — **included in `MicroBench` by default** | — |
+| `MBHostInfo` | `host-info` *(default)* | `host.hostname`, `host.os`; also `host.cpu_cores_logical`, `host.cpu_cores_physical`, `host.ram_total` (bytes) when psutil is installed (silently omitted otherwise) | psutil (optional) |
+| `MBPeakMemory` | `peak-memory` | `call.peak_memory_bytes` | — |
+| `MBSlurmInfo` | `slurm-info` *(default)* | `slurm` dict of all `SLURM_*` env vars (empty dict if not in a SLURM job) | — |
+| `MBLoadedModules` | `loaded-modules` *(default)* | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
+| `MBWorkingDir` | `working-dir` *(default)* | `call.working_dir` — absolute path of the working directory at benchmark time | — |
+| `MBCgroupLimits` | `cgroup-limits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
+| `MBGitInfo` | `git-info` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
+| `MBGlobalPackages` | Python only | `python.loaded_packages` for every package in the caller's global scope | — |
+| `MBInstalledPackages` | `installed-packages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
+| `MBCondaPackages` | `conda-packages` | `conda` dict with `name`, `path`, and `packages` (version dict) | `conda` on PATH or `CONDA_EXE` set |
+| `MBNvidiaSmi` | `nvidia-smi` | `nvidia` — list of per-GPU dicts (see below) | `nvidia-smi` on PATH |
+| `MBLineProfiler` | Python only | `call.line_profiler` (base64-encoded profile, see below) | line_profiler |
+| `MBFileHash` | `file-hash` | `file_hashes` — SHA-256 checksum of each specified file | — |
 
 ## Function calls and return values
 
@@ -348,6 +383,13 @@ class Bench(MicroBench, MBGitInfo):
 Use `capture_optional = True` to silently skip git capture on machines
 without git or when running outside a repository.
 
+**CLI:** use `--git-repo DIR` to specify the repository directory (defaults
+to the current working directory):
+
+```bash
+microbench --mixin git-info --git-repo /path/to/repo -- ./run.sh
+```
+
 ### `MBFileHash`
 
 Records a cryptographic checksum of one or more files alongside benchmark
@@ -422,6 +464,15 @@ Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
         hash_files = ['sometimes_missing.dat']
         capture_optional = True
     ```
+
+**CLI:** use `--hash-file FILE [FILE ...]` and `--hash-algorithm ALGORITHM`.
+The CLI defaults to hashing the benchmarked command executable rather than
+`sys.argv[0]`:
+
+```bash
+microbench --mixin file-hash --hash-file run_experiment.py config.yaml -- ./run.sh
+microbench --mixin file-hash --hash-algorithm md5 -- ./run.sh
+```
 
 ## Package versions
 
@@ -515,7 +566,11 @@ class GpuBench(MicroBench, MBNvidiaSmi):
 
 Run `nvidia-smi --help-query-gpu` for the full list of available attribute names.
 
-**CLI:** `--nvidia-attributes gpu_name memory.total power.draw`
+**CLI:** use `--nvidia-attributes ATTR [ATTR ...]`:
+
+```bash
+microbench --mixin nvidia-smi --nvidia-attributes gpu_name power.draw temperature.gpu -- ./run.sh
+```
 
 ### Selecting specific GPUs
 
@@ -541,7 +596,12 @@ class GpuBench(MicroBench, MBNvidiaSmi):
 
 Omit `nvidia_gpus` entirely to capture all GPUs.
 
-**CLI:** `--nvidia-gpus GPU-abc123def456` or `--nvidia-gpus 0 1`
+**CLI:** use `--nvidia-gpus GPU [GPU ...]`:
+
+```bash
+microbench --mixin nvidia-smi --nvidia-gpus 0 1 -- ./run.sh
+microbench --mixin nvidia-smi --nvidia-gpus GPU-abc123def456 -- ./run.sh
+```
 
 ## Line profiler — `MBLineProfiler`
 
