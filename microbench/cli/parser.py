@@ -258,7 +258,7 @@ def _build_parser(mixin_map):
         metavar='SECONDS',
         help=(
             'Sample child process CPU usage and RSS every SECONDS seconds, '
-            'recording results in subprocess_monitor. Requires psutil. '
+            'recording results in call.monitor. Requires psutil. '
             'Monitoring is disabled when this flag is omitted.'
         ),
     )
