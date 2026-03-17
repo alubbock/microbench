@@ -134,7 +134,7 @@ Output (written to stdout when `--outfile` is omitted):
 
 The CLI supports additional options, including capturing stdout/stderr, setting timeouts,
 and repeat iterations for benchmarking. See the
-[CLI documentation](https://alubbock.github.io/microbench/cli/) for the full option reference.
+[CLI documentation](https://alubbock.github.io/microbench/latest/cli/) for the full option reference.
 
 ## Quick start — Python API
 
