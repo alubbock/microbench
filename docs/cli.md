@@ -59,6 +59,48 @@ microbench [options] -- COMMAND [ARGS...]
 
 Use `--` to separate microbench options from the command being benchmarked.
 
+!!! note "Running scripts and shell built-ins"
+    microbench runs `COMMAND` directly as a process, not through a shell.
+    The command must be an executable file — shell built-ins and script
+    interpreters must be invoked explicitly.
+
+    **POSIX (Linux / macOS) — shell scripts:**
+    Shell scripts can be run directly if they are executable and have a
+    shebang line (`#!/bin/bash`). If not, invoke the interpreter explicitly:
+
+    ```
+    microbench -- bash run_simulation.sh
+    ```
+
+    **Windows — batch scripts (`.bat` / `.cmd`):**
+    Batch files are not standalone executables; they require `cmd.exe`:
+
+    ```
+    microbench -- cmd /c run_simulation.bat
+    ```
+
+    **Windows — PowerShell scripts (`.ps1`):**
+    PowerShell scripts require `powershell` (Windows PowerShell) or `pwsh`
+    (PowerShell 7+). The default execution policy may also need overriding:
+
+    ```
+    microbench -- pwsh -ExecutionPolicy Bypass -File run_simulation.ps1
+    ```
+
+    **Windows — shell built-ins** (`echo`, `dir`, `type`, etc.) are part of
+    `cmd.exe` and are not standalone executables. Use `cmd /c`:
+
+    ```
+    microbench -- cmd /c echo hello
+    ```
+
+    A cross-platform command for testing is `python -c "pass"`, which is
+    always available in the environment where microbench is installed:
+
+    ```
+    microbench -- python -c "pass"
+    ```
+
 ## Fields recorded
 
 Every record contains the standard `mb.*` and `call.*` fields plus:
