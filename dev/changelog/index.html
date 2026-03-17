@@ -1475,6 +1475,13 @@
   now resolves the package directory from <code>__file__</code> directly instead of
   importing from <code>__init__</code>.</p>
 </li>
+<li>
+<p><strong>Tests moved out of package tree</strong>: <code>microbench/tests/</code> relocated to
+  top-level <code>tests/</code>. The test suite was previously installed as part of the
+  package, inflating wheel sizes and polluting the installed namespace.
+  <code>pyproject.toml</code> updated (<code>testpaths</code>, <code>per-file-ignores</code>, package
+  <code>exclude</code>). All tests continue to pass.</p>
+</li>
 </ul>
 <h2 id="110-2026-03-13">[1.1.0] - 2026-03-13</h2>
 <h3 id="new-features_1">New features</h3>
