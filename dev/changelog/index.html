@@ -1126,6 +1126,7 @@ Be sure to review the breaking changes before upgrading.</p>
 <li><code>FileOutput</code> — writes JSONL to a file path or file-like object (wraps the
     previous default behaviour).</li>
 <li><code>RedisOutput</code> — writes to a Redis list.</li>
+<li><code>HttpOutput</code> - New for v2 - POST each benchmark result to an HTTP/HTTPS endpoint.</li>
 </ul>
 <p>The existing <code>outfile</code> parameter and class-level <code>outfile</code> attribute continue
   to work as shorthand for a single <code>FileOutput</code>. Passing both <code>outfile</code> and
