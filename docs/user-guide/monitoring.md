@@ -12,7 +12,57 @@ or CPU usage changes over time during a long-running computation.
 
 Requires [psutil](https://pypi.org/project/psutil/).
 
-## Basic setup
+!!! warning "Record size"
+    All samples are accumulated in memory and written as part of the record
+    when the benchmark completes. A long-running process sampled at a short
+    interval can produce a large number of samples — for example, a 10-hour
+    job sampled every 5 seconds yields 7,200 samples per iteration. Estimate
+    your expected sample count (runtime ÷ interval) and choose an interval
+    long enough to keep the record size and memory usage manageable.
+
+## CLI
+
+Pass `--monitor-interval SECONDS` to periodically sample the child process's
+CPU usage and RSS memory while it runs:
+
+```bash
+microbench \
+    --outfile results.jsonl \
+    --monitor-interval 5 \
+    -- ./run_simulation.sh --steps 10000
+```
+
+Each sample has three fixed fields:
+
+| Field | Description |
+|---|---|
+| `timestamp` | ISO 8601 UTC timestamp of the sample |
+| `cpu_percent` | CPU usage of the child process at sample time |
+| `rss_bytes` | Resident set size of the child process in bytes |
+
+Samples are stored in `call.monitor` as a list of per-iteration lists (one
+inner list per `--iterations` call, warmup excluded):
+
+```json
+{
+  "call": {
+    "monitor": [
+      [
+        {"timestamp": "2025-01-01T12:00:05Z", "cpu_percent": 0.0,  "rss_bytes": 52428800},
+        {"timestamp": "2025-01-01T12:00:10Z", "cpu_percent": 87.3, "rss_bytes": 61865984}
+      ]
+    ]
+  }
+}
+```
+
+If the process exits before the first sample fires, `call.monitor` is omitted
+from the record.
+
+Only the direct child process is sampled; grandchild subprocesses are not
+included.
+
+## Python API
 
 Define a `monitor` static method on your benchmark class. It receives a
 [`psutil.Process`](https://psutil.readthedocs.io/en/latest/#psutil.Process)
@@ -38,8 +88,8 @@ def my_function():
     pass
 ```
 
-Samples are stored as a list in the `call.monitor` field of each result record,
-each entry including a `timestamp` and whatever your `monitor` method
+Samples are stored as a flat list in the `call.monitor` field of each result
+record, each entry including a `timestamp` and whatever your `monitor` method
 returns:
 
 ```json
@@ -53,14 +103,14 @@ returns:
 }
 ```
 
-## Configuration
+### Configuration
 
 | Class variable | Default | Description |
 |---|---|---|
 | `monitor_interval` | `60` | Seconds between samples |
 | `monitor_timeout` | `30` | Seconds to wait for the monitor thread to stop cleanly |
 
-## Sampling all available process info
+### Sampling all available process info
 
 ```python
 class MyBench(MicroBench):
@@ -71,7 +121,7 @@ class MyBench(MicroBench):
         ])
 ```
 
-## Notes
+### Notes
 
 - The monitor thread takes an initial sample immediately when the function
   starts, then repeats at `monitor_interval` seconds.

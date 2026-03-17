@@ -1,4 +1,9 @@
-# Configuration
+# Python API configuration
+
+!!! note "CLI configuration"
+    This page covers Python API configuration. For CLI flags such as
+    `--outfile`, `--iterations`, `--warmup`, `--mixin`, and output options,
+    see the [CLI reference](../cli.md).
 
 ## Constructor parameters
 

@@ -65,7 +65,7 @@ nav:
   - Getting started: getting-started.md
   - Command-line interface: cli.md
   - User guide:
-    - Configuration: user-guide/configuration.md
+    - Python API configuration: user-guide/configuration.md
     - Mixins: user-guide/mixins.md
     - Output: user-guide/output.md
     - Periodic monitoring: user-guide/monitoring.md
