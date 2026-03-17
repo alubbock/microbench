@@ -52,7 +52,7 @@ is active out of the box.
 | Cgroup CPU/RAM limits (containers, Linux only) | `--mixin cgroup-limits` | `MBCgroupLimits` |
 | Function call arguments | — | `MBFunctionCall` |
 | Function return value | — | `MBReturnValue` |
-| Peak RSS memory over a function call | — | `MBPeakMemory` |
+| Peak memory over a function call via `tracemalloc` | — | `MBPeakMemory` |
 | Python packages loaded into the caller's globals | — | `MBGlobalPackages` |
 | Line-by-line performance profile | — | `MBLineProfiler` |
 
