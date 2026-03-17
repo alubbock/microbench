@@ -872,7 +872,11 @@ mixins.</p>
 <li><strong>Cluster and HPC ready</strong> — capture SLURM environment variables, psutil resource metrics, and run IDs for correlating results across nodes</li>
 <li><strong>JSONL output</strong> — one JSON object per call; load directly into pandas with <code>read_json(..., lines=True)</code>; no schema lock-in</li>
 <li><strong>Automatic run correlation</strong> — <code>mb.run_id</code> is a UUID generated once per process; all bench suites in the same run share it, enabling <code>groupby('mb.run_id')</code> across independent suites</li>
-<li><strong>Flexible output</strong> — write to a local file, an in-memory buffer, or Redis; concurrent writers safe via <code>O_APPEND</code></li>
+<li><strong>Flexible output</strong> — write to a local file, an in-memory buffer, Redis, or an HTTP endpoint; concurrent writers safe via <code>O_APPEND</code></li>
+<li><strong>Sub-timings</strong> — label named phases inside a single record with <code>bench.time(name)</code></li>
+<li><strong>Context managers</strong> — <code>bench.record(name)</code> and <code>bench.record_on_exit(name)</code> for timing code blocks without decorators</li>
+<li><strong>Async support</strong> — native <code>async def</code> decorator support and <code>bench.arecord()</code> async context manager</li>
+<li><strong>Quick stats</strong> — <code>bench.summary()</code> prints min/mean/median/max/stdev with no extra dependencies</li>
 </ul>
 <h2 id="installation">Installation</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip install microbench
@@ -908,6 +912,10 @@ Some mixins have optional requirements:</p>
 <tr>
 <td><code>RedisOutput</code></td>
 <td><a href="https://github.com/andymccurdy/redis-py">redis-py</a></td>
+</tr>
+<tr>
+<td><code>HttpOutput</code></td>
+<td>no extra dependencies (uses stdlib <code>urllib</code>)</td>
 </tr>
 <tr>
 <td><code>LiveStream</code></td>

@@ -1324,8 +1324,8 @@
 <p><strong><code>MBPythonInfo</code> mixin</strong> replaces <code>MBPythonVersion</code>: records a <code>python</code> dict
   with <code>version</code>, <code>prefix</code> (<code>sys.prefix</code>), and <code>executable</code> (<code>sys.executable</code>),
   giving a complete picture of the running interpreter in one field. <code>MBPythonVersion</code>
-  is deprecated and will be removed in a future release. <code>MBPythonInfo</code> is included
-  in :class:<code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
+  has been removed (see breaking changes above). <code>MBPythonInfo</code> is included
+  in <code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
   <code>--no-mixin</code> suppresses it on the CLI as usual.</p>
 </li>
 <li>
@@ -1517,8 +1517,8 @@
 </li>
 <li>
 <p><strong><code>python-dateutil</code> dependency removed from <code>LiveStream</code></strong>: timestamp
-  parsing now uses <code>datetime.fromisoformat()</code> from the standard library
-  (Python 3.7+). Remove <code>python-dateutil</code> from your environment if it was
+  parsing now uses <code>datetime.fromisoformat()</code> from the standard library.
+  Remove <code>python-dateutil</code> from your environment if it was
   only installed for microbench.</p>
 </li>
 </ul>

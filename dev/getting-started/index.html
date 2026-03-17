@@ -999,11 +999,11 @@ a list of dicts:</p>
 </table>
 <h2 id="extended-example">Extended example</h2>
 <p>Here's an extended example to give you an idea of real-world usage.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> <span class="n">MBPythonInfo</span><span class="p">,</span> \
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> \
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span><span class="o">,</span><span class="w"> </span><span class="nn">time</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> <span class="n">MBPythonInfo</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFunctionCall</span><span class="p">,</span> <span class="n">MBHostInfo</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">):</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">outfile</span> <span class="o">=</span> <span class="s1">&#39;/home/user/my-benchmarks.jsonl&#39;</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">env_vars</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">,)</span>
@@ -1019,10 +1019,11 @@ a list of dicts:</p>
 </code></pre></div>
 <p>Mixins used:
 - <code>MBFunctionCall</code> records the supplied arguments <code>x</code> and <code>y</code>.
-- <code>MBPythonInfo</code> captures the Python version, prefix, and executable.
 - <code>MBHostInfo</code> captures <code>host.hostname</code> and <code>host.os</code>.
 - <code>MBSlurmInfo</code> captures all <code>SLURM_</code> environment variables (used by the
   <a href="https://slurm.schedmd.com/overview.html">SLURM</a> cluster system).</p>
+<p>Note: <code>MBPythonInfo</code> is already included in <code>MicroBench</code> by default — there is
+no need to list it explicitly in the class definition.</p>
 <p>Class variables:
 - <code>outfile</code> saves results to a file (one JSON object per line).
 - <code>capture_versions</code> records the versions of specified packages.
