@@ -1,35 +1,20 @@
-import json
-from datetime import datetime, timedelta, timezone
+"""Compatibility shim — re-exports from microbench.core.encoding.
 
-try:
-    import numpy
-except ImportError:
-    numpy = None
+Direct imports from ``microbench._encoding`` still work but are deprecated.
+Use ``from microbench import JSONEncoder, JSONEncodeWarning`` instead.
+"""
 
+import warnings as _warnings
 
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-        if isinstance(o, timedelta):
-            return o.total_seconds()
-        if isinstance(o, timezone):
-            return str(o)
-        if numpy:
-            if isinstance(o, numpy.integer):
-                return int(o)
-            elif isinstance(o, numpy.floating):
-                return float(o)
-            elif isinstance(o, numpy.ndarray):
-                return o.tolist()
+_warnings.warn(
+    'microbench._encoding is a private compatibility shim and will be removed '
+    'in a future version. Import from microbench directly instead.',
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-        return super().default(o)
-
-
-class JSONEncodeWarning(Warning):
-    """Warning used when JSON encoding fails"""
-
-    pass
-
-
-_UNENCODABLE_PLACEHOLDER_VALUE = '__unencodable_as_json__'
+from microbench.core.encoding import (  # noqa: F401, E402
+    _UNENCODABLE_PLACEHOLDER_VALUE,
+    JSONEncoder,
+    JSONEncodeWarning,
+)
