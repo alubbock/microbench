@@ -25,7 +25,7 @@ from microbench import (
     RedisOutput,
     summary,
 )
-from microbench._output import _flatten_dict
+from microbench.outputs.utils import _flatten_dict
 
 
 def test_env_vars_not_iterable():
@@ -100,7 +100,7 @@ def test_outfile_string_path():
 
 def test_get_results_without_pandas():
     """get_results(format='df') raises ImportError when pandas is unavailable."""
-    import microbench._output
+    import microbench.outputs.file
 
     bench = MicroBench()
 
@@ -110,7 +110,7 @@ def test_get_results_without_pandas():
 
     noop()
 
-    with patch.object(microbench._output, 'pandas', None):
+    with patch.object(microbench.outputs.file, 'pandas', None):
         # Default format='dict' works without pandas
         results = bench.get_results()
         assert isinstance(results, list)
@@ -211,7 +211,7 @@ def test_redis_output_get_results():
 
 def test_redis_output_get_results_without_pandas():
     """RedisOutput.get_results() raises ImportError without pandas."""
-    import microbench._output
+    import microbench.outputs.redis
 
     redis_store = []
     mock_redis, _ = _make_mock_redis(redis_store)
@@ -219,9 +219,9 @@ def test_redis_output_get_results_without_pandas():
     with patch.dict('sys.modules', {'redis': mock_redis}):
         bench = MicroBench(outputs=[RedisOutput('test:bench')])
 
-        with patch.object(microbench._output, 'pandas', None):
-            with pytest.raises(ImportError, match='pandas'):
-                bench.get_results(format='df')
+    with patch.object(microbench.outputs.redis, 'pandas', None):
+        with pytest.raises(ImportError, match='pandas'):
+            bench.get_results(format='df')
 
 
 def test_redis_output_multiple_results():

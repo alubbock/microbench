@@ -524,7 +524,7 @@ def _run_main_with_monitor(argv, mock_pid=12345, mock_returncode=0, fake_samples
     mock_proc = _make_mock_popen_for_monitor(returncode=mock_returncode, pid=mock_pid)
 
     # Patch _SubprocessMonitorThread so no real psutil calls happen.
-    with patch('microbench.__main__._SubprocessMonitorThread') as MockThread:
+    with patch('microbench.cli.main._SubprocessMonitorThread') as MockThread:
         mock_thread = MagicMock()
         mock_thread.samples = fake_samples
         MockThread.return_value = mock_thread
@@ -610,7 +610,7 @@ def test_cli_monitor_interval_multiple_iterations():
         return t
 
     buf = io.StringIO()
-    with patch('microbench.__main__._SubprocessMonitorThread', side_effect=make_thread):
+    with patch('microbench.cli.main._SubprocessMonitorThread', side_effect=make_thread):
         with patch('subprocess.Popen', return_value=mock_proc):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
@@ -647,7 +647,7 @@ def test_cli_monitor_interval_warmup_excluded():
         return t
 
     buf = io.StringIO()
-    with patch('microbench.__main__._SubprocessMonitorThread', side_effect=make_thread):
+    with patch('microbench.cli.main._SubprocessMonitorThread', side_effect=make_thread):
         with patch('subprocess.Popen', return_value=mock_proc):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
@@ -700,7 +700,7 @@ def test_cli_monitor_interval_with_stdout_capture():
     fake_samples = [{'timestamp': 'T', 'cpu_percent': 8.0, 'rss_bytes': 2048}]
 
     buf = io.StringIO()
-    with patch('microbench.__main__._SubprocessMonitorThread') as MockThread:
+    with patch('microbench.cli.main._SubprocessMonitorThread') as MockThread:
         mock_thread = MagicMock()
         mock_thread.samples = fake_samples
         MockThread.return_value = mock_thread

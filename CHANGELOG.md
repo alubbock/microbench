@@ -378,6 +378,38 @@ All notable changes to microbench are documented here.
 
 Also includes all changes from v1.1.0.
 
+### Refactoring
+
+- **Module structure split**: the `microbench/__init__.py` god-module and the
+  `microbench/__main__.py` CLI monolith have been broken into focused
+  subpackages:
+  - `microbench/core/` — `bench.py`, `contexts.py`, `encoding.py`,
+    `monitoring.py`
+  - `microbench/mixins/` — `base.py`, `call.py`, `python.py`, `system.py`,
+    `vcs.py`, `profiling.py`, `gpu.py`
+  - `microbench/outputs/` — `base.py`, `file.py`, `http.py`, `redis.py`,
+    `utils.py`
+  - `microbench/cli/` — `main.py`, `parser.py`, `registry.py`, `runner.py`
+  - `microbench/version.py` — `__version__` in its own module
+
+  The **public import surface is preserved**: `from microbench import
+  MicroBench`, all `MB*` mixins, output classes, `JSONEncoder`, `summary`, and
+  `__version__` all continue to work unchanged.
+
+  The old *private* module paths (`microbench._mixins`, `microbench._output`,
+  `microbench._encoding`) are deprecated and no longer re-export every symbol
+  they previously exposed. If your code imports from these private paths,
+  migrate to direct `from microbench import ...` imports.
+
+- **`_apply_default_mixin()` removed**: the runtime class-construction hack
+  that deferred `MBPythonInfo` inclusion to avoid a circular import has been
+  replaced with a direct `class MicroBench(MBPythonInfo, MicroBenchBase)`
+  definition. No circular import occurs with the new layout.
+
+- **`_is_microbench_internal()` circular import fixed**: `mixins/python.py`
+  now resolves the package directory from `__file__` directly instead of
+  importing from `__init__`.
+
 ## [1.1.0] - 2026-03-13
 
 ### New features

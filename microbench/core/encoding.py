@@ -1,3 +1,10 @@
+"""JSON encoding utilities for microbench.
+
+Provides a JSONEncoder that handles datetime, timedelta, timezone,
+and numpy scalar/array types, plus a warning class and placeholder
+value for unencodable objects.
+"""
+
 import json
 from datetime import datetime, timedelta, timezone
 

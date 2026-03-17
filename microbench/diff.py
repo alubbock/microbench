@@ -1,3 +1,19 @@
+"""Environment diff utilities for microbench.
+
+Public API
+----------
+envdiff(a, b)
+    Compare two JSON environment records with a side-by-side HTML diff.
+    Intended for use in Jupyter notebooks.
+
+Private helpers (``_`` prefix — not part of the public API)
+------------------------------------------------------------
+_markup_diff, _align_seqs, _html_diffs, _html_sidebyside, _mark_text,
+_mark_span, _show_diffs
+    Low-level building blocks used by ``envdiff``.  They are tested
+    directly in ``tests/test_diff.py`` but may change without notice.
+"""
+
 import difflib
 import json
 from itertools import zip_longest
