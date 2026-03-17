@@ -1392,8 +1392,8 @@ your benchmark job writes to the file:</p>
 field (finish_time − start_time) to each record before <code>display()</code> is
 called. Override <code>display()</code> to change how records are shown, or <code>filter()</code>
 to skip records selectively.</p>
-<p>Requires <a href="https://pypi.org/project/python-dateutil/">python-dateutil</a>:
-<code>pip install python-dateutil</code>.</p>
+<p><code>LiveStream</code> has no extra dependencies — it uses Python's built-in
+<code>datetime.fromisoformat()</code> for timestamp parsing.</p>
 <h2 id="comparing-environments">Comparing environments</h2>
 <p><code>envdiff</code> produces a side-by-side visual diff of two records in a Jupyter
 notebook, highlighting fields that differ. Useful for diagnosing why the

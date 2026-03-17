@@ -760,6 +760,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -866,6 +877,17 @@
     <span class="md-ellipsis">
       
         Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
       
     </span>
   </a>
@@ -1481,6 +1503,23 @@
   package, inflating wheel sizes and polluting the installed namespace.
   <code>pyproject.toml</code> updated (<code>testpaths</code>, <code>per-file-ignores</code>, package
   <code>exclude</code>). All tests continue to pass.</p>
+</li>
+</ul>
+<h3 id="bug-fixes">Bug fixes</h3>
+<ul>
+<li>
+<p><strong><code>LiveStream</code> updated for v2 record schema</strong>: field references updated from
+  the v1 flat schema (<code>function_name</code>, <code>hostname</code>, <code>start_time</code>,
+  <code>finish_time</code>) to the v2 nested schema (<code>call.name</code>, <code>host.hostname</code>,
+  <code>call.start_time</code>, <code>call.finish_time</code>). Records produced by microbench v1
+  are no longer parsed correctly by <code>LiveStream</code>; this is expected given the
+  v2 schema migration documented in the breaking changes section above.</p>
+</li>
+<li>
+<p><strong><code>python-dateutil</code> dependency removed from <code>LiveStream</code></strong>: timestamp
+  parsing now uses <code>datetime.fromisoformat()</code> from the standard library
+  (Python 3.7+). Remove <code>python-dateutil</code> from your environment if it was
+  only installed for microbench.</p>
 </li>
 </ul>
 <h2 id="110-2026-03-13">[1.1.0] - 2026-03-13</h2>
