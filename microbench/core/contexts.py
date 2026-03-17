@@ -40,16 +40,18 @@ class _ContextManagerRun:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._bench.post_run_triggers(self._bm_data)
-        self._bench.post_finish_triggers(self._bm_data)
-        if exc_type is not None:
-            self._bm_data['exception'] = {
-                'type': exc_type.__name__,
-                'message': str(exc_val),
-            }
-        bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
-        self._bench.output_result(bm_data)
-        _active_bm_data.reset(self._ctx_token)
+        try:
+            self._bench.post_run_triggers(self._bm_data)
+            self._bench.post_finish_triggers(self._bm_data)
+            if exc_type is not None:
+                self._bm_data['exception'] = {
+                    'type': exc_type.__name__,
+                    'message': str(exc_val),
+                }
+            bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
+            self._bench.output_result(bm_data)
+        finally:
+            _active_bm_data.reset(self._ctx_token)
         return False  # never suppress exceptions
 
 
@@ -82,16 +84,18 @@ class _AsyncContextManagerRun:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self._bench.post_run_triggers(self._bm_data)
-        self._bench.post_finish_triggers(self._bm_data)
-        if exc_type is not None:
-            self._bm_data['exception'] = {
-                'type': exc_type.__name__,
-                'message': str(exc_val),
-            }
-        bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
-        self._bench.output_result(bm_data)
-        _active_bm_data.reset(self._ctx_token)
+        try:
+            self._bench.post_run_triggers(self._bm_data)
+            self._bench.post_finish_triggers(self._bm_data)
+            if exc_type is not None:
+                self._bm_data['exception'] = {
+                    'type': exc_type.__name__,
+                    'message': str(exc_val),
+                }
+            bm_data = {k: v for k, v in self._bm_data.items() if not k.startswith('_')}
+            self._bench.output_result(bm_data)
+        finally:
+            _active_bm_data.reset(self._ctx_token)
         return False  # never suppress exceptions
 
 

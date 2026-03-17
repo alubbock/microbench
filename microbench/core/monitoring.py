@@ -18,10 +18,14 @@ except ImportError:
 class _MonitorThread(threading.Thread):
     def __init__(self, telem_fn, interval, slot, timezone, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not psutil:
+            raise ImportError('Monitoring requires the "psutil" package')
         self._terminate = threading.Event()
+        self._prev_sigint = None
+        self._prev_sigterm = None
         if threading.current_thread() is threading.main_thread():
-            signal.signal(signal.SIGINT, self.terminate)
-            signal.signal(signal.SIGTERM, self.terminate)
+            self._prev_sigint = signal.signal(signal.SIGINT, self.terminate)
+            self._prev_sigterm = signal.signal(signal.SIGTERM, self.terminate)
         else:
             warnings.warn(
                 '_MonitorThread: signal handlers not registered because '
@@ -34,12 +38,16 @@ class _MonitorThread(threading.Thread):
         self._monitor_data = slot
         self._monitor_fn = telem_fn
         self._tz = timezone
-        if not psutil:
-            raise ImportError('Monitoring requires the "psutil" package')
         self.process = psutil.Process()
 
     def terminate(self, signum=None, frame=None):
         self._terminate.set()
+        if self._prev_sigint is not None:
+            signal.signal(signal.SIGINT, self._prev_sigint)
+            self._prev_sigint = None
+        if self._prev_sigterm is not None:
+            signal.signal(signal.SIGTERM, self._prev_sigterm)
+            self._prev_sigterm = None
 
     def _get_sample(self):
         sample = {'timestamp': datetime.now(self._tz)}

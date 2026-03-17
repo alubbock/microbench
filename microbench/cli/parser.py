@@ -62,7 +62,8 @@ def _build_parser(mixin_map):
         prog='python -m microbench',
         description=(
             'Run an external command and record benchmark metadata to JSONL.\n\n'
-            'By default captures host-info, slurm-info, and loaded-modules. '
+            'By default captures python-info, host-info, slurm-info, '
+            'loaded-modules, and working-dir. '
             'Specifying --mixin replaces the defaults; use --show-mixins to '
             'list all available mixins. '
             'Metadata capture failures are recorded in call.capture_errors '
