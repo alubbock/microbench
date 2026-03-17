@@ -716,15 +716,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#200-unreleased" class="md-nav__link">
+  <a href="#200-2026-03-17" class="md-nav__link">
     <span class="md-ellipsis">
       
-        [2.0.0] - unreleased
+        [2.0.0] - 2026-03-17
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[2.0.0] - unreleased">
+    <nav class="md-nav" aria-label="[2.0.0] - 2026-03-17">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -817,15 +817,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#200-unreleased" class="md-nav__link">
+  <a href="#200-2026-03-17" class="md-nav__link">
     <span class="md-ellipsis">
       
-        [2.0.0] - unreleased
+        [2.0.0] - 2026-03-17
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[2.0.0] - unreleased">
+    <nav class="md-nav" aria-label="[2.0.0] - 2026-03-17">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -905,7 +905,7 @@
 
 <h1 id="changelog">Changelog</h1>
 <p>All notable changes to microbench are documented here.</p>
-<h2 id="200-unreleased">[2.0.0] - unreleased</h2>
+<h2 id="200-2026-03-17">[2.0.0] - 2026-03-17</h2>
 <p>Microbench v2 is a significant upgrade with many new features versus v1.1.0.
 Be sure to review the breaking changes before upgrading.</p>
 <h3 id="new-features">New features</h3>
@@ -1234,15 +1234,7 @@ Be sure to review the breaking changes before upgrading.</p>
 <td><code>call.name</code></td>
 </tr>
 <tr>
-<td><code>mb_timings</code></td>
-<td><code>call.timings</code></td>
-</tr>
-<tr>
-<td><code>mb_capture_errors</code></td>
-<td><code>call.capture_errors</code></td>
-</tr>
-<tr>
-<td><code>monitor</code></td>
+<td><code>telemetry</code></td>
 <td><code>call.monitor</code></td>
 </tr>
 <tr>
@@ -1273,24 +1265,12 @@ Be sure to review the breaking changes before upgrading.</p>
 <td><code>host.os</code></td>
 </tr>
 <tr>
-<td><code>cpu_cores_logical</code></td>
-<td><code>host.cpu_cores_logical</code></td>
-</tr>
-<tr>
 <td><code>cpu_cores_physical</code></td>
 <td><code>host.cpu_cores_physical</code></td>
 </tr>
 <tr>
 <td><code>ram_total</code></td>
 <td><code>host.ram_total</code></td>
-</tr>
-<tr>
-<td><code>working_dir</code></td>
-<td><code>call.working_dir</code></td>
-</tr>
-<tr>
-<td><code>peak_memory_bytes</code></td>
-<td><code>call.peak_memory_bytes</code></td>
 </tr>
 <tr>
 <td><code>args</code></td>
@@ -1321,58 +1301,12 @@ Be sure to review the breaking changes before upgrading.</p>
 <td><code>python.installed_package_paths</code></td>
 </tr>
 <tr>
-<td><code>git_info</code></td>
-<td><code>git</code></td>
-</tr>
-<tr>
-<td><code>cgroup_limits</code></td>
-<td><code>cgroups</code> (inner keys also renamed: <code>cpu_cores</code> → <code>cpu_cores_limit</code>, <code>memory_bytes</code> → <code>memory_bytes_limit</code>, <code>cgroup_version</code> → <code>version</code>)</td>
-</tr>
-<tr>
 <td><code>nvidia_&lt;attr&gt;</code> (multiple flat dicts)</td>
 <td><code>nvidia</code> (list of per-GPU dicts with <code>uuid</code> key)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>CLI fields</strong> also move into <code>call</code>:</p>
-<table>
-<thead>
-<tr>
-<th>Old key</th>
-<th>New key</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>function_name</code> (basename)</td>
-<td><code>call.name</code></td>
-</tr>
-<tr>
-<td><code>command</code></td>
-<td><code>call.command</code></td>
-</tr>
-<tr>
-<td><code>returncode</code></td>
-<td><code>call.returncode</code></td>
-</tr>
-<tr>
-<td><code>stdout</code></td>
-<td><code>call.stdout</code></td>
-</tr>
-<tr>
-<td><code>stderr</code></td>
-<td><code>call.stderr</code></td>
-</tr>
-<tr>
-<td><code>subprocess_monitor</code></td>
-<td><code>call.monitor</code></td>
-</tr>
-</tbody>
-</table>
-<p>A new <code>call.invocation</code> field is always present: <code>'Python'</code> for the Python
-  API and <code>'CLI'</code> for the command-line interface.</p>
-<p>Unchanged namespaces: <code>slurm</code>, <code>loaded_modules</code>, <code>conda</code>, <code>file_hashes</code>,
-  <code>exception</code> (top-level), <code>exit_signal</code> (top-level).</p>
+<p>Unchanged namespaces: <code>conda</code>.</p>
 <p><strong>Migration:</strong> Use <code>get_results(flat=True)</code> to access fields via dot-notation
   keys (<code>call.name</code>, <code>mb.run_id</code>, <code>host.hostname</code>, etc.) in pandas or scripts
   without rewriting nested dict access. Alternatively, update field access to
