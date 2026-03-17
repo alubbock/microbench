@@ -31,6 +31,7 @@ docs = ["mkdocs-material", "mkdocstrings[python]", "mike", "pymdown-extensions"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["microbench*"]
+exclude = ["tests*"]
 
 [tool.setuptools_scm]
 # Writes the version to a file so it is available without a git checkout
@@ -39,7 +40,7 @@ include = ["microbench*"]
 version_file = "microbench/_version_scm.py"
 
 [tool.pytest.ini_options]
-testpaths = ["microbench/tests"]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 88
@@ -55,4 +56,4 @@ inline-quotes = "single"
 
 [tool.ruff.lint.per-file-ignores]
 # pandas is imported to test that its version is captured in global packages
-"microbench/tests/globals_capture.py" = ["F401"]
+"tests/globals_capture.py" = ["F401"]
