@@ -410,7 +410,7 @@
   <span class="md-ellipsis">
     
   
-    Configuration
+    Python API configuration
   
 
     
@@ -547,10 +547,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#basic-setup" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic setup
+        CLI
       
     </span>
   </a>
@@ -558,6 +558,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -567,8 +579,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#sampling-all-available-process-info" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -578,8 +590,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -587,6 +599,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -798,10 +815,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#basic-setup" class="md-nav__link">
+  <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic setup
+        CLI
       
     </span>
   </a>
@@ -809,6 +826,18 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python API
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Python API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -818,8 +847,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#sampling-all-available-process-info" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -829,8 +858,8 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -838,6 +867,11 @@
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -873,41 +907,98 @@ These names were renamed to <code>monitor</code> / <code>monitor_interval</code>
 execution of a benchmarked function. This is useful for tracking how memory
 or CPU usage changes over time during a long-running computation.</p>
 <p>Requires <a href="https://pypi.org/project/psutil/">psutil</a>.</p>
-<h2 id="basic-setup">Basic setup</h2>
+<div class="admonition warning">
+<p class="admonition-title">Record size</p>
+<p>All samples are accumulated in memory and written as part of the record
+when the benchmark completes. A long-running process sampled at a short
+interval can produce a large number of samples — for example, a 10-hour
+job sampled every 5 seconds yields 7,200 samples per iteration. Estimate
+your expected sample count (runtime ÷ interval) and choose an interval
+long enough to keep the record size and memory usage manageable.</p>
+</div>
+<h2 id="cli">CLI</h2>
+<p>Pass <code>--monitor-interval SECONDS</code> to periodically sample the child process's
+CPU usage and RSS memory while it runs:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
+</code></pre></div>
+<p>Each sample has three fixed fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>timestamp</code></td>
+<td>ISO 8601 UTC timestamp of the sample</td>
+</tr>
+<tr>
+<td><code>cpu_percent</code></td>
+<td>CPU usage of the child process at sample time</td>
+</tr>
+<tr>
+<td><code>rss_bytes</code></td>
+<td>Resident set size of the child process in bytes</td>
+</tr>
+</tbody>
+</table>
+<p>Samples are stored in <code>call.monitor</code> as a list of per-iteration lists (one
+inner list per <code>--iterations</code> call, warmup excluded):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p">[</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="p">]</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">}</span>
+</code></pre></div>
+<p>If the process exits before the first sample fires, <code>call.monitor</code> is omitted
+from the record.</p>
+<p>Only the direct child process is sampled; grandchild subprocesses are not
+included.</p>
+<h2 id="python-api">Python API</h2>
 <p>Define a <code>monitor</code> static method on your benchmark class. It receives a
 <a href="https://psutil.readthedocs.io/en/latest/#psutil.Process"><code>psutil.Process</code></a>
 object and should return a dictionary of sample data. Microbench handles
 launching and cleaning up the background thread automatically.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">monitor_interval</span> <span class="o">=</span> <span class="mi">90</span>  <span class="c1"># seconds between samples (default: 60)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="nd">@staticmethod</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">process</span><span class="p">):</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        <span class="n">mem</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">memory_full_info</span><span class="p">()</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;rss&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span> <span class="s1">&#39;vms&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">}</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">()</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nd">@bench</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="c1"># ... long-running work ...</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="k">pass</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">monitor_interval</span> <span class="o">=</span> <span class="mi">90</span>  <span class="c1"># seconds between samples (default: 60)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="nd">@staticmethod</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">process</span><span class="p">):</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">mem</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">memory_full_info</span><span class="p">()</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;rss&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">rss</span><span class="p">,</span> <span class="s1">&#39;vms&#39;</span><span class="p">:</span> <span class="n">mem</span><span class="o">.</span><span class="n">vms</span><span class="p">}</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MyBench</span><span class="p">()</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nd">@bench</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="c1"># ... long-running work ...</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="k">pass</span>
 </code></pre></div>
-<p>Samples are stored as a list in the <code>call.monitor</code> field of each result record,
-each entry including a <code>timestamp</code> and whatever your <code>monitor</code> method
+<p>Samples are stored as a flat list in the <code>call.monitor</code> field of each result
+record, each entry including a <code>timestamp</code> and whatever your <code>monitor</code> method
 returns:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00+00:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">104857600</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;vms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">536870912</span><span class="p">},</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:01:30+00:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">209715200</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;vms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">536870912</span><span class="p">}</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="p">]</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00+00:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">104857600</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;vms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">536870912</span><span class="p">},</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:01:30+00:00&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">209715200</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;vms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">536870912</span><span class="p">}</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="configuration">Configuration</h2>
+<h3 id="configuration">Configuration</h3>
 <table>
 <thead>
 <tr>
@@ -929,15 +1020,15 @@ returns:</p>
 </tr>
 </tbody>
 </table>
-<h2 id="sampling-all-available-process-info">Sampling all available process info</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="nd">@staticmethod</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">process</span><span class="p">):</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="k">return</span> <span class="n">process</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>            <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;memory_info&#39;</span><span class="p">,</span> <span class="s1">&#39;num_threads&#39;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="p">])</span>
+<h3 id="sampling-all-available-process-info">Sampling all available process info</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="nd">@staticmethod</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">monitor</span><span class="p">(</span><span class="n">process</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>        <span class="k">return</span> <span class="n">process</span><span class="o">.</span><span class="n">as_dict</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>            <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;memory_info&#39;</span><span class="p">,</span> <span class="s1">&#39;num_threads&#39;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="p">])</span>
 </code></pre></div>
-<h2 id="notes">Notes</h2>
+<h3 id="notes">Notes</h3>
 <ul>
 <li>The monitor thread takes an initial sample immediately when the function
   starts, then repeats at <code>monitor_interval</code> seconds.</li>
