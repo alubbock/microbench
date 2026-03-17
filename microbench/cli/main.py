@@ -377,4 +377,4 @@ def main(argv=None):
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()
 
-    sys.exit(max(bench._subprocess_returncodes, default=0))
+    sys.exit(next((code for code in bench._subprocess_returncodes if code != 0), 0))
