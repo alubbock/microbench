@@ -12,23 +12,30 @@ Be sure to review the breaking changes before upgrading.
 - **Command-line interface** (`microbench -- COMMAND`): wrap any external
   command and record host metadata alongside timing without writing Python
   code. Useful for SLURM jobs, shell scripts, and compiled executables.
-  Records `command`, `returncode` (list, one per timed iteration),
+
+    * Records `command`, `returncode` (list, one per timed iteration),
   alongside the standard timing fields. Mixins are specified by short
   kebab-case names without the `MB` prefix (e.g. `host-info`);
-  original MB-prefixed names are also accepted. Use
+  original MB-prefixed names are also accepted.
+    * Use
   `--mixin MIXIN [MIXIN ...]` to select metadata to capture (defaults to
   `host-info`, `slurm-info`, `loaded-modules`, `python-info`
-  and `working-dir`); use `--show-mixins` to
+  and `working-dir`)
+    * Use `--show-mixins` to
   list all available mixins with descriptions; use `--field KEY=VALUE` to
-  attach extra labels; use `--iterations N` and `--warmup N` for repeat
-  timing; use `--stdout[=suppress]` and `--stderr[=suppress]` to capture
-  subprocess output into the record (output is re-printed to the terminal
-  unless `=suppress` is given); use `--monitor-interval SECONDS` to sample
-  child process CPU and memory over time. Some mixins expose
-  their own configuration flags (shown in `--show-mixins` and `--help`).
-  Capture failures are non-fatal by default
+  attach extra labels
+    * Use `--iterations N` and `--warmup N` for repeat
+  timing
+    * Use `--stdout[=suppress]` and `--stderr[=suppress]` to capture subprocess output into the record (output is re-printed to the terminal
+  unless `=suppress` is given)
+    * Use `--monitor-interval SECONDS` to sample
+  child process CPU and memory over time.
+    * Some mixins expose
+  their own configuration flags (shown in `--show-mixins` and `--help`)
+    * Capture failures are non-fatal by default
   (`capture_optional = True`), making the CLI safe across heterogeneous
-  cluster nodes. The process exits with the first non-zero returncode seen
+  cluster nodes.
+    * The process exits with the first non-zero returncode seen
   across all timed iterations if present, or zero (success) otherwise.
 
 - **`summary(results)` / `bench.summary()`**: prints min / mean / median /
