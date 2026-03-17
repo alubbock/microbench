@@ -68,7 +68,7 @@ Every record contains the standard `mb.*` and `call.*` fields plus:
 | `call.invocation` | Always `'CLI'` for records produced by the CLI. |
 | `call.name` | Basename of the executable, e.g. `"run_sim.sh"`. |
 | `call.command` | Full command as a list, e.g. `["./run_sim.sh", "--steps", "1000"]`. |
-| `call.returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the highest value. |
+| `call.returncode` | List of exit codes, one per timed iteration (warmup excluded). The process exits with the first non-zero return code, if present, or zero (success) otherwise. |
 | `call.timed_out` | *(present only when `--timeout` fires)* `true` when at least one timed iteration was killed due to the timeout. Absent on normal completion. |
 | `call.monitor` | *(present only with `--monitor-interval`)* List of per-iteration sample lists. See [Subprocess monitoring](#subprocess-monitoring). |
 
@@ -196,17 +196,11 @@ task ID, node list, etc.) alongside the wall-clock time of the simulation.
 CPU and RAM fields are included automatically by `host-info` when psutil is
 installed.
 
-Read the results with pandas:
+Read the results:
 
 ```python
-import pandas
-results = pandas.read_json('/scratch/user/results.jsonl', lines=True)
-results = results.apply(lambda r: pandas.Series(r), axis=1)  # flatten if needed
-# Or use get_results(flat=True) when reading via microbench:
 from microbench import FileOutput
-flat = FileOutput('/scratch/user/results.jsonl').get_results(flat=True)
-import pandas
-df = pandas.DataFrame(flat)
+df = FileOutput('/scratch/user/results.jsonl').get_results(flat=True, format='df')
 df['total_duration'] = df['call.durations'].apply(sum)
 df.groupby('slurm.job_id')['total_duration'].describe()
 ```
@@ -228,7 +222,8 @@ With 10 iterations and 2 warmup runs, the record contains:
 - `call.stdout` / `call.stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
 
 Warmup runs are excluded from all three lists. The process exits with
-`max(returncode)` so any failing iteration propagates to the shell.
+the first non-zero return code, if present, so any failing iteration
+propagates to the shell.
 
 !!! note "Subprocess-side buffering"
     When stdout or stderr is captured via a pipe, many programs switch from
@@ -245,7 +240,7 @@ Warmup runs are excluded from all three lists. The process exits with
 To detect failed iterations when analysing results with pandas (using `flat=True`):
 
 ```python
-df['any_failed'] = df['call.returncode'].apply(lambda rc: max(rc) != 0)
+df['any_failed'] = df['call.returncode'].apply(lambda rc: any(rc))
 ```
 
 ## Timeout
@@ -270,7 +265,8 @@ The record is always written, even for timed-out iterations. Detect timeouts in
 analysis with:
 
 ```python
-df['any_timed_out'] = df['call.timed_out'].notna()
+timed_out = df.get('call.timed_out')  # Check if column if present
+df['any_timed_out'] = False if timed_out is None else timed_out.notna()
 ```
 
 The `call.returncode` for a SIGTERM-killed process will be `-15`; for SIGKILL, `-9`.
@@ -443,7 +439,7 @@ Each sample is a dict with three keys:
 | Key | Description |
 |---|---|
 | `timestamp` | ISO 8601 UTC timestamp of the sample. |
-| `cpu_percent` | CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines). The first sample is always `0.0` — this is a psutil limitation where two successive calls are needed to compute a ratio. |
+| `cpu_percent` | CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines). |
 | `rss_bytes` | Resident set size (physical RAM) of the child process in bytes. |
 
 Example record (single iteration, two samples):

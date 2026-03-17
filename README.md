@@ -9,7 +9,7 @@ a different git commit without realising it.
 Microbench records the context alongside your timings: Python version,
 package versions, hostname, hardware, environment variables, git commit,
 and more. When performance varies across machines or runs, the metadata
-tell you why. When you need to reproduce a result, it shows exactly what
+tells you why. When you need to reproduce a result, it shows exactly what
 was running.
 
 Unlike other benchmarking tools, Microbench focuses on **reproducibility
@@ -132,8 +132,9 @@ Output (written to stdout when `--outfile` is omitted):
 }
 ```
 
-The CLI supports additional options including capturing stdout/stderr, setting timeouts, and repeat iterations for benchmarking. See the [CLI documentation](https://alubbock.github.io/microbench/cli/) for the
-full option reference.
+The CLI supports additional options, including capturing stdout/stderr, setting timeouts,
+and repeat iterations for benchmarking. See the
+[CLI documentation](https://alubbock.github.io/microbench/cli/) for the full option reference.
 
 ## Quick start — Python API
 
@@ -170,7 +171,7 @@ like:
 | Shell scripts, compiled executables, or non-Python programs | CLI |
 | SLURM jobs or batch scripts | CLI |
 | One-off timing with host metadata, no code changes | CLI |
-| Python functions needing sub-timings (`bench.time()`),return-value capture, or line-by-line profiling | Python API |
+| Python functions needing sub-timings (`bench.time()`), return-value capture, or line-by-line profiling | Python API |
 | Custom capture logic (subclassing mixins) | Python API |
 | Capturing live Python module versions (not just what's installed) | Python API |
 | Async Python functions | Python API |

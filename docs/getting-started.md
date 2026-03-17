@@ -9,7 +9,9 @@ and capture timing and host metadata with no code changes:
 microbench --outfile results.jsonl -- ./run_simulation.sh --steps 1000
 ```
 
-Host information and SLURM environment variables are captured by default.
+Default information captured includes timing, the Python interpreter, host
+information, SLURM environment variables, loaded modules, and the current
+working directory.
 Use `--field KEY=VALUE` to attach labels and `--iterations N` to run the
 command multiple times:
 
@@ -105,7 +107,7 @@ myfunction(x, y)
 ```
 
 Mixins used:
-- `MBFunctionCall` records the supplied arguments `x` and `y`.
+- `MBFunctionCall` records the supplied argument values.
 - `MBHostInfo` captures `host.hostname` and `host.os`.
 - `MBSlurmInfo` captures all `SLURM_*` environment variables (used by the
   [SLURM](https://slurm.schedmd.com/overview.html) cluster system).
