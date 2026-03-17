@@ -1,8 +1,7 @@
 import json
 import logging
 import threading
-
-import dateutil.parser
+from datetime import datetime
 
 
 class LiveStream:
@@ -84,15 +83,23 @@ class LiveStream:
         return True
 
     def process_runtime(self, data):
-        data['runtime'] = dateutil.parser.parse(
-            data['finish_time']
-        ) - dateutil.parser.parse(data['start_time'])
+        call = data.get('call', {})
+        start = call.get('start_time')
+        finish = call.get('finish_time')
+        if start and finish:
+            data['runtime'] = datetime.fromisoformat(finish) - datetime.fromisoformat(
+                start
+            )
+        else:
+            data['runtime'] = None
 
     def display(self, data):
+        call = data.get('call', {})
+        host = data.get('host', {})
         self._log.info(
             '{}() on {} took {}'.format(
-                data['function_name'],
-                data.get('hostname', '<unknown>'),
-                data['runtime'],
+                call.get('name', '<unknown>'),
+                host.get('hostname', '<unknown>'),
+                data.get('runtime'),
             )
         )

@@ -416,6 +416,20 @@ Also includes all changes from v1.1.0.
   `pyproject.toml` updated (`testpaths`, `per-file-ignores`, package
   `exclude`). All tests continue to pass.
 
+### Bug fixes
+
+- **`LiveStream` updated for v2 record schema**: field references updated from
+  the v1 flat schema (`function_name`, `hostname`, `start_time`,
+  `finish_time`) to the v2 nested schema (`call.name`, `host.hostname`,
+  `call.start_time`, `call.finish_time`). Records produced by microbench v1
+  are no longer parsed correctly by `LiveStream`; this is expected given the
+  v2 schema migration documented in the breaking changes section above.
+
+- **`python-dateutil` dependency removed from `LiveStream`**: timestamp
+  parsing now uses `datetime.fromisoformat()` from the standard library
+  (Python 3.7+). Remove `python-dateutil` from your environment if it was
+  only installed for microbench.
+
 ## [1.1.0] - 2026-03-13
 
 ### New features

@@ -295,8 +295,8 @@ field (finish_time − start_time) to each record before `display()` is
 called. Override `display()` to change how records are shown, or `filter()`
 to skip records selectively.
 
-Requires [python-dateutil](https://pypi.org/project/python-dateutil/):
-`pip install python-dateutil`.
+`LiveStream` has no extra dependencies — it uses Python's built-in
+`datetime.fromisoformat()` for timestamp parsing.
 
 ## Comparing environments
 
