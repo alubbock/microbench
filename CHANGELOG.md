@@ -2,7 +2,7 @@
 
 All notable changes to microbench are documented here.
 
-## [2.0.0] - unreleased
+## [2.0.0] - 2026-03-17
 
 Microbench v2 is a significant upgrade with many new features versus v1.1.0.
 Be sure to review the breaking changes before upgrading.
@@ -286,9 +286,7 @@ Be sure to review the breaking changes before upgrading.
   | `finish_time` | `call.finish_time` |
   | `run_durations` | `call.durations` |
   | `function_name` | `call.name` |
-  | `mb_timings` | `call.timings` |
-  | `mb_capture_errors` | `call.capture_errors` |
-  | `monitor` | `call.monitor` |
+  | `telemetry` | `call.monitor` |
   | `env_*` (flat keys) | `env.*` (dict) |
   | `package_versions` (from `capture_versions`) | `python.loaded_packages` |
 
@@ -298,11 +296,8 @@ Be sure to review the breaking changes before upgrading.
   |---|---|
   | `hostname` | `host.hostname` |
   | `operating_system` | `host.os` |
-  | `cpu_cores_logical` | `host.cpu_cores_logical` |
   | `cpu_cores_physical` | `host.cpu_cores_physical` |
   | `ram_total` | `host.ram_total` |
-  | `working_dir` | `call.working_dir` |
-  | `peak_memory_bytes` | `call.peak_memory_bytes` |
   | `args` | `call.args` |
   | `kwargs` | `call.kwargs` |
   | `return_value` | `call.return_value` |
@@ -310,26 +305,9 @@ Be sure to review the breaking changes before upgrading.
   | `package_versions` (MBGlobalPackages) | `python.loaded_packages` |
   | `package_versions` (MBInstalledPackages) | `python.installed_packages` |
   | `package_paths` | `python.installed_package_paths` |
-  | `git_info` | `git` |
-  | `cgroup_limits` | `cgroups` (inner keys also renamed: `cpu_cores` → `cpu_cores_limit`, `memory_bytes` → `memory_bytes_limit`, `cgroup_version` → `version`) |
   | `nvidia_<attr>` (multiple flat dicts) | `nvidia` (list of per-GPU dicts with `uuid` key) |
 
-  **CLI fields** also move into `call`:
-
-  | Old key | New key |
-  |---|---|
-  | `function_name` (basename) | `call.name` |
-  | `command` | `call.command` |
-  | `returncode` | `call.returncode` |
-  | `stdout` | `call.stdout` |
-  | `stderr` | `call.stderr` |
-  | `subprocess_monitor` | `call.monitor` |
-
-  A new `call.invocation` field is always present: `'Python'` for the Python
-  API and `'CLI'` for the command-line interface.
-
-  Unchanged namespaces: `slurm`, `loaded_modules`, `conda`, `file_hashes`,
-  `exception` (top-level), `exit_signal` (top-level).
+  Unchanged namespaces: `conda`.
 
   **Migration:** Use `get_results(flat=True)` to access fields via dot-notation
   keys (`call.name`, `mb.run_id`, `host.hostname`, etc.) in pandas or scripts
