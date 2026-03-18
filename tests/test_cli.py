@@ -181,7 +181,7 @@ def test_cli_capture_optional_on_by_default():
 
 
 def test_cli_all_flag_includes_all_mixins():
-    """--all includes every cli_compatible mixin."""
+    """--all includes every mixin in the CLI registry."""
     from microbench.__main__ import _get_mixin_map
 
     all_names = set(_get_mixin_map())

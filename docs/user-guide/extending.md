@@ -29,15 +29,15 @@ leftmost class in the inheritance list wins.
 
 ### Making a mixin CLI-compatible
 
-A mixin with `cli_compatible = True` appears in `--show-mixins` and can be
-selected with `--mixin`. That attribute alone is enough for mixins that need
-no configuration:
+Document CLI compatibility in the docstring, and add it to cli/registry.py
 
 ```python
 class MBMachineType:
-    """Capture the machine architecture (e.g. x86_64, arm64)."""
+    """Capture the machine architecture (e.g. x86_64, arm64).
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_machine_type(self, bm_data):
         import platform

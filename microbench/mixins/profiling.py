@@ -21,9 +21,9 @@ class MBPeakMemory:
         which covers Python objects and most C-extension allocations. Memory
         allocated directly via ``malloc`` in C extensions (e.g. some large
         NumPy arrays) is not tracked.
-    """
 
-    cli_compatible = True
+        CLI compatible.
+    """
 
     def capture_peak_memory(self, bm_data):
         import tracemalloc

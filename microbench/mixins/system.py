@@ -24,9 +24,10 @@ class MBHostInfo:
 
     This mixin supersedes the former ``MBHostCpuCores`` and ``MBHostRamTotal``
     mixins, which have been removed.
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_hostname(self, bm_data):
         bm_data.setdefault('host', {})['hostname'] = socket.gethostname()
@@ -52,9 +53,10 @@ class MBWorkingDir:
 
     Records the current working directory as ``call.working_dir``. This is
     per-call data since the working directory can change between calls.
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_working_dir(self, bm_data):
         bm_data.setdefault('call', {})['working_dir'] = os.getcwd()
@@ -77,9 +79,10 @@ class MBSlurmInfo:
                 "cpus_per_task": "4"
             }
         }
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_slurm(self, bm_data):
         bm_data['slurm'] = {
@@ -108,9 +111,10 @@ class MBLoadedModules:
 
     Module entries without a version (e.g. ``null``) are stored with an
     empty string as the version.
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_loaded_modules(self, bm_data):
         loaded = os.environ.get('LOADEDMODULES', '')
@@ -236,9 +240,10 @@ class MBCgroupLimits:
                 "version": 2
             }
         }
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_cgroup_limits(self, bm_data):
         if sys.platform != 'linux':

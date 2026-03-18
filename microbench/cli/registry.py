@@ -18,7 +18,7 @@ from microbench.mixins.system import (
 from microbench.mixins.vcs import MBFileHash, MBGitInfo
 
 # Maps kebab-case CLI name → mixin class.
-# Only mixins with ``cli_compatible = True`` should be listed here.
+# Only CLI-compatible mixins (noted in their docstring) should be listed here.
 MIXIN_REGISTRY: dict = {
     'python-info': MBPythonInfo,
     'host-info': MBHostInfo,
