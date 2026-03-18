@@ -28,16 +28,33 @@ def _existing_dir(value):
 
 
 def _resolve_cmd_path(cmd):
-    """Resolve cmd[0] to an absolute file path for use as a hash target."""
+    """Resolve cmd[0] and scan arguments for file paths to hash.
+
+    Resolves the command executable (``cmd[0]``) to an absolute path via
+    :func:`shutil.which`, then scans the remaining arguments
+    (``cmd[1:]``) for tokens that correspond to existing files on disk.
+    This transparently captures input and output file paths that appear
+    on the command line without requiring the user to specify
+    ``--hash-file`` explicitly.
+    """
     import shutil
 
+    paths = []
+
+    # Resolve the command executable.
     path = cmd[0]
     resolved = shutil.which(path)
     if resolved:
-        return [resolved]
-    if os.path.isfile(path):
-        return [path]
-    return []
+        paths.append(resolved)
+    elif os.path.isfile(path):
+        paths.append(path)
+
+    # Scan remaining arguments for tokens that name existing files.
+    for arg in cmd[1:]:
+        if os.path.isfile(arg):
+            paths.append(arg)
+
+    return paths
 
 
 class MBGitInfo:
@@ -150,10 +167,11 @@ class MBFileHash:
     without loading them fully into memory.
 
     **CLI usage** (``python -m microbench``): the default is the
-    benchmarked command executable (``cmd[0]``) rather than the running
-    script, since ``sys.argv[0]`` points to the microbench package
-    itself. Use ``--hash-file FILE [FILE ...]`` to override, and
-    ``--hash-algorithm`` to change the algorithm.
+    benchmarked command executable (``cmd[0]``) *plus* any arguments
+    that resolve to existing files on disk (``cmd[1:]``). This
+    transparently captures input and output files without requiring
+    ``--hash-file``. Use ``--hash-file FILE [FILE ...]`` to override the
+    default entirely, and ``--hash-algorithm`` to change the algorithm.
 
     Attributes:
         hash_files (iterable of str, optional): File paths to hash.
@@ -167,7 +185,8 @@ class MBFileHash:
 
         {
             "file_hashes": {
-                "run_experiment.py": "e3b0c44298fc1c14..."
+                "run_experiment.py": "e3b0c44298fc1c14...",
+                "input.csv": "2cf24dba5fb0a30e..."
             }
         }
 
@@ -183,8 +202,10 @@ class MBFileHash:
             nargs='+',
             type=_existing_file,
             help=(
-                'File(s) to hash with the file-hash mixin. '
-                'CLI default: the benchmarked command executable. '
+                'File(s) to hash with the file-hash mixin. Overrides '
+                'the default entirely. '
+                'CLI default: the command executable plus any arguments '
+                'that are existing files. '
                 'Python API default: the running script.'
             ),
             cli_default=_resolve_cmd_path,
