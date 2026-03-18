@@ -5802,6 +5802,11 @@ bench = MicroBench(outputs=[RedisOutput(&#39;microbench:mykey&#39;,
 and in the CLI default mixin set. It supersedes the former <code>MBPythonVersion</code>.</p>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -5829,7 +5834,8 @@ and in the CLI default mixin set. It supersedes the former <code>MBPythonVersion
 <span class="normal"><a href="#__codelineno-0-47">47</a></span>
 <span class="normal"><a href="#__codelineno-0-48">48</a></span>
 <span class="normal"><a href="#__codelineno-0-49">49</a></span>
-<span class="normal"><a href="#__codelineno-0-50">50</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBPythonInfo</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-50">50</a></span>
+<span class="normal"><a href="#__codelineno-0-51">51</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBPythonInfo</span><span class="p">:</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the Python interpreter version, prefix, and executable path.</span>
 <a id="__codelineno-0-33" name="__codelineno-0-33"></a>
 <a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">    Records a ``python`` dict with three keys:</span>
@@ -5840,15 +5846,16 @@ and in the CLI default mixin set. It supersedes the former <code>MBPythonVersion
 <a id="__codelineno-0-39" name="__codelineno-0-39"></a>
 <a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">    This mixin is included in :class:`MicroBench` by default (Python API)</span>
 <a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    and in the CLI default mixin set. It supersedes the former ``MBPythonVersion``.</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_python_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">python</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="p">{})</span>
-<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">()</span>
-<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">prefix</span>
-<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;executable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_python_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">python</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-0-49" name="__codelineno-0-49"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">()</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">prefix</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;executable&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -5898,6 +5905,11 @@ psutil is not available — no error or warning is raised.</p>
 mixins, which have been removed.</p>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -5937,7 +5949,8 @@ mixins, which have been removed.</p>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
 <span class="normal"><a href="#__codelineno-0-45">45</a></span>
 <span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBHostInfo</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-47">47</a></span>
+<span class="normal"><a href="#__codelineno-0-48">48</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBHostInfo</span><span class="p">:</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture hostname, operating system, and (optionally) CPU and RAM info.</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">    Always records ``host.hostname`` and ``host.os`` using only the standard</span>
@@ -5948,27 +5961,28 @@ mixins, which have been removed.</p>
 <a id="__codelineno-0-24" name="__codelineno-0-24"></a>
 <a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    This mixin supersedes the former ``MBHostCpuCores`` and ``MBHostRamTotal``</span>
 <a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    mixins, which have been removed.</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28"></a>
-<a id="__codelineno-0-29" name="__codelineno-0-29"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30"></a>
-<a id="__codelineno-0-31" name="__codelineno-0-31"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_hostname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;hostname&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33"></a>
-<a id="__codelineno-0-34" name="__codelineno-0-34"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_os</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;os&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_cpu_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38"></a>        <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39"></a>            <span class="k">return</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40"></a>        <span class="n">host</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">host</span><span class="p">[</span><span class="s1">&#39;cpu_cores_logical&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">host</span><span class="p">[</span><span class="s1">&#39;cpu_cores_physical&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43"></a>
-<a id="__codelineno-0-44" name="__codelineno-0-44"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_ram_total</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46"></a>            <span class="k">return</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;ram_total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">total</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31"></a>
+<a id="__codelineno-0-32" name="__codelineno-0-32"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_hostname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;hostname&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34"></a>
+<a id="__codelineno-0-35" name="__codelineno-0-35"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_os</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;os&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37"></a>
+<a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_cpu_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40"></a>            <span class="k">return</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41"></a>        <span class="n">host</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42"></a>        <span class="n">host</span><span class="p">[</span><span class="s1">&#39;cpu_cores_logical&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-43" name="__codelineno-0-43"></a>        <span class="n">host</span><span class="p">[</span><span class="s1">&#39;cpu_cores_physical&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a id="__codelineno-0-44" name="__codelineno-0-44"></a>
+<a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_ram_total</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="k">if</span> <span class="n">psutil</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47"></a>            <span class="k">return</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;host&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;ram_total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">total</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6020,6 +6034,7 @@ iterations as <code>call.peak_memory_bytes</code>.</p>
 which covers Python objects and most C-extension allocations. Memory
 allocated directly via <code>malloc</code> in C extensions (e.g. some large
 NumPy arrays) is not tracked.</p>
+<p>CLI compatible.</p>
 </details>
 
 
@@ -6073,9 +6088,9 @@ NumPy arrays) is not tracked.</p>
 <a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">        which covers Python objects and most C-extension allocations. Memory</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">        allocated directly via ``malloc`` in C extensions (e.g. some large</span>
 <a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">        NumPy arrays) is not tracked.</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24"></a>
+<a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    &quot;&quot;&quot;</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27"></a>
 <a id="__codelineno-0-28" name="__codelineno-0-28"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_peak_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
 <a id="__codelineno-0-29" name="__codelineno-0-29"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">tracemalloc</span>
@@ -6148,6 +6163,11 @@ variables are set (e.g. running locally), <code>slurm</code> is an empty dict.</
 </code></pre></div>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -6156,9 +6176,7 @@ variables are set (e.g. running locally), <code>slurm</code> is an empty dict.</
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/system.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-63">63</a></span>
-<span class="normal"><a href="#__codelineno-0-64">64</a></span>
-<span class="normal"><a href="#__codelineno-0-65">65</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-65">65</a></span>
 <span class="normal"><a href="#__codelineno-0-66">66</a></span>
 <span class="normal"><a href="#__codelineno-0-67">67</a></span>
 <span class="normal"><a href="#__codelineno-0-68">68</a></span>
@@ -6180,31 +6198,35 @@ variables are set (e.g. running locally), <code>slurm</code> is an empty dict.</
 <span class="normal"><a href="#__codelineno-0-84">84</a></span>
 <span class="normal"><a href="#__codelineno-0-85">85</a></span>
 <span class="normal"><a href="#__codelineno-0-86">86</a></span>
-<span class="normal"><a href="#__codelineno-0-87">87</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBSlurmInfo</span><span class="p">:</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture all SLURM_* environment variables.</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="sd">    Results are stored in the ``slurm`` field as a dict, with keys</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a><span class="sd">    lowercased and the ``SLURM_`` prefix stripped. If no SLURM environment</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    variables are set (e.g. running locally), ``slurm`` is an empty dict.</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">    Example output::</span>
+<span class="normal"><a href="#__codelineno-0-87">87</a></span>
+<span class="normal"><a href="#__codelineno-0-88">88</a></span>
+<span class="normal"><a href="#__codelineno-0-89">89</a></span>
+<span class="normal"><a href="#__codelineno-0-90">90</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBSlurmInfo</span><span class="p">:</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture all SLURM_* environment variables.</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a><span class="sd">    Results are stored in the ``slurm`` field as a dict, with keys</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a><span class="sd">    lowercased and the ``SLURM_`` prefix stripped. If no SLURM environment</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a><span class="sd">    variables are set (e.g. running locally), ``slurm`` is an empty dict.</span>
 <a id="__codelineno-0-71" name="__codelineno-0-71"></a>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">        {</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">            &quot;slurm&quot;: {</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">                &quot;job_id&quot;: &quot;12345&quot;,</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">                &quot;array_task_id&quot;: &quot;3&quot;,</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">                &quot;nodelist&quot;: &quot;gpu-node-[01-04]&quot;,</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">                &quot;cpus_per_task&quot;: &quot;4&quot;</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">            }</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">        }</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_slurm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;slurm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>            <span class="n">k</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;SLURM_&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>        <span class="p">}</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    Example output::</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a><span class="sd">        {</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">            &quot;slurm&quot;: {</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">                &quot;job_id&quot;: &quot;12345&quot;,</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">                &quot;array_task_id&quot;: &quot;3&quot;,</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">                &quot;nodelist&quot;: &quot;gpu-node-[01-04]&quot;,</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">                &quot;cpus_per_task&quot;: &quot;4&quot;</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">            }</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">        }</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_slurm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;slurm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>            <span class="n">k</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;SLURM_&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6263,6 +6285,11 @@ benchmark is not running in a module-enabled environment,
 empty string as the version.</p>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -6271,10 +6298,7 @@ empty string as the version.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/system.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
-<span class="normal"><a href="#__codelineno-0-91"> 91</a></span>
-<span class="normal"><a href="#__codelineno-0-92"> 92</a></span>
-<span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-93"> 93</a></span>
 <span class="normal"><a href="#__codelineno-0-94"> 94</a></span>
 <span class="normal"><a href="#__codelineno-0-95"> 95</a></span>
 <span class="normal"><a href="#__codelineno-0-96"> 96</a></span>
@@ -6305,41 +6329,46 @@ empty string as the version.</p>
 <span class="normal"><a href="#__codelineno-0-121">121</a></span>
 <span class="normal"><a href="#__codelineno-0-122">122</a></span>
 <span class="normal"><a href="#__codelineno-0-123">123</a></span>
-<span class="normal"><a href="#__codelineno-0-124">124</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBLoadedModules</span><span class="p">:</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture loaded Lmod / Environment Modules.</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Reads the ``LOADEDMODULES`` environment variable set by both Lmod and</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    Environment Modules and records the loaded modules as a dict mapping</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    module name to version string. If no modules are loaded, or the</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    benchmark is not running in a module-enabled environment,</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    ``loaded_modules`` is an empty dict.</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    Example output::</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        {</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">            &quot;loaded_modules&quot;: {</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">                &quot;gcc&quot;: &quot;12.2.0&quot;,</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">                &quot;openmpi&quot;: &quot;4.1.5&quot;,</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">                &quot;python&quot;: &quot;3.10.4&quot;</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">            }</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">        }</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">    Module entries without a version (e.g. ``null``) are stored with an</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">    empty string as the version.</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+<span class="normal"><a href="#__codelineno-0-125">125</a></span>
+<span class="normal"><a href="#__codelineno-0-126">126</a></span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBLoadedModules</span><span class="p">:</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture loaded Lmod / Environment Modules.</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    Reads the ``LOADEDMODULES`` environment variable set by both Lmod and</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Environment Modules and records the loaded modules as a dict mapping</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">    module name to version string. If no modules are loaded, or the</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">    benchmark is not running in a module-enabled environment,</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    ``loaded_modules`` is an empty dict.</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    Example output::</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        {</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">            &quot;loaded_modules&quot;: {</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a><span class="sd">                &quot;gcc&quot;: &quot;12.2.0&quot;,</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">                &quot;openmpi&quot;: &quot;4.1.5&quot;,</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">                &quot;python&quot;: &quot;3.10.4&quot;</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">            }</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        }</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">    Module entries without a version (e.g. ``null``) are stored with an</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    empty string as the version.</span>
 <a id="__codelineno-0-114" name="__codelineno-0-114"></a>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_loaded_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">loaded</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LOADEDMODULES&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="n">modules</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">loaded</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a>            <span class="n">entry</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="p">:</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>                <span class="k">continue</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a>            <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>            <span class="n">modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;loaded_modules&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">modules</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_loaded_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">loaded</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LOADEDMODULES&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="n">modules</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">loaded</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>            <span class="n">entry</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="p">:</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>            <span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>            <span class="n">modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;loaded_modules&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">modules</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6384,6 +6413,11 @@ empty string as the version.</p>
 per-call data since the working directory can change between calls.</p>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -6392,8 +6426,7 @@ per-call data since the working directory can change between calls.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/system.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-50">50</a></span>
-<span class="normal"><a href="#__codelineno-0-51">51</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-51">51</a></span>
 <span class="normal"><a href="#__codelineno-0-52">52</a></span>
 <span class="normal"><a href="#__codelineno-0-53">53</a></span>
 <span class="normal"><a href="#__codelineno-0-54">54</a></span>
@@ -6402,17 +6435,20 @@ per-call data since the working directory can change between calls.</p>
 <span class="normal"><a href="#__codelineno-0-57">57</a></span>
 <span class="normal"><a href="#__codelineno-0-58">58</a></span>
 <span class="normal"><a href="#__codelineno-0-59">59</a></span>
-<span class="normal"><a href="#__codelineno-0-60">60</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBWorkingDir</span><span class="p">:</span>
-<a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the working directory at benchmark time.</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    Records the current working directory as ``call.working_dir``. This is</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    per-call data since the working directory can change between calls.</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal"><a href="#__codelineno-0-60">60</a></span>
+<span class="normal"><a href="#__codelineno-0-61">61</a></span>
+<span class="normal"><a href="#__codelineno-0-62">62</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBWorkingDir</span><span class="p">:</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture the working directory at benchmark time.</span>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">    Records the current working directory as ``call.working_dir``. This is</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    per-call data since the working directory can change between calls.</span>
 <a id="__codelineno-0-56" name="__codelineno-0-56"></a>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_working_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;working_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_working_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="p">{})[</span><span class="s1">&#39;working_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6483,6 +6519,11 @@ A SLURM job launched with <code>--cpus-per-task=4</code> will typically report
 </code></pre></div>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -6491,11 +6532,7 @@ A SLURM job launched with <code>--cpus-per-task=4</code> will typically report
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/system.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-209">209</a></span>
-<span class="normal"><a href="#__codelineno-0-210">210</a></span>
-<span class="normal"><a href="#__codelineno-0-211">211</a></span>
-<span class="normal"><a href="#__codelineno-0-212">212</a></span>
-<span class="normal"><a href="#__codelineno-0-213">213</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-213">213</a></span>
 <span class="normal"><a href="#__codelineno-0-214">214</a></span>
 <span class="normal"><a href="#__codelineno-0-215">215</a></span>
 <span class="normal"><a href="#__codelineno-0-216">216</a></span>
@@ -6535,51 +6572,57 @@ A SLURM job launched with <code>--cpus-per-task=4</code> will typically report
 <span class="normal"><a href="#__codelineno-0-250">250</a></span>
 <span class="normal"><a href="#__codelineno-0-251">251</a></span>
 <span class="normal"><a href="#__codelineno-0-252">252</a></span>
-<span class="normal"><a href="#__codelineno-0-253">253</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-209" name="__codelineno-0-209"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBCgroupLimits</span><span class="p">:</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture CPU quota and memory limit from Linux cgroups.</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">    Works for SLURM jobs and Kubernetes pods (cgroup v1 and v2). Results</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">    are stored in the ``cgroups`` field as a dict containing:</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a><span class="sd">    - ``cpu_cores_limit``: effective CPU parallelism as a float (quota ÷</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">      period), or ``None`` if unlimited or unavailable.</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">    - ``memory_bytes_limit``: memory limit in bytes as an int, or ``None``</span>
-<a id="__codelineno-0-218" name="__codelineno-0-218"></a><span class="sd">      if unlimited or unavailable.</span>
-<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">    - ``version``: ``1`` or ``2``.</span>
-<a id="__codelineno-0-220" name="__codelineno-0-220"></a>
-<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    On non-Linux systems or when the cgroup filesystem is unavailable,</span>
-<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">    ``cgroups`` is an empty dict.</span>
-<a id="__codelineno-0-223" name="__codelineno-0-223"></a>
-<a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">    Note:</span>
-<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">        ``cpu_cores_limit`` is derived from the cgroup CPU quota and period,</span>
-<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">        so it represents effective CPU parallelism, not a physical core count.</span>
-<a id="__codelineno-0-227" name="__codelineno-0-227"></a><span class="sd">        A SLURM job launched with ``--cpus-per-task=4`` will typically report</span>
-<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">        ``cpu_cores_limit: 4.0``.</span>
-<a id="__codelineno-0-229" name="__codelineno-0-229"></a>
-<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">    Example output::</span>
-<a id="__codelineno-0-231" name="__codelineno-0-231"></a>
-<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">        {</span>
-<a id="__codelineno-0-233" name="__codelineno-0-233"></a><span class="sd">            &quot;cgroups&quot;: {</span>
-<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">                &quot;cpu_cores_limit&quot;: 4.0,</span>
-<a id="__codelineno-0-235" name="__codelineno-0-235"></a><span class="sd">                &quot;memory_bytes_limit&quot;: 17179869184,</span>
-<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">                &quot;version&quot;: 2</span>
-<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">            }</span>
-<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">        }</span>
-<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-240" name="__codelineno-0-240"></a>
-<a id="__codelineno-0-241" name="__codelineno-0-241"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-242" name="__codelineno-0-242"></a>
-<a id="__codelineno-0-243" name="__codelineno-0-243"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_cgroup_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-244" name="__codelineno-0-244"></a>        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="s1">&#39;linux&#39;</span><span class="p">:</span>
-<a id="__codelineno-0-245" name="__codelineno-0-245"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-246" name="__codelineno-0-246"></a>            <span class="k">return</span>
-<a id="__codelineno-0-247" name="__codelineno-0-247"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-248" name="__codelineno-0-248"></a>            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/sys/fs/cgroup/cgroup.controllers&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-249" name="__codelineno-0-249"></a>                <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_read_cgroup_v2</span><span class="p">()</span>
-<a id="__codelineno-0-250" name="__codelineno-0-250"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-251" name="__codelineno-0-251"></a>                <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_read_cgroup_v1</span><span class="p">()</span>
-<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">):</span>
-<a id="__codelineno-0-253" name="__codelineno-0-253"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="normal"><a href="#__codelineno-0-253">253</a></span>
+<span class="normal"><a href="#__codelineno-0-254">254</a></span>
+<span class="normal"><a href="#__codelineno-0-255">255</a></span>
+<span class="normal"><a href="#__codelineno-0-256">256</a></span>
+<span class="normal"><a href="#__codelineno-0-257">257</a></span>
+<span class="normal"><a href="#__codelineno-0-258">258</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBCgroupLimits</span><span class="p">:</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture CPU quota and memory limit from Linux cgroups.</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a><span class="sd">    Works for SLURM jobs and Kubernetes pods (cgroup v1 and v2). Results</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a><span class="sd">    are stored in the ``cgroups`` field as a dict containing:</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a><span class="sd">    - ``cpu_cores_limit``: effective CPU parallelism as a float (quota ÷</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a><span class="sd">      period), or ``None`` if unlimited or unavailable.</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a><span class="sd">    - ``memory_bytes_limit``: memory limit in bytes as an int, or ``None``</span>
+<a id="__codelineno-0-222" name="__codelineno-0-222"></a><span class="sd">      if unlimited or unavailable.</span>
+<a id="__codelineno-0-223" name="__codelineno-0-223"></a><span class="sd">    - ``version``: ``1`` or ``2``.</span>
+<a id="__codelineno-0-224" name="__codelineno-0-224"></a>
+<a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">    On non-Linux systems or when the cgroup filesystem is unavailable,</span>
+<a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">    ``cgroups`` is an empty dict.</span>
+<a id="__codelineno-0-227" name="__codelineno-0-227"></a>
+<a id="__codelineno-0-228" name="__codelineno-0-228"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-229" name="__codelineno-0-229"></a><span class="sd">        ``cpu_cores_limit`` is derived from the cgroup CPU quota and period,</span>
+<a id="__codelineno-0-230" name="__codelineno-0-230"></a><span class="sd">        so it represents effective CPU parallelism, not a physical core count.</span>
+<a id="__codelineno-0-231" name="__codelineno-0-231"></a><span class="sd">        A SLURM job launched with ``--cpus-per-task=4`` will typically report</span>
+<a id="__codelineno-0-232" name="__codelineno-0-232"></a><span class="sd">        ``cpu_cores_limit: 4.0``.</span>
+<a id="__codelineno-0-233" name="__codelineno-0-233"></a>
+<a id="__codelineno-0-234" name="__codelineno-0-234"></a><span class="sd">    Example output::</span>
+<a id="__codelineno-0-235" name="__codelineno-0-235"></a>
+<a id="__codelineno-0-236" name="__codelineno-0-236"></a><span class="sd">        {</span>
+<a id="__codelineno-0-237" name="__codelineno-0-237"></a><span class="sd">            &quot;cgroups&quot;: {</span>
+<a id="__codelineno-0-238" name="__codelineno-0-238"></a><span class="sd">                &quot;cpu_cores_limit&quot;: 4.0,</span>
+<a id="__codelineno-0-239" name="__codelineno-0-239"></a><span class="sd">                &quot;memory_bytes_limit&quot;: 17179869184,</span>
+<a id="__codelineno-0-240" name="__codelineno-0-240"></a><span class="sd">                &quot;version&quot;: 2</span>
+<a id="__codelineno-0-241" name="__codelineno-0-241"></a><span class="sd">            }</span>
+<a id="__codelineno-0-242" name="__codelineno-0-242"></a><span class="sd">        }</span>
+<a id="__codelineno-0-243" name="__codelineno-0-243"></a>
+<a id="__codelineno-0-244" name="__codelineno-0-244"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-247" name="__codelineno-0-247"></a>
+<a id="__codelineno-0-248" name="__codelineno-0-248"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_cgroup_limits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-249" name="__codelineno-0-249"></a>        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">!=</span> <span class="s1">&#39;linux&#39;</span><span class="p">:</span>
+<a id="__codelineno-0-250" name="__codelineno-0-250"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-251" name="__codelineno-0-251"></a>            <span class="k">return</span>
+<a id="__codelineno-0-252" name="__codelineno-0-252"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-253" name="__codelineno-0-253"></a>            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/sys/fs/cgroup/cgroup.controllers&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-254" name="__codelineno-0-254"></a>                <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_read_cgroup_v2</span><span class="p">()</span>
+<a id="__codelineno-0-255" name="__codelineno-0-255"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-256" name="__codelineno-0-256"></a>                <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_read_cgroup_v1</span><span class="p">()</span>
+<a id="__codelineno-0-257" name="__codelineno-0-257"></a>        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">ZeroDivisionError</span><span class="p">):</span>
+<a id="__codelineno-0-258" name="__codelineno-0-258"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;cgroups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6672,6 +6715,11 @@ directory if unavailable.</p>
 }
 </code></pre></div>
 
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
 
 
 
@@ -6773,7 +6821,9 @@ directory if unavailable.</p>
 <span class="normal"><a href="#__codelineno-0-132">132</a></span>
 <span class="normal"><a href="#__codelineno-0-133">133</a></span>
 <span class="normal"><a href="#__codelineno-0-134">134</a></span>
-<span class="normal"><a href="#__codelineno-0-135">135</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBGitInfo</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-135">135</a></span>
+<span class="normal"><a href="#__codelineno-0-136">136</a></span>
+<span class="normal"><a href="#__codelineno-0-137">137</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-43" name="__codelineno-0-43"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBGitInfo</span><span class="p">:</span>
 <a id="__codelineno-0-44" name="__codelineno-0-44"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture git repository information.</span>
 <a id="__codelineno-0-45" name="__codelineno-0-45"></a>
 <a id="__codelineno-0-46" name="__codelineno-0-46"></a><span class="sd">    Requires ``git`` ≥ 2.11 to be available on ``PATH``. Records the</span>
@@ -6808,64 +6858,66 @@ directory if unavailable.</p>
 <a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">                &quot;dirty&quot;: false</span>
 <a id="__codelineno-0-76" name="__codelineno-0-76"></a><span class="sd">            }</span>
 <a id="__codelineno-0-77" name="__codelineno-0-77"></a><span class="sd">        }</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="n">CLIArg</span><span class="p">(</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--git-repo&#39;</span><span class="p">],</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;git_repo&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;DIR&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_existing_dir</span><span class="p">,</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a>                <span class="s1">&#39;Directory to inspect for git info. &#39;</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>                <span class="s1">&#39;CLI default: current working directory. &#39;</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>                <span class="s1">&#39;Python API default: directory of the running script.&#39;</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>            <span class="p">),</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>            <span class="n">cli_default</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cmd</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>        <span class="p">),</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="p">]</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_git_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;git_repo&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>            <span class="n">cwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">git_repo</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>            <span class="n">argv0</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>            <span class="k">if</span> <span class="n">argv0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">argv0</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>                <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">argv0</span><span class="p">))</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>                <span class="n">cwd</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># fall back to shell&#39;s working directory</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cwd&#39;</span><span class="p">:</span> <span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">:</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">}</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--git-repo&#39;</span><span class="p">],</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;git_repo&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;DIR&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_existing_dir</span><span class="p">,</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>                <span class="s1">&#39;Directory to inspect for git info. &#39;</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>                <span class="s1">&#39;CLI default: current working directory. &#39;</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>                <span class="s1">&#39;Python API default: directory of the running script.&#39;</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>            <span class="p">),</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>            <span class="n">cli_default</span><span class="o">=</span><span class="k">lambda</span> <span class="n">cmd</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>        <span class="p">),</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="p">]</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_git_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;git_repo&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>            <span class="n">cwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">git_repo</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>            <span class="n">argv0</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>            <span class="k">if</span> <span class="n">argv0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">argv0</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>                <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">argv0</span><span class="p">))</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>                <span class="n">cwd</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># fall back to shell&#39;s working directory</span>
 <a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">repo</span> <span class="o">=</span> <span class="p">(</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;rev-parse&#39;</span><span class="p">,</span> <span class="s1">&#39;--show-toplevel&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>            <span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>            <span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="p">)</span>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;--porcelain=v2&#39;</span><span class="p">,</span> <span class="s1">&#39;--branch&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>        <span class="n">commit</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a>        <span class="n">branch</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">dirty</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a>            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;# branch.oid &#39;</span><span class="p">):</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>                <span class="n">commit</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">13</span><span class="p">:]</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a>            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;# branch.head &#39;</span><span class="p">):</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a>                <span class="n">head</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">14</span><span class="p">:]</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a>                <span class="n">branch</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s1">&#39;(detached)&#39;</span> <span class="k">else</span> <span class="n">head</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>            <span class="k">elif</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a>                <span class="n">dirty</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-131" name="__codelineno-0-131"></a>            <span class="s1">&#39;repo&#39;</span><span class="p">:</span> <span class="n">repo</span><span class="p">,</span>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a>            <span class="s1">&#39;commit&#39;</span><span class="p">:</span> <span class="n">commit</span><span class="p">,</span>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a>            <span class="s1">&#39;branch&#39;</span><span class="p">:</span> <span class="n">branch</span><span class="p">,</span>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a>            <span class="s1">&#39;dirty&#39;</span><span class="p">:</span> <span class="n">dirty</span><span class="p">,</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a>        <span class="p">}</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cwd&#39;</span><span class="p">:</span> <span class="n">cwd</span><span class="p">,</span> <span class="s1">&#39;stderr&#39;</span><span class="p">:</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">}</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="n">repo</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>            <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;rev-parse&#39;</span><span class="p">,</span> <span class="s1">&#39;--show-toplevel&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>            <span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a>            <span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="p">)</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">output</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;--porcelain=v2&#39;</span><span class="p">,</span> <span class="s1">&#39;--branch&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>        <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="n">commit</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>        <span class="n">branch</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>        <span class="n">dirty</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;# branch.oid &#39;</span><span class="p">):</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>                <span class="n">commit</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">13</span><span class="p">:]</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>            <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;# branch.head &#39;</span><span class="p">):</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>                <span class="n">head</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">14</span><span class="p">:]</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>                <span class="n">branch</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">head</span> <span class="o">==</span> <span class="s1">&#39;(detached)&#39;</span> <span class="k">else</span> <span class="n">head</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>            <span class="k">elif</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a>                <span class="n">dirty</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131"></a>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a>            <span class="s1">&#39;repo&#39;</span><span class="p">:</span> <span class="n">repo</span><span class="p">,</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>            <span class="s1">&#39;commit&#39;</span><span class="p">:</span> <span class="n">commit</span><span class="p">,</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a>            <span class="s1">&#39;branch&#39;</span><span class="p">:</span> <span class="n">branch</span><span class="p">,</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>            <span class="s1">&#39;dirty&#39;</span><span class="p">:</span> <span class="n">dirty</span><span class="p">,</span>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a>        <span class="p">}</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6967,6 +7019,11 @@ is not required.</p>
 </code></pre></div>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -6975,9 +7032,7 @@ is not required.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/vcs.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-138">138</a></span>
-<span class="normal"><a href="#__codelineno-0-139">139</a></span>
-<span class="normal"><a href="#__codelineno-0-140">140</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-140">140</a></span>
 <span class="normal"><a href="#__codelineno-0-141">141</a></span>
 <span class="normal"><a href="#__codelineno-0-142">142</a></span>
 <span class="normal"><a href="#__codelineno-0-143">143</a></span>
@@ -7054,86 +7109,92 @@ is not required.</p>
 <span class="normal"><a href="#__codelineno-0-214">214</a></span>
 <span class="normal"><a href="#__codelineno-0-215">215</a></span>
 <span class="normal"><a href="#__codelineno-0-216">216</a></span>
-<span class="normal"><a href="#__codelineno-0-217">217</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-138" name="__codelineno-0-138"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBFileHash</span><span class="p">:</span>
-<a id="__codelineno-0-139" name="__codelineno-0-139"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture cryptographic hashes of specified files.</span>
-<a id="__codelineno-0-140" name="__codelineno-0-140"></a>
-<a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="sd">    Useful for recording the exact state of scripts or configuration</span>
-<a id="__codelineno-0-142" name="__codelineno-0-142"></a><span class="sd">    files alongside benchmark results, so results can be tied to a</span>
-<a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="sd">    specific version of the code even without version control.</span>
-<a id="__codelineno-0-144" name="__codelineno-0-144"></a>
-<a id="__codelineno-0-145" name="__codelineno-0-145"></a><span class="sd">    By default hashes the running script (``sys.argv[0]``). Set</span>
-<a id="__codelineno-0-146" name="__codelineno-0-146"></a><span class="sd">    ``hash_files`` to an iterable of paths to hash specific files</span>
-<a id="__codelineno-0-147" name="__codelineno-0-147"></a><span class="sd">    instead. Files are read in 64 KB chunks, so large files are handled</span>
-<a id="__codelineno-0-148" name="__codelineno-0-148"></a><span class="sd">    without loading them fully into memory.</span>
-<a id="__codelineno-0-149" name="__codelineno-0-149"></a>
-<a id="__codelineno-0-150" name="__codelineno-0-150"></a><span class="sd">    **CLI usage** (``python -m microbench``): the default is the</span>
-<a id="__codelineno-0-151" name="__codelineno-0-151"></a><span class="sd">    benchmarked command executable (``cmd[0]``) rather than the running</span>
-<a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="sd">    script, since ``sys.argv[0]`` points to the microbench package</span>
-<a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="sd">    itself. Use ``--hash-file FILE [FILE ...]`` to override, and</span>
-<a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="sd">    ``--hash-algorithm`` to change the algorithm.</span>
-<a id="__codelineno-0-155" name="__codelineno-0-155"></a>
-<a id="__codelineno-0-156" name="__codelineno-0-156"></a><span class="sd">    Attributes:</span>
-<a id="__codelineno-0-157" name="__codelineno-0-157"></a><span class="sd">        hash_files (iterable of str, optional): File paths to hash.</span>
-<a id="__codelineno-0-158" name="__codelineno-0-158"></a><span class="sd">            Defaults to ``[sys.argv[0]]``.</span>
-<a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="sd">        hash_algorithm (str, optional): Hash algorithm name accepted by</span>
-<a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="sd">            :func:`hashlib.new`. Defaults to ``&#39;sha256&#39;``. Use ``&#39;md5&#39;``</span>
-<a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="sd">            for faster hashing of large files where cryptographic strength</span>
-<a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">            is not required.</span>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">    Example output::</span>
+<span class="normal"><a href="#__codelineno-0-217">217</a></span>
+<span class="normal"><a href="#__codelineno-0-218">218</a></span>
+<span class="normal"><a href="#__codelineno-0-219">219</a></span>
+<span class="normal"><a href="#__codelineno-0-220">220</a></span>
+<span class="normal"><a href="#__codelineno-0-221">221</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-140" name="__codelineno-0-140"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBFileHash</span><span class="p">:</span>
+<a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture cryptographic hashes of specified files.</span>
+<a id="__codelineno-0-142" name="__codelineno-0-142"></a>
+<a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="sd">    Useful for recording the exact state of scripts or configuration</span>
+<a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="sd">    files alongside benchmark results, so results can be tied to a</span>
+<a id="__codelineno-0-145" name="__codelineno-0-145"></a><span class="sd">    specific version of the code even without version control.</span>
+<a id="__codelineno-0-146" name="__codelineno-0-146"></a>
+<a id="__codelineno-0-147" name="__codelineno-0-147"></a><span class="sd">    By default hashes the running script (``sys.argv[0]``). Set</span>
+<a id="__codelineno-0-148" name="__codelineno-0-148"></a><span class="sd">    ``hash_files`` to an iterable of paths to hash specific files</span>
+<a id="__codelineno-0-149" name="__codelineno-0-149"></a><span class="sd">    instead. Files are read in 64 KB chunks, so large files are handled</span>
+<a id="__codelineno-0-150" name="__codelineno-0-150"></a><span class="sd">    without loading them fully into memory.</span>
+<a id="__codelineno-0-151" name="__codelineno-0-151"></a>
+<a id="__codelineno-0-152" name="__codelineno-0-152"></a><span class="sd">    **CLI usage** (``python -m microbench``): the default is the</span>
+<a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="sd">    benchmarked command executable (``cmd[0]``) rather than the running</span>
+<a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="sd">    script, since ``sys.argv[0]`` points to the microbench package</span>
+<a id="__codelineno-0-155" name="__codelineno-0-155"></a><span class="sd">    itself. Use ``--hash-file FILE [FILE ...]`` to override, and</span>
+<a id="__codelineno-0-156" name="__codelineno-0-156"></a><span class="sd">    ``--hash-algorithm`` to change the algorithm.</span>
+<a id="__codelineno-0-157" name="__codelineno-0-157"></a>
+<a id="__codelineno-0-158" name="__codelineno-0-158"></a><span class="sd">    Attributes:</span>
+<a id="__codelineno-0-159" name="__codelineno-0-159"></a><span class="sd">        hash_files (iterable of str, optional): File paths to hash.</span>
+<a id="__codelineno-0-160" name="__codelineno-0-160"></a><span class="sd">            Defaults to ``[sys.argv[0]]``.</span>
+<a id="__codelineno-0-161" name="__codelineno-0-161"></a><span class="sd">        hash_algorithm (str, optional): Hash algorithm name accepted by</span>
+<a id="__codelineno-0-162" name="__codelineno-0-162"></a><span class="sd">            :func:`hashlib.new`. Defaults to ``&#39;sha256&#39;``. Use ``&#39;md5&#39;``</span>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a><span class="sd">            for faster hashing of large files where cryptographic strength</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">            is not required.</span>
 <a id="__codelineno-0-165" name="__codelineno-0-165"></a>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">        {</span>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">            &quot;file_hashes&quot;: {</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">                &quot;run_experiment.py&quot;: &quot;e3b0c44298fc1c14...&quot;</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">            }</span>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">        }</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-172" name="__codelineno-0-172"></a>
-<a id="__codelineno-0-173" name="__codelineno-0-173"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-174" name="__codelineno-0-174"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-0-175" name="__codelineno-0-175"></a>        <span class="n">CLIArg</span><span class="p">(</span>
-<a id="__codelineno-0-176" name="__codelineno-0-176"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--hash-file&#39;</span><span class="p">],</span>
-<a id="__codelineno-0-177" name="__codelineno-0-177"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hash_files&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-178" name="__codelineno-0-178"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;FILE&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-179" name="__codelineno-0-179"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-180" name="__codelineno-0-180"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_existing_file</span><span class="p">,</span>
-<a id="__codelineno-0-181" name="__codelineno-0-181"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-0-182" name="__codelineno-0-182"></a>                <span class="s1">&#39;File(s) to hash with the file-hash mixin. &#39;</span>
-<a id="__codelineno-0-183" name="__codelineno-0-183"></a>                <span class="s1">&#39;CLI default: the benchmarked command executable. &#39;</span>
-<a id="__codelineno-0-184" name="__codelineno-0-184"></a>                <span class="s1">&#39;Python API default: the running script.&#39;</span>
-<a id="__codelineno-0-185" name="__codelineno-0-185"></a>            <span class="p">),</span>
-<a id="__codelineno-0-186" name="__codelineno-0-186"></a>            <span class="n">cli_default</span><span class="o">=</span><span class="n">_resolve_cmd_path</span><span class="p">,</span>
-<a id="__codelineno-0-187" name="__codelineno-0-187"></a>        <span class="p">),</span>
-<a id="__codelineno-0-188" name="__codelineno-0-188"></a>        <span class="n">CLIArg</span><span class="p">(</span>
-<a id="__codelineno-0-189" name="__codelineno-0-189"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--hash-algorithm&#39;</span><span class="p">],</span>
-<a id="__codelineno-0-190" name="__codelineno-0-190"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hash_algorithm&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-191" name="__codelineno-0-191"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;ALGORITHM&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-192" name="__codelineno-0-192"></a>            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Hash algorithm for the file-hash mixin (e.g. sha256, md5). Default: sha256.&#39;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
-<a id="__codelineno-0-193" name="__codelineno-0-193"></a>        <span class="p">),</span>
-<a id="__codelineno-0-194" name="__codelineno-0-194"></a>    <span class="p">]</span>
-<a id="__codelineno-0-195" name="__codelineno-0-195"></a>
-<a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_file_hashes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<a id="__codelineno-0-198" name="__codelineno-0-198"></a>
-<a id="__codelineno-0-199" name="__codelineno-0-199"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;hash_files&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-200" name="__codelineno-0-200"></a>            <span class="n">paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash_files</span><span class="p">)</span>
-<a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-202" name="__codelineno-0-202"></a>            <span class="n">argv0</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
-<a id="__codelineno-0-203" name="__codelineno-0-203"></a>            <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">argv0</span><span class="p">]</span> <span class="k">if</span> <span class="n">argv0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">argv0</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
-<a id="__codelineno-0-204" name="__codelineno-0-204"></a>
-<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;hash_algorithm&#39;</span><span class="p">,</span> <span class="s1">&#39;sha256&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-206" name="__codelineno-0-206"></a>        <span class="n">hashes</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-207" name="__codelineno-0-207"></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
-<a id="__codelineno-0-208" name="__codelineno-0-208"></a>            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<a id="__codelineno-0-209" name="__codelineno-0-209"></a>                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">hashlib</span><span class="p">,</span> <span class="s1">&#39;file_digest&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-210" name="__codelineno-0-210"></a>                    <span class="c1"># Python 3.11+: C-level loop, faster for large files</span>
-<a id="__codelineno-0-211" name="__codelineno-0-211"></a>                    <span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">file_digest</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<a id="__codelineno-0-212" name="__codelineno-0-212"></a>                <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-213" name="__codelineno-0-213"></a>                    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
-<a id="__codelineno-0-214" name="__codelineno-0-214"></a>                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">65536</span><span class="p">),</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-215" name="__codelineno-0-215"></a>                        <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-<a id="__codelineno-0-216" name="__codelineno-0-216"></a>                    <span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-<a id="__codelineno-0-217" name="__codelineno-0-217"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;file_hashes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashes</span>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a><span class="sd">    Example output::</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        {</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">            &quot;file_hashes&quot;: {</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">                &quot;run_experiment.py&quot;: &quot;e3b0c44298fc1c14...&quot;</span>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">            }</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        }</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-175" name="__codelineno-0-175"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-177" name="__codelineno-0-177"></a>
+<a id="__codelineno-0-178" name="__codelineno-0-178"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-179" name="__codelineno-0-179"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-0-180" name="__codelineno-0-180"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--hash-file&#39;</span><span class="p">],</span>
+<a id="__codelineno-0-181" name="__codelineno-0-181"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hash_files&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-182" name="__codelineno-0-182"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;FILE&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-183" name="__codelineno-0-183"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-184" name="__codelineno-0-184"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_existing_file</span><span class="p">,</span>
+<a id="__codelineno-0-185" name="__codelineno-0-185"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-0-186" name="__codelineno-0-186"></a>                <span class="s1">&#39;File(s) to hash with the file-hash mixin. &#39;</span>
+<a id="__codelineno-0-187" name="__codelineno-0-187"></a>                <span class="s1">&#39;CLI default: the benchmarked command executable. &#39;</span>
+<a id="__codelineno-0-188" name="__codelineno-0-188"></a>                <span class="s1">&#39;Python API default: the running script.&#39;</span>
+<a id="__codelineno-0-189" name="__codelineno-0-189"></a>            <span class="p">),</span>
+<a id="__codelineno-0-190" name="__codelineno-0-190"></a>            <span class="n">cli_default</span><span class="o">=</span><span class="n">_resolve_cmd_path</span><span class="p">,</span>
+<a id="__codelineno-0-191" name="__codelineno-0-191"></a>        <span class="p">),</span>
+<a id="__codelineno-0-192" name="__codelineno-0-192"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-0-193" name="__codelineno-0-193"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--hash-algorithm&#39;</span><span class="p">],</span>
+<a id="__codelineno-0-194" name="__codelineno-0-194"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;hash_algorithm&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-195" name="__codelineno-0-195"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;ALGORITHM&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-196" name="__codelineno-0-196"></a>            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Hash algorithm for the file-hash mixin (e.g. sha256, md5). Default: sha256.&#39;</span><span class="p">,</span>  <span class="c1"># noqa: E501</span>
+<a id="__codelineno-0-197" name="__codelineno-0-197"></a>        <span class="p">),</span>
+<a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="p">]</span>
+<a id="__codelineno-0-199" name="__codelineno-0-199"></a>
+<a id="__codelineno-0-200" name="__codelineno-0-200"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_file_hashes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-201" name="__codelineno-0-201"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<a id="__codelineno-0-202" name="__codelineno-0-202"></a>
+<a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;hash_files&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-204" name="__codelineno-0-204"></a>            <span class="n">paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash_files</span><span class="p">)</span>
+<a id="__codelineno-0-205" name="__codelineno-0-205"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-206" name="__codelineno-0-206"></a>            <span class="n">argv0</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+<a id="__codelineno-0-207" name="__codelineno-0-207"></a>            <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">argv0</span><span class="p">]</span> <span class="k">if</span> <span class="n">argv0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">argv0</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+<a id="__codelineno-0-208" name="__codelineno-0-208"></a>
+<a id="__codelineno-0-209" name="__codelineno-0-209"></a>        <span class="n">algorithm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;hash_algorithm&#39;</span><span class="p">,</span> <span class="s1">&#39;sha256&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-210" name="__codelineno-0-210"></a>        <span class="n">hashes</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-211" name="__codelineno-0-211"></a>        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+<a id="__codelineno-0-212" name="__codelineno-0-212"></a>            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-0-213" name="__codelineno-0-213"></a>                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">hashlib</span><span class="p">,</span> <span class="s1">&#39;file_digest&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-214" name="__codelineno-0-214"></a>                    <span class="c1"># Python 3.11+: C-level loop, faster for large files</span>
+<a id="__codelineno-0-215" name="__codelineno-0-215"></a>                    <span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">file_digest</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-0-216" name="__codelineno-0-216"></a>                <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-217" name="__codelineno-0-217"></a>                    <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span>
+<a id="__codelineno-0-218" name="__codelineno-0-218"></a>                    <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">65536</span><span class="p">),</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-219" name="__codelineno-0-219"></a>                        <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+<a id="__codelineno-0-220" name="__codelineno-0-220"></a>                    <span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+<a id="__codelineno-0-221" name="__codelineno-0-221"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;file_hashes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashes</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7186,8 +7247,7 @@ package name to version string.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/python.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-53">53</a></span>
-<span class="normal"><a href="#__codelineno-0-54">54</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-54">54</a></span>
 <span class="normal"><a href="#__codelineno-0-55">55</a></span>
 <span class="normal"><a href="#__codelineno-0-56">56</a></span>
 <span class="normal"><a href="#__codelineno-0-57">57</a></span>
@@ -7216,37 +7276,38 @@ package name to version string.</p>
 <span class="normal"><a href="#__codelineno-0-80">80</a></span>
 <span class="normal"><a href="#__codelineno-0-81">81</a></span>
 <span class="normal"><a href="#__codelineno-0-82">82</a></span>
-<span class="normal"><a href="#__codelineno-0-83">83</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBGlobalPackages</span><span class="p">:</span>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture Python packages imported in global environment.</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    Results are stored in ``python.loaded_packages`` as a dict mapping</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    package name to version string.</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>        <span class="c1"># Walk up the call stack to the first frame outside the microbench</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="c1"># package (excluding tests/) — that is the user&#39;s module whose globals</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="c1"># we want to inspect.</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="k">while</span> <span class="n">caller_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_microbench_internal</span><span class="p">(</span><span class="n">caller_frame</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">):</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>                <span class="k">break</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>            <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">f_back</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="k">if</span> <span class="n">caller_frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>            <span class="k">return</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="n">caller_globals</span> <span class="o">=</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">f_globals</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">caller_globals</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_capture_package_version</span><span class="p">(</span><span class="n">bm_data</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">skip_if_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>                <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>                    <span class="n">module_name</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="vm">__module__</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>                    <span class="k">continue</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_capture_package_version</span><span class="p">(</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>                    <span class="n">bm_data</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">skip_if_none</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>                <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-83">83</a></span>
+<span class="normal"><a href="#__codelineno-0-84">84</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBGlobalPackages</span><span class="p">:</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture Python packages imported in global environment.</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    Results are stored in ``python.loaded_packages`` as a dict mapping</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a><span class="sd">    package name to version string.</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>        <span class="c1"># Walk up the call stack to the first frame outside the microbench</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>        <span class="c1"># package (excluding tests/) — that is the user&#39;s module whose globals</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>        <span class="c1"># we want to inspect.</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>        <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">currentframe</span><span class="p">()</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>        <span class="k">while</span> <span class="n">caller_frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_microbench_internal</span><span class="p">(</span><span class="n">caller_frame</span><span class="o">.</span><span class="n">f_code</span><span class="o">.</span><span class="n">co_filename</span><span class="p">):</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>                <span class="k">break</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>            <span class="n">caller_frame</span> <span class="o">=</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">f_back</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="k">if</span> <span class="n">caller_frame</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>            <span class="k">return</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>        <span class="n">caller_globals</span> <span class="o">=</span> <span class="n">caller_frame</span><span class="o">.</span><span class="n">f_globals</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">caller_globals</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_capture_package_version</span><span class="p">(</span><span class="n">bm_data</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">skip_if_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>            <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>                <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>                    <span class="n">module_name</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="vm">__module__</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>                    <span class="k">continue</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>                <span class="bp">self</span><span class="o">.</span><span class="n">_capture_package_version</span><span class="p">(</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>                    <span class="n">bm_data</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">skip_if_none</span><span class="o">=</span><span class="kc">True</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>                <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7321,6 +7382,11 @@ package under <code>python.installed_package_paths</code>. Defaults to
     </table>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -7329,8 +7395,7 @@ package under <code>python.installed_package_paths</code>. Defaults to
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/python.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-86"> 86</a></span>
-<span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-87"> 87</a></span>
 <span class="normal"><a href="#__codelineno-0-88"> 88</a></span>
 <span class="normal"><a href="#__codelineno-0-89"> 89</a></span>
 <span class="normal"><a href="#__codelineno-0-90"> 90</a></span>
@@ -7361,39 +7426,44 @@ package under <code>python.installed_package_paths</code>. Defaults to
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span>
-<span class="normal"><a href="#__codelineno-0-118">118</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-86" name="__codelineno-0-86"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBInstalledPackages</span><span class="p">:</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture installed Python packages using importlib.</span>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a><span class="sd">    Records the name and version of every distribution available in the</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    current Python environment via ``importlib.metadata``.</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a><span class="sd">    Results are stored in ``python.installed_packages`` as a dict mapping</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    package name to version string. When ``capture_paths=True``,</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    installation paths are stored in ``python.installed_package_paths``.</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    Attributes:</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">        capture_paths (bool): Also record the installation path of each</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">            package under ``python.installed_package_paths``. Defaults to</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">            ``False``.</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">    &quot;&quot;&quot;</span>
+<span class="normal"><a href="#__codelineno-0-118">118</a></span>
+<span class="normal"><a href="#__codelineno-0-119">119</a></span>
+<span class="normal"><a href="#__codelineno-0-120">120</a></span>
+<span class="normal"><a href="#__codelineno-0-121">121</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-87" name="__codelineno-0-87"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBInstalledPackages</span><span class="p">:</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture installed Python packages using importlib.</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a><span class="sd">    Records the name and version of every distribution available in the</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a><span class="sd">    current Python environment via ``importlib.metadata``.</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a><span class="sd">    Results are stored in ``python.installed_packages`` as a dict mapping</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a><span class="sd">    package name to version string. When ``capture_paths=True``,</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    installation paths are stored in ``python.installed_package_paths``.</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Attributes:</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        capture_paths (bool): Also record the installation path of each</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">            package under ``python.installed_package_paths``. Defaults to</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">            ``False``.</span>
 <a id="__codelineno-0-101" name="__codelineno-0-101"></a>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.metadata</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">False</span>
 <a id="__codelineno-0-107" name="__codelineno-0-107"></a>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>        <span class="n">python</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="p">{})</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_packages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_paths</span><span class="p">:</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>            <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_package_paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">importlib</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">distributions</span><span class="p">():</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>            <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_packages&#39;</span><span class="p">][</span><span class="n">pkg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">version</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_paths</span> <span class="ow">and</span> <span class="n">pkg</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>                <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_package_paths&#39;</span><span class="p">][</span><span class="n">pkg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>                    <span class="n">pkg</span><span class="o">.</span><span class="n">locate_file</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>                <span class="p">)</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="kn">import</span><span class="w"> </span><span class="nn">importlib.metadata</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="n">python</span> <span class="o">=</span> <span class="n">bm_data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_packages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_paths</span><span class="p">:</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>            <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_package_paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">importlib</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">distributions</span><span class="p">():</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>            <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_packages&#39;</span><span class="p">][</span><span class="n">pkg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">version</span>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capture_paths</span> <span class="ow">and</span> <span class="n">pkg</span><span class="o">.</span><span class="n">files</span><span class="p">:</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>                <span class="n">python</span><span class="p">[</span><span class="s1">&#39;installed_package_paths&#39;</span><span class="p">][</span><span class="n">pkg</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>                    <span class="n">pkg</span><span class="o">.</span><span class="n">locate_file</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>                <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7486,6 +7556,11 @@ Defaults to <code>False</code>.</p>
     </table>
 
 
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
+
 
 
 
@@ -7494,10 +7569,7 @@ Defaults to <code>False</code>.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>microbench/mixins/python.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-121">121</a></span>
-<span class="normal"><a href="#__codelineno-0-122">122</a></span>
-<span class="normal"><a href="#__codelineno-0-123">123</a></span>
-<span class="normal"><a href="#__codelineno-0-124">124</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-124">124</a></span>
 <span class="normal"><a href="#__codelineno-0-125">125</a></span>
 <span class="normal"><a href="#__codelineno-0-126">126</a></span>
 <span class="normal"><a href="#__codelineno-0-127">127</a></span>
@@ -7544,57 +7616,64 @@ Defaults to <code>False</code>.</p>
 <span class="normal"><a href="#__codelineno-0-168">168</a></span>
 <span class="normal"><a href="#__codelineno-0-169">169</a></span>
 <span class="normal"><a href="#__codelineno-0-170">170</a></span>
-<span class="normal"><a href="#__codelineno-0-171">171</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBCondaPackages</span><span class="p">:</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture conda packages and active environment metadata.</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    Runs ``conda list --prefix PREFIX`` where PREFIX is taken from the</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="sd">    ``CONDA_PREFIX`` environment variable (the active conda environment).</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a><span class="sd">    Falls back to ``sys.prefix`` when ``CONDA_PREFIX`` is not set (e.g.</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">    when running inside the base environment without explicit activation).</span>
-<a id="__codelineno-0-128" name="__codelineno-0-128"></a>
-<a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="sd">    If ``conda`` is not on ``PATH``, the ``CONDA_EXE`` environment variable</span>
-<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="sd">    is tried as a fallback before raising an error.</span>
+<span class="normal"><a href="#__codelineno-0-171">171</a></span>
+<span class="normal"><a href="#__codelineno-0-172">172</a></span>
+<span class="normal"><a href="#__codelineno-0-173">173</a></span>
+<span class="normal"><a href="#__codelineno-0-174">174</a></span>
+<span class="normal"><a href="#__codelineno-0-175">175</a></span>
+<span class="normal"><a href="#__codelineno-0-176">176</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBCondaPackages</span><span class="p">:</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture conda packages and active environment metadata.</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a><span class="sd">    Runs ``conda list --prefix PREFIX`` where PREFIX is taken from the</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a><span class="sd">    ``CONDA_PREFIX`` environment variable (the active conda environment).</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a><span class="sd">    Falls back to ``sys.prefix`` when ``CONDA_PREFIX`` is not set (e.g.</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130"></a><span class="sd">    when running inside the base environment without explicit activation).</span>
 <a id="__codelineno-0-131" name="__codelineno-0-131"></a>
-<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">    Records a single ``conda`` dict with three keys:</span>
-<a id="__codelineno-0-133" name="__codelineno-0-133"></a>
-<a id="__codelineno-0-134" name="__codelineno-0-134"></a><span class="sd">    - ``name`` (from ``CONDA_DEFAULT_ENV``) — may be ``None`` if unset.</span>
-<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">    - ``path`` (from ``CONDA_PREFIX``) — may be ``None`` if unset.</span>
-<a id="__codelineno-0-136" name="__codelineno-0-136"></a><span class="sd">    - ``packages`` — dict mapping package name to version string.</span>
-<a id="__codelineno-0-137" name="__codelineno-0-137"></a>
-<a id="__codelineno-0-138" name="__codelineno-0-138"></a><span class="sd">    Attributes:</span>
-<a id="__codelineno-0-139" name="__codelineno-0-139"></a><span class="sd">        include_builds (bool): Include the build string in the version.</span>
-<a id="__codelineno-0-140" name="__codelineno-0-140"></a><span class="sd">            Defaults to ``True``.</span>
-<a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="sd">        include_channels (bool): Include the channel name in the version.</span>
-<a id="__codelineno-0-142" name="__codelineno-0-142"></a><span class="sd">            Defaults to ``False``.</span>
-<a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-144" name="__codelineno-0-144"></a>
-<a id="__codelineno-0-145" name="__codelineno-0-145"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-146" name="__codelineno-0-146"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-147" name="__codelineno-0-147"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-148" name="__codelineno-0-148"></a>
-<a id="__codelineno-0-149" name="__codelineno-0-149"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_conda_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-150" name="__codelineno-0-150"></a>        <span class="n">conda_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_PREFIX&#39;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
-<a id="__codelineno-0-151" name="__codelineno-0-151"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;conda&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-152" name="__codelineno-0-152"></a>            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_DEFAULT_ENV&#39;</span><span class="p">),</span>
-<a id="__codelineno-0-153" name="__codelineno-0-153"></a>            <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_PREFIX&#39;</span><span class="p">),</span>
-<a id="__codelineno-0-154" name="__codelineno-0-154"></a>            <span class="s1">&#39;packages&#39;</span><span class="p">:</span> <span class="p">{},</span>
-<a id="__codelineno-0-155" name="__codelineno-0-155"></a>        <span class="p">}</span>
-<a id="__codelineno-0-156" name="__codelineno-0-156"></a>        <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;conda&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_EXE&#39;</span><span class="p">,</span> <span class="s1">&#39;conda&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-157" name="__codelineno-0-157"></a>        <span class="n">pkg_list</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
-<a id="__codelineno-0-158" name="__codelineno-0-158"></a>            <span class="p">[</span><span class="n">conda_exe</span><span class="p">,</span> <span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="s1">&#39;--prefix&#39;</span><span class="p">,</span> <span class="n">conda_prefix</span><span class="p">]</span>
-<a id="__codelineno-0-159" name="__codelineno-0-159"></a>        <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-160" name="__codelineno-0-160"></a>
-<a id="__codelineno-0-161" name="__codelineno-0-161"></a>        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkg_list</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
-<a id="__codelineno-0-162" name="__codelineno-0-162"></a>            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pkg</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-<a id="__codelineno-0-163" name="__codelineno-0-163"></a>                <span class="k">continue</span>
-<a id="__codelineno-0-164" name="__codelineno-0-164"></a>            <span class="n">pkg_data</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
-<a id="__codelineno-0-165" name="__codelineno-0-165"></a>            <span class="n">pkg_name</span> <span class="o">=</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-166" name="__codelineno-0-166"></a>            <span class="n">pkg_version</span> <span class="o">=</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-<a id="__codelineno-0-167" name="__codelineno-0-167"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_builds</span><span class="p">:</span>
-<a id="__codelineno-0-168" name="__codelineno-0-168"></a>                <span class="n">pkg_version</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-<a id="__codelineno-0-169" name="__codelineno-0-169"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_channels</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkg_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
-<a id="__codelineno-0-170" name="__codelineno-0-170"></a>                <span class="n">pkg_version</span> <span class="o">+=</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
-<a id="__codelineno-0-171" name="__codelineno-0-171"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;conda&#39;</span><span class="p">][</span><span class="s1">&#39;packages&#39;</span><span class="p">][</span><span class="n">pkg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg_version</span>
+<a id="__codelineno-0-132" name="__codelineno-0-132"></a><span class="sd">    If ``conda`` is not on ``PATH``, the ``CONDA_EXE`` environment variable</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133"></a><span class="sd">    is tried as a fallback before raising an error.</span>
+<a id="__codelineno-0-134" name="__codelineno-0-134"></a>
+<a id="__codelineno-0-135" name="__codelineno-0-135"></a><span class="sd">    Records a single ``conda`` dict with three keys:</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136"></a>
+<a id="__codelineno-0-137" name="__codelineno-0-137"></a><span class="sd">    - ``name`` (from ``CONDA_DEFAULT_ENV``) — may be ``None`` if unset.</span>
+<a id="__codelineno-0-138" name="__codelineno-0-138"></a><span class="sd">    - ``path`` (from ``CONDA_PREFIX``) — may be ``None`` if unset.</span>
+<a id="__codelineno-0-139" name="__codelineno-0-139"></a><span class="sd">    - ``packages`` — dict mapping package name to version string.</span>
+<a id="__codelineno-0-140" name="__codelineno-0-140"></a>
+<a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="sd">    Attributes:</span>
+<a id="__codelineno-0-142" name="__codelineno-0-142"></a><span class="sd">        include_builds (bool): Include the build string in the version.</span>
+<a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="sd">            Defaults to ``True``.</span>
+<a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="sd">        include_channels (bool): Include the channel name in the version.</span>
+<a id="__codelineno-0-145" name="__codelineno-0-145"></a><span class="sd">            Defaults to ``False``.</span>
+<a id="__codelineno-0-146" name="__codelineno-0-146"></a>
+<a id="__codelineno-0-147" name="__codelineno-0-147"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-148" name="__codelineno-0-148"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-149" name="__codelineno-0-149"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-150" name="__codelineno-0-150"></a>
+<a id="__codelineno-0-151" name="__codelineno-0-151"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-0-152" name="__codelineno-0-152"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-153" name="__codelineno-0-153"></a>
+<a id="__codelineno-0-154" name="__codelineno-0-154"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_conda_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-155" name="__codelineno-0-155"></a>        <span class="n">conda_prefix</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_PREFIX&#39;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+<a id="__codelineno-0-156" name="__codelineno-0-156"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;conda&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-0-157" name="__codelineno-0-157"></a>            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_DEFAULT_ENV&#39;</span><span class="p">),</span>
+<a id="__codelineno-0-158" name="__codelineno-0-158"></a>            <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_PREFIX&#39;</span><span class="p">),</span>
+<a id="__codelineno-0-159" name="__codelineno-0-159"></a>            <span class="s1">&#39;packages&#39;</span><span class="p">:</span> <span class="p">{},</span>
+<a id="__codelineno-0-160" name="__codelineno-0-160"></a>        <span class="p">}</span>
+<a id="__codelineno-0-161" name="__codelineno-0-161"></a>        <span class="n">conda_exe</span> <span class="o">=</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;conda&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CONDA_EXE&#39;</span><span class="p">,</span> <span class="s1">&#39;conda&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-162" name="__codelineno-0-162"></a>        <span class="n">pkg_list</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+<a id="__codelineno-0-163" name="__codelineno-0-163"></a>            <span class="p">[</span><span class="n">conda_exe</span><span class="p">,</span> <span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="s1">&#39;--prefix&#39;</span><span class="p">,</span> <span class="n">conda_prefix</span><span class="p">]</span>
+<a id="__codelineno-0-164" name="__codelineno-0-164"></a>        <span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-165" name="__codelineno-0-165"></a>
+<a id="__codelineno-0-166" name="__codelineno-0-166"></a>        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkg_list</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+<a id="__codelineno-0-167" name="__codelineno-0-167"></a>            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pkg</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+<a id="__codelineno-0-168" name="__codelineno-0-168"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-169" name="__codelineno-0-169"></a>            <span class="n">pkg_data</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<a id="__codelineno-0-170" name="__codelineno-0-170"></a>            <span class="n">pkg_name</span> <span class="o">=</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-171" name="__codelineno-0-171"></a>            <span class="n">pkg_version</span> <span class="o">=</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-0-172" name="__codelineno-0-172"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_builds</span><span class="p">:</span>
+<a id="__codelineno-0-173" name="__codelineno-0-173"></a>                <span class="n">pkg_version</span> <span class="o">+=</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<a id="__codelineno-0-174" name="__codelineno-0-174"></a>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_channels</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkg_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+<a id="__codelineno-0-175" name="__codelineno-0-175"></a>                <span class="n">pkg_version</span> <span class="o">+=</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="n">pkg_data</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+<a id="__codelineno-0-176" name="__codelineno-0-176"></a>            <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;conda&#39;</span><span class="p">][</span><span class="s1">&#39;packages&#39;</span><span class="p">][</span><span class="n">pkg_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg_version</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7692,6 +7771,11 @@ after a reboot). Omit to poll all installed GPUs.</p>
       </tbody>
     </table>
 
+
+<details class="note" open>
+  <summary>Note</summary>
+  <p>CLI compatible.</p>
+</details>
 
 
 
@@ -7805,7 +7889,9 @@ after a reboot). Omit to poll all installed GPUs.</p>
 <span class="normal"><a href="#__codelineno-0-124">124</a></span>
 <span class="normal"><a href="#__codelineno-0-125">125</a></span>
 <span class="normal"><a href="#__codelineno-0-126">126</a></span>
-<span class="normal"><a href="#__codelineno-0-127">127</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBNvidiaSmi</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-127">127</a></span>
+<span class="normal"><a href="#__codelineno-0-128">128</a></span>
+<span class="normal"><a href="#__codelineno-0-129">129</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="k">class</span><span class="w"> </span><span class="nc">MBNvidiaSmi</span><span class="p">:</span>
 <a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture attributes on installed NVIDIA GPUs using nvidia-smi.</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25"></a>
 <a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    Requires the ``nvidia-smi`` utility to be available on ``PATH``</span>
@@ -7834,82 +7920,84 @@ after a reboot). Omit to poll all installed GPUs.</p>
 <a id="__codelineno-0-49" name="__codelineno-0-49"></a><span class="sd">        nvidia_gpus (tuple): GPU IDs to poll — zero-based indexes, UUIDs,</span>
 <a id="__codelineno-0-50" name="__codelineno-0-50"></a><span class="sd">            or PCI bus IDs. GPU UUIDs are recommended (indexes can change</span>
 <a id="__codelineno-0-51" name="__codelineno-0-51"></a><span class="sd">            after a reboot). Omit to poll all installed GPUs.</span>
-<a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-53" name="__codelineno-0-53"></a>
-<a id="__codelineno-0-54" name="__codelineno-0-54"></a>    <span class="n">cli_compatible</span> <span class="o">=</span> <span class="kc">True</span>
-<a id="__codelineno-0-55" name="__codelineno-0-55"></a>    <span class="n">_nvidia_default_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-56" name="__codelineno-0-56"></a>    <span class="n">_nvidia_gpu_regex</span> <span class="o">=</span> <span class="n">_NVIDIA_GPU_REGEX</span>
-<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-0-58" name="__codelineno-0-58"></a>        <span class="n">CLIArg</span><span class="p">(</span>
-<a id="__codelineno-0-59" name="__codelineno-0-59"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--nvidia-attributes&#39;</span><span class="p">],</span>
-<a id="__codelineno-0-60" name="__codelineno-0-60"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;nvidia_attributes&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-61" name="__codelineno-0-61"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;ATTR&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-62" name="__codelineno-0-62"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-63" name="__codelineno-0-63"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-0-64" name="__codelineno-0-64"></a>                <span class="s1">&#39;GPU attributes to query with nvidia-smi. &#39;</span>
-<a id="__codelineno-0-65" name="__codelineno-0-65"></a>                <span class="s1">&#39;Run nvidia-smi --help-query-gpu for all names. &#39;</span>
-<a id="__codelineno-0-66" name="__codelineno-0-66"></a>                <span class="s1">&#39;Default: gpu_name memory.total&#39;</span>
-<a id="__codelineno-0-67" name="__codelineno-0-67"></a>            <span class="p">),</span>
-<a id="__codelineno-0-68" name="__codelineno-0-68"></a>        <span class="p">),</span>
-<a id="__codelineno-0-69" name="__codelineno-0-69"></a>        <span class="n">CLIArg</span><span class="p">(</span>
-<a id="__codelineno-0-70" name="__codelineno-0-70"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--nvidia-gpus&#39;</span><span class="p">],</span>
-<a id="__codelineno-0-71" name="__codelineno-0-71"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;nvidia_gpus&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-72" name="__codelineno-0-72"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;GPU&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-73" name="__codelineno-0-73"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-74" name="__codelineno-0-74"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_nvidia_gpu_id</span><span class="p">,</span>
-<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-0-76" name="__codelineno-0-76"></a>                <span class="s1">&#39;GPU IDs to query: zero-based indexes, UUIDs, or PCI bus IDs. &#39;</span>
-<a id="__codelineno-0-77" name="__codelineno-0-77"></a>                <span class="s1">&#39;Run nvidia-smi -L to list UUIDs. &#39;</span>
-<a id="__codelineno-0-78" name="__codelineno-0-78"></a>                <span class="s1">&#39;Default: all GPUs.&#39;</span>
-<a id="__codelineno-0-79" name="__codelineno-0-79"></a>            <span class="p">),</span>
-<a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="p">),</span>
-<a id="__codelineno-0-81" name="__codelineno-0-81"></a>    <span class="p">]</span>
-<a id="__codelineno-0-82" name="__codelineno-0-82"></a>
-<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_nvidia</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
-<a id="__codelineno-0-84" name="__codelineno-0-84"></a>        <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
-<a id="__codelineno-0-85" name="__codelineno-0-85"></a>            <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nvidia_attributes&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nvidia_default_attributes</span>
-<a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="p">)</span>
-<a id="__codelineno-0-87" name="__codelineno-0-87"></a>
-<a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nvidia_gpus&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-89" name="__codelineno-0-89"></a>            <span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nvidia_gpus</span>
-<a id="__codelineno-0-90" name="__codelineno-0-90"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">gpus</span><span class="p">:</span>
-<a id="__codelineno-0-91" name="__codelineno-0-91"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-92" name="__codelineno-0-92"></a>                    <span class="s1">&#39;nvidia_gpus cannot be empty. Leave the attribute out&#39;</span>
-<a id="__codelineno-0-93" name="__codelineno-0-93"></a>                    <span class="s1">&#39; to capture data for all GPUs&#39;</span>
-<a id="__codelineno-0-94" name="__codelineno-0-94"></a>                <span class="p">)</span>
-<a id="__codelineno-0-95" name="__codelineno-0-95"></a>            <span class="k">for</span> <span class="n">gpu</span> <span class="ow">in</span> <span class="n">gpus</span><span class="p">:</span>
-<a id="__codelineno-0-96" name="__codelineno-0-96"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nvidia_gpu_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">gpu</span><span class="p">)):</span>
-<a id="__codelineno-0-97" name="__codelineno-0-97"></a>                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-<a id="__codelineno-0-98" name="__codelineno-0-98"></a>                        <span class="s1">&#39;nvidia_gpus must be a list of GPU indexes (zero-based),&#39;</span>
-<a id="__codelineno-0-99" name="__codelineno-0-99"></a>                        <span class="s1">&#39; UUIDs, or PCI bus IDs&#39;</span>
-<a id="__codelineno-0-100" name="__codelineno-0-100"></a>                    <span class="p">)</span>
-<a id="__codelineno-0-101" name="__codelineno-0-101"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-102" name="__codelineno-0-102"></a>            <span class="n">gpus</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-103" name="__codelineno-0-103"></a>
-<a id="__codelineno-0-104" name="__codelineno-0-104"></a>        <span class="c1"># Construct the command</span>
-<a id="__codelineno-0-105" name="__codelineno-0-105"></a>        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-0-106" name="__codelineno-0-106"></a>            <span class="s1">&#39;nvidia-smi&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-107" name="__codelineno-0-107"></a>            <span class="s1">&#39;--format=csv,noheader&#39;</span><span class="p">,</span>
-<a id="__codelineno-0-108" name="__codelineno-0-108"></a>            <span class="s1">&#39;--query-gpu=uuid,</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nvidia_attributes</span><span class="p">)),</span>
-<a id="__codelineno-0-109" name="__codelineno-0-109"></a>        <span class="p">]</span>
-<a id="__codelineno-0-110" name="__codelineno-0-110"></a>        <span class="k">if</span> <span class="n">gpus</span><span class="p">:</span>
-<a id="__codelineno-0-111" name="__codelineno-0-111"></a>            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gpus</span><span class="p">)]</span>
-<a id="__codelineno-0-112" name="__codelineno-0-112"></a>
-<a id="__codelineno-0-113" name="__codelineno-0-113"></a>        <span class="c1"># Execute the command</span>
-<a id="__codelineno-0-114" name="__codelineno-0-114"></a>        <span class="n">res</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
-<a id="__codelineno-0-115" name="__codelineno-0-115"></a>
-<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="c1"># Process results into a list of per-GPU dicts</span>
-<a id="__codelineno-0-117" name="__codelineno-0-117"></a>        <span class="n">nvidia_list</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-118" name="__codelineno-0-118"></a>        <span class="k">for</span> <span class="n">gpu_line</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
-<a id="__codelineno-0-119" name="__codelineno-0-119"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">gpu_line</span><span class="p">:</span>
-<a id="__codelineno-0-120" name="__codelineno-0-120"></a>                <span class="k">continue</span>
-<a id="__codelineno-0-121" name="__codelineno-0-121"></a>            <span class="n">gpu_res</span> <span class="o">=</span> <span class="n">gpu_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span>
-<a id="__codelineno-0-122" name="__codelineno-0-122"></a>            <span class="n">gpu_uuid</span> <span class="o">=</span> <span class="n">gpu_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<a id="__codelineno-0-123" name="__codelineno-0-123"></a>            <span class="n">gpu_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;uuid&#39;</span><span class="p">:</span> <span class="n">gpu_uuid</span><span class="p">}</span>
-<a id="__codelineno-0-124" name="__codelineno-0-124"></a>            <span class="k">for</span> <span class="n">attr_idx</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nvidia_attributes</span><span class="p">):</span>
-<a id="__codelineno-0-125" name="__codelineno-0-125"></a>                <span class="n">gpu_dict</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">gpu_res</span><span class="p">[</span><span class="n">attr_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-<a id="__codelineno-0-126" name="__codelineno-0-126"></a>            <span class="n">nvidia_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gpu_dict</span><span class="p">)</span>
-<a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;nvidia&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nvidia_list</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="sd">    Note:</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="sd">        CLI compatible.</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-56" name="__codelineno-0-56"></a>
+<a id="__codelineno-0-57" name="__codelineno-0-57"></a>    <span class="n">_nvidia_default_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58"></a>    <span class="n">_nvidia_gpu_regex</span> <span class="o">=</span> <span class="n">_NVIDIA_GPU_REGEX</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59"></a>    <span class="n">cli_args</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--nvidia-attributes&#39;</span><span class="p">],</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;nvidia_attributes&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;ATTR&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-65" name="__codelineno-0-65"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66"></a>                <span class="s1">&#39;GPU attributes to query with nvidia-smi. &#39;</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67"></a>                <span class="s1">&#39;Run nvidia-smi --help-query-gpu for all names. &#39;</span>
+<a id="__codelineno-0-68" name="__codelineno-0-68"></a>                <span class="s1">&#39;Default: gpu_name memory.total&#39;</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69"></a>            <span class="p">),</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70"></a>        <span class="p">),</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71"></a>        <span class="n">CLIArg</span><span class="p">(</span>
+<a id="__codelineno-0-72" name="__codelineno-0-72"></a>            <span class="n">flags</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;--nvidia-gpus&#39;</span><span class="p">],</span>
+<a id="__codelineno-0-73" name="__codelineno-0-73"></a>            <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;nvidia_gpus&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74"></a>            <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;GPU&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75"></a>            <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">_nvidia_gpu_id</span><span class="p">,</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77"></a>            <span class="n">help</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-0-78" name="__codelineno-0-78"></a>                <span class="s1">&#39;GPU IDs to query: zero-based indexes, UUIDs, or PCI bus IDs. &#39;</span>
+<a id="__codelineno-0-79" name="__codelineno-0-79"></a>                <span class="s1">&#39;Run nvidia-smi -L to list UUIDs. &#39;</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80"></a>                <span class="s1">&#39;Default: all GPUs.&#39;</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81"></a>            <span class="p">),</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="p">),</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="p">]</span>
+<a id="__codelineno-0-84" name="__codelineno-0-84"></a>
+<a id="__codelineno-0-85" name="__codelineno-0-85"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">capture_nvidia</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bm_data</span><span class="p">):</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86"></a>        <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87"></a>            <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nvidia_attributes&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nvidia_default_attributes</span>
+<a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="p">)</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89"></a>
+<a id="__codelineno-0-90" name="__codelineno-0-90"></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;nvidia_gpus&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-91" name="__codelineno-0-91"></a>            <span class="n">gpus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nvidia_gpus</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">gpus</span><span class="p">:</span>
+<a id="__codelineno-0-93" name="__codelineno-0-93"></a>                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94"></a>                    <span class="s1">&#39;nvidia_gpus cannot be empty. Leave the attribute out&#39;</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95"></a>                    <span class="s1">&#39; to capture data for all GPUs&#39;</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96"></a>                <span class="p">)</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97"></a>            <span class="k">for</span> <span class="n">gpu</span> <span class="ow">in</span> <span class="n">gpus</span><span class="p">:</span>
+<a id="__codelineno-0-98" name="__codelineno-0-98"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nvidia_gpu_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">gpu</span><span class="p">)):</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99"></a>                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100"></a>                        <span class="s1">&#39;nvidia_gpus must be a list of GPU indexes (zero-based),&#39;</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101"></a>                        <span class="s1">&#39; UUIDs, or PCI bus IDs&#39;</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102"></a>                    <span class="p">)</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104"></a>            <span class="n">gpus</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105"></a>
+<a id="__codelineno-0-106" name="__codelineno-0-106"></a>        <span class="c1"># Construct the command</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107"></a>        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-0-108" name="__codelineno-0-108"></a>            <span class="s1">&#39;nvidia-smi&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109"></a>            <span class="s1">&#39;--format=csv,noheader&#39;</span><span class="p">,</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110"></a>            <span class="s1">&#39;--query-gpu=uuid,</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nvidia_attributes</span><span class="p">)),</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111"></a>        <span class="p">]</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112"></a>        <span class="k">if</span> <span class="n">gpus</span><span class="p">:</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113"></a>            <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gpus</span><span class="p">)]</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115"></a>        <span class="c1"># Execute the command</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116"></a>        <span class="n">res</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117"></a>
+<a id="__codelineno-0-118" name="__codelineno-0-118"></a>        <span class="c1"># Process results into a list of per-GPU dicts</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119"></a>        <span class="n">nvidia_list</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120"></a>        <span class="k">for</span> <span class="n">gpu_line</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">gpu_line</span><span class="p">:</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122"></a>                <span class="k">continue</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123"></a>            <span class="n">gpu_res</span> <span class="o">=</span> <span class="n">gpu_line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124"></a>            <span class="n">gpu_uuid</span> <span class="o">=</span> <span class="n">gpu_res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125"></a>            <span class="n">gpu_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;uuid&#39;</span><span class="p">:</span> <span class="n">gpu_uuid</span><span class="p">}</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126"></a>            <span class="k">for</span> <span class="n">attr_idx</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nvidia_attributes</span><span class="p">):</span>
+<a id="__codelineno-0-127" name="__codelineno-0-127"></a>                <span class="n">gpu_dict</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">gpu_res</span><span class="p">[</span><span class="n">attr_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128"></a>            <span class="n">nvidia_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gpu_dict</span><span class="p">)</span>
+<a id="__codelineno-0-129" name="__codelineno-0-129"></a>        <span class="n">bm_data</span><span class="p">[</span><span class="s1">&#39;nvidia&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nvidia_list</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
