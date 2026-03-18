@@ -39,9 +39,10 @@ class MBPythonInfo:
 
     This mixin is included in :class:`MicroBench` by default (Python API)
     and in the CLI default mixin set. It supersedes the former ``MBPythonVersion``.
-    """
 
-    cli_compatible = True
+    Note:
+        CLI compatible.
+    """
 
     def capture_python_info(self, bm_data):
         python = bm_data.setdefault('python', {})
@@ -97,9 +98,11 @@ class MBInstalledPackages:
         capture_paths (bool): Also record the installation path of each
             package under ``python.installed_package_paths``. Defaults to
             ``False``.
+
+    Note:
+        CLI compatible.
     """
 
-    cli_compatible = True
     capture_paths = False
 
     def capture_packages(self, bm_data):
@@ -140,9 +143,11 @@ class MBCondaPackages:
             Defaults to ``True``.
         include_channels (bool): Include the channel name in the version.
             Defaults to ``False``.
+
+    Note:
+        CLI compatible.
     """
 
-    cli_compatible = True
     include_builds = True
     include_channels = False
 

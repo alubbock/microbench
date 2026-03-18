@@ -49,9 +49,11 @@ class MBNvidiaSmi:
         nvidia_gpus (tuple): GPU IDs to poll — zero-based indexes, UUIDs,
             or PCI bus IDs. GPU UUIDs are recommended (indexes can change
             after a reboot). Omit to poll all installed GPUs.
+
+    Note:
+        CLI compatible.
     """
 
-    cli_compatible = True
     _nvidia_default_attributes = ('gpu_name', 'memory.total')
     _nvidia_gpu_regex = _NVIDIA_GPU_REGEX
     cli_args = [

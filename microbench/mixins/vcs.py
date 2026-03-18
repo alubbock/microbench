@@ -75,9 +75,11 @@ class MBGitInfo:
                 "dirty": false
             }
         }
+
+    Note:
+        CLI compatible.
     """
 
-    cli_compatible = True
     cli_args = [
         CLIArg(
             flags=['--git-repo'],
@@ -168,9 +170,11 @@ class MBFileHash:
                 "run_experiment.py": "e3b0c44298fc1c14..."
             }
         }
+
+    Note:
+        CLI compatible.
     """
 
-    cli_compatible = True
     cli_args = [
         CLIArg(
             flags=['--hash-file'],
