@@ -1224,6 +1224,134 @@ def test_cli_hash_algorithm(tmp_path):
     assert sha256_hex != md5_hex
 
 
+def test_cli_hash_file_default_includes_arg_files(tmp_path):
+    """file-hash default scans cmd[1:] and hashes arguments that are files."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+    input_file = tmp_path / 'input.csv'
+    input_file.write_bytes(b'a,b,c\n1,2,3\n')
+    config = tmp_path / 'params.yaml'
+    config.write_bytes(b'lr: 0.001\n')
+
+    _, record, _ = _run_main(
+        [
+            '--mixin',
+            'file-hash',
+            '--',
+            str(script),
+            str(input_file),
+            '--flag',
+            str(config),
+        ]
+    )
+    hashes = record.get('file_hashes', {})
+    assert str(script) in hashes
+    assert str(input_file) in hashes
+    assert str(config) in hashes
+
+
+def test_cli_hash_file_default_arg_skips_nonexistent(tmp_path):
+    """file-hash default ignores cmd[1:] tokens that are not existing files."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+
+    _, record, _ = _run_main(
+        ['--mixin', 'file-hash', '--', str(script), 'no_such_file.csv']
+    )
+    hashes = record.get('file_hashes', {})
+    assert str(script) in hashes
+    assert 'no_such_file.csv' not in hashes
+    assert 'capture_errors' not in record.get('call', {})
+
+
+def test_cli_hash_file_default_arg_skips_flags(tmp_path):
+    """file-hash default does not attempt to hash flag-like arguments."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+
+    _, record, _ = _run_main(
+        [
+            '--mixin',
+            'file-hash',
+            '--',
+            str(script),
+            '--verbose',
+            '-n',
+            '10',
+        ]
+    )
+    hashes = record.get('file_hashes', {})
+    assert str(script) in hashes
+    # Flag tokens should not appear as hash keys
+    assert '--verbose' not in hashes
+    assert '-n' not in hashes
+    assert '10' not in hashes
+
+
+def test_cli_hash_file_default_arg_skips_directories(tmp_path):
+    """file-hash default does not hash directory paths passed as arguments."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+    subdir = tmp_path / 'output_dir'
+    subdir.mkdir()
+
+    _, record, _ = _run_main(['--mixin', 'file-hash', '--', str(script), str(subdir)])
+    hashes = record.get('file_hashes', {})
+    assert str(script) in hashes
+    assert str(subdir) not in hashes
+
+
+def test_cli_hash_file_explicit_overrides_arg_scan(tmp_path):
+    """--hash-file overrides the default entirely; argument files are not scanned."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+    input_file = tmp_path / 'input.csv'
+    input_file.write_bytes(b'data\n')
+    explicit = tmp_path / 'specific.dat'
+    explicit.write_bytes(b'specific\n')
+
+    _, record, _ = _run_main(
+        [
+            '--mixin',
+            'file-hash',
+            '--hash-file',
+            str(explicit),
+            '--',
+            str(script),
+            str(input_file),
+        ]
+    )
+    hashes = record.get('file_hashes', {})
+    # Only the explicitly named file should appear
+    assert str(explicit) in hashes
+    assert str(script) not in hashes
+    assert str(input_file) not in hashes
+
+
+def test_cli_hash_file_default_arg_duplicate_file(tmp_path):
+    """file-hash handles the same file appearing multiple times in args."""
+    script = tmp_path / 'script.sh'
+    script.write_bytes(b'#!/bin/sh')
+    data = tmp_path / 'data.csv'
+    data.write_bytes(b'x\n')
+
+    _, record, _ = _run_main(
+        [
+            '--mixin',
+            'file-hash',
+            '--',
+            str(script),
+            str(data),
+            str(data),  # duplicated
+        ]
+    )
+    hashes = record.get('file_hashes', {})
+    assert str(script) in hashes
+    # dict assignment means the second write is idempotent; key appears once
+    assert str(data) in hashes
+    assert 'capture_errors' not in record.get('call', {})
+
+
 def test_cli_timeout_grace_period_requires_timeout():
     """--timeout-grace-period without --timeout is an error."""
     with pytest.raises(SystemExit) as exc:
