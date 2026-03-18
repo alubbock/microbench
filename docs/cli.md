@@ -182,11 +182,26 @@ so the CLI defaults to the working directory instead.
 
 | Option | Description |
 |---|---|
-| `--hash-file FILE [FILE ...]` | File(s) to hash. |
+| `--hash-file FILE [FILE ...]` | File(s) to hash. Overrides the default entirely. |
 | `--hash-algorithm ALGORITHM` | Hash algorithm (e.g. `sha256`, `md5`). Default: `sha256`. |
 
 **CLI default for `--hash-file`:** the benchmarked command executable
-(`cmd[0]`), e.g. `./run_simulation.sh`.
+(`cmd[0]`) **plus any arguments that resolve to existing files on disk**
+(`cmd[1:]`). For example, given the command:
+
+```bash
+microbench --mixin file-hash -- ./run.sh input.csv --config params.yaml
+```
+
+microbench will automatically hash `./run.sh`, `input.csv`, and
+`params.yaml` — capturing the provenance of inputs without any extra
+flags. Note that file hashes are computed prior to command execution.
+Tokens that don't correspond to existing files (flags such as
+`--config`, non-existent paths including output filenames) are
+silently ignored.
+
+Passing `--hash-file` overrides this default entirely; only the
+explicitly named files are hashed.
 
 **Python API default:** the running script (`sys.argv[0]`). The same
 `sys.argv[0]` issue applies here, so the CLI defaults to hashing the

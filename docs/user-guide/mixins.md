@@ -395,7 +395,8 @@ microbench --mixin git-info --git-repo /path/to/repo -- ./run.sh
 Records a cryptographic checksum of one or more files alongside benchmark
 results. This ties a result to the exact version of the script that produced
 it — useful when benchmarks evolve over time and you need to know which code
-generated which numbers.
+generated which numbers. Hashes are computed as a pre-hook, i.e. before the
+enclosed code is run.
 
 ```python
 from microbench import MicroBench, MBFileHash
@@ -432,10 +433,13 @@ class Bench(MicroBench, MBFileHash):
 ```
 
 Each record will contain a `file_hashes` dict mapping each path to its
-hex digest:
+hex digest. The hashing algorithm is stored under `mb.file_hash_algorithm`:
 
 ```json
 {
+  "mb": {
+    "file_hash_algorithm": "sha256"
+  },
   "file_hashes": {
     "run_experiment.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "config.yaml": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
@@ -466,11 +470,17 @@ Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
     ```
 
 **CLI:** use `--hash-file FILE [FILE ...]` and `--hash-algorithm ALGORITHM`.
-The CLI defaults to hashing the benchmarked command executable rather than
-`sys.argv[0]`:
+The CLI default hashes the benchmarked command executable *plus* any
+arguments that resolve to existing files on disk:
 
 ```bash
+# Automatically hashes run.sh, input.csv, and params.yaml
+microbench --mixin file-hash -- ./run.sh input.csv --config params.yaml
+
+# Hash a specific set of files (overrides the default entirely)
 microbench --mixin file-hash --hash-file run_experiment.py config.yaml -- ./run.sh
+
+# Change the hash algorithm
 microbench --mixin file-hash --hash-algorithm md5 -- ./run.sh
 ```
 
