@@ -2,6 +2,7 @@ import io
 import json
 import os
 import subprocess
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1729,3 +1730,112 @@ def test_cli_show_mixins_includes_nvidia_flags():
     output = buf.getvalue()
     assert '--nvidia-attributes' in output
     assert '--nvidia-gpus' in output
+
+
+# ---------------------------------------------------------------------------
+# MBResourceUsage — CLI tests
+# ---------------------------------------------------------------------------
+
+_RUSAGE_FIELDS = frozenset(
+    {
+        'utime',
+        'stime',
+        'maxrss',
+        'minflt',
+        'majflt',
+        'inblock',
+        'oublock',
+        'nvcsw',
+        'nivcsw',
+    }
+)
+
+
+def test_cli_resource_usage_in_defaults():
+    """resource-usage is included in the default mixin set."""
+    _, record, _ = _run_main(['--', 'true'])
+    assert 'resource_usage' in record
+
+
+def test_cli_resource_usage_fields_present():
+    """resource-usage records all expected fields."""
+    _, record, _ = _run_main(['--mixin', 'resource-usage', '--', 'true'])
+    ru = record.get('resource_usage', {})
+    assert set(ru.keys()) == _RUSAGE_FIELDS
+
+
+def test_cli_resource_usage_values_are_numeric():
+    """resource-usage field values are all numbers (int or float)."""
+    _, record, _ = _run_main(['--mixin', 'resource-usage', '--', 'true'])
+    ru = record.get('resource_usage', {})
+    for field, value in ru.items():
+        assert isinstance(value, int | float), (
+            f'{field}: expected number, got {type(value)}'
+        )
+
+
+def test_cli_resource_usage_no_mixins_omits_field():
+    """--no-mixin produces a record without resource_usage."""
+    _, record, _ = _run_main(['--no-mixin', '--', 'true'])
+    assert 'resource_usage' not in record
+
+
+def test_cli_show_mixins_includes_resource_usage():
+    """--show-mixins lists resource-usage with a default marker."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit):
+            main(['--show-mixins'])
+    output = buf.getvalue()
+    assert 'resource-usage' in output
+    # resource-usage is a default mixin — should be starred
+    lines = [line for line in output.splitlines() if 'resource-usage' in line]
+    assert lines, 'resource-usage not found in --show-mixins output'
+    assert lines[0].startswith('  *'), 'resource-usage should be marked as default (*)'
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_cli_resource_usage_real_subprocess_maxrss():
+    """resource-usage records a positive maxrss from a real subprocess."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit):
+            main(['--mixin', 'resource-usage', '--', sys.executable, '-c', 'pass'])
+    record = json.loads(buf.getvalue())
+    ru = record.get('resource_usage', {})
+    assert set(ru.keys()) == _RUSAGE_FIELDS
+    assert ru['maxrss'] > 0, (
+        'maxrss should be positive after running a Python subprocess'
+    )
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_cli_resource_usage_real_subprocess_cpu_nonnegative():
+    """utime and stime are non-negative after a real subprocess."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit):
+            main(['--mixin', 'resource-usage', '--', sys.executable, '-c', 'pass'])
+    record = json.loads(buf.getvalue())
+    ru = record.get('resource_usage', {})
+    assert ru['utime'] >= 0.0
+    assert ru['stime'] >= 0.0
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_cli_resource_usage_real_subprocess_counts_nonnegative():
+    """All integer count fields are non-negative after a real subprocess."""
+    buf = io.StringIO()
+    with patch('sys.stdout', buf):
+        with pytest.raises(SystemExit):
+            main(['--mixin', 'resource-usage', '--', sys.executable, '-c', 'pass'])
+    record = json.loads(buf.getvalue())
+    ru = record.get('resource_usage', {})
+    for field in ('minflt', 'majflt', 'inblock', 'oublock', 'nvcsw', 'nivcsw'):
+        assert ru[field] >= 0, f'{field} should be non-negative'

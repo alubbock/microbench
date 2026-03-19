@@ -13,6 +13,7 @@ from microbench import (
     MBLineProfiler,
     MBLoadedModules,
     MBPeakMemory,
+    MBResourceUsage,
     MBSlurmInfo,
     MBWorkingDir,
     MicroBench,
@@ -836,3 +837,127 @@ def test_cgroup_limits_unavailable():
         noop()
 
     assert bench.get_results()[0].get('cgroups', {}) == {}
+
+
+# ---------------------------------------------------------------------------
+# MBResourceUsage
+# ---------------------------------------------------------------------------
+
+_RUSAGE_FIELDS = {
+    'utime',
+    'stime',
+    'maxrss',
+    'minflt',
+    'majflt',
+    'inblock',
+    'oublock',
+    'nvcsw',
+    'nivcsw',
+}
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_fields():
+    """MBResourceUsage records all expected fields in Python API mode."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return sum(range(50000))
+
+    work()
+    ru = bench.get_results()[0].get('resource_usage', {})
+    assert set(ru.keys()) == _RUSAGE_FIELDS
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_maxrss_positive():
+    """maxrss is a positive integer (bytes) after running a Python function."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return list(range(10000))
+
+    work()
+    maxrss = bench.get_results()[0]['resource_usage']['maxrss']
+    assert isinstance(maxrss, int)
+    assert maxrss > 0
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_cpu_nonnegative():
+    """utime and stime are non-negative floats."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return sum(range(10000))
+
+    work()
+    ru = bench.get_results()[0]['resource_usage']
+    assert ru['utime'] >= 0.0
+    assert ru['stime'] >= 0.0
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_counts_nonnegative():
+    """All integer count fields are non-negative."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    ru = bench.get_results()[0]['resource_usage']
+    for field in ('minflt', 'majflt', 'inblock', 'oublock', 'nvcsw', 'nivcsw'):
+        assert ru[field] >= 0, f'{field} should be non-negative'
+
+
+def test_resource_usage_windows_fallback():
+    """Records empty dict when the resource module is unavailable (Windows guard)."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    import microbench.mixins.system as _sys_mod
+
+    original = _sys_mod._resource
+    try:
+        _sys_mod._resource = None
+        noop()
+    finally:
+        _sys_mod._resource = original
+
+    assert bench.get_results()[0].get('resource_usage') == {}
