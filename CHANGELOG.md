@@ -2,6 +2,22 @@
 
 All notable changes to microbench are documented here.
 
+## [Unreleased]
+
+### Enhancements
+
+- **`file-hash` mixin — automatic argument file scanning** (CLI): the
+  default hash list now includes not only the command executable (`cmd[0]`)
+  but also any command-line arguments (`cmd[1:]`) that resolve to existing
+  files on disk prior to command execution. Passing `--hash-file` still
+  overrides the default entirely; the Python API is unaffected. The hash
+  algorithm name is now stored under `mb.file_hash_algorithm`.
+
+### Documentation
+
+- Fix documentation on writing custom mixins to note that they must be
+  added to the registry if they are to be detected by the CLI.
+
 ## [2.0.0] - 2026-03-17
 
 Microbench v2 is a significant upgrade with many new features versus v1.1.0.
