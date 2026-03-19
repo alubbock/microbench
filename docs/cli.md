@@ -244,7 +244,7 @@ microbench \
 POSIX `getrusage()` data automatically for the benchmarked subprocess.
 
 On Windows, `resource-usage` records an empty `resource_usage` dict and does
-not raise an error (the `resource` module is POSIX-only).
+not raise an error (the Python `resource` module is POSIX-only).
 
 ## Capture failures
 

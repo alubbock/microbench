@@ -341,21 +341,23 @@ platforms or when the cgroup filesystem is unavailable.
 
 ### `MBResourceUsage`
 
-Captures POSIX `getrusage()` data — CPU time, peak resident set size (RSS),
-page faults, block I/O operations, and context switches — using only the
-Python standard library (`resource` module). No extra dependencies are
-required.
+Captures POSIX [`getrusage(2)`](https://man7.org/linux/man-pages/man2/getrusage.2.html)
+data — CPU time, page faults, block I/O operations, and context switches —
+using only the Python standard library (`resource` module). No extra
+dependencies are required.
 
 **Modes**
 
-- **CLI mode**: uses `RUSAGE_CHILDREN`, which accumulates the resources
-  consumed by the benchmarked subprocess and all its descendants. A
-  before/after delta isolates each iteration's cost.
+- **CLI mode**: uses `RUSAGE_CHILDREN`, which accumulates resources consumed
+  by the benchmarked subprocess and all its descendants. A before/after
+  delta isolates each iteration's cost. `maxrss` is also recorded (see
+  platform notes below).
 - **Python API mode**: uses `RUSAGE_SELF`, which captures resources consumed
-  by the current Python process since the last snapshot.
-
-**`maxrss` is always reported in bytes**, regardless of platform. Linux
-reports kilobytes and is automatically converted.
+  by the current Python process since the last snapshot. `maxrss` is
+  **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process high-water mark
+  that reflects the peak since the interpreter started, not just since the
+  decorated function was called, making it unreliable for function-level
+  measurement.
 
 ```python
 from microbench import MicroBench, MBResourceUsage
@@ -372,14 +374,13 @@ def work():
 work()
 ```
 
-Each record will contain:
+Python API record (no `maxrss`):
 
 ```json
 {
   "resource_usage": {
     "utime": 0.052,
     "stime": 0.003,
-    "maxrss": 41943040,
     "minflt": 1024,
     "majflt": 0,
     "inblock": 0,
@@ -390,32 +391,104 @@ Each record will contain:
 }
 ```
 
-| Field | Description |
-|---|---|
-| `utime` | User CPU time in seconds (float) |
-| `stime` | System CPU time in seconds (float) |
-| `maxrss` | Peak resident set size in bytes (int) — high-water mark, not a delta |
-| `minflt` | Minor page faults — pages reclaimed without I/O (int) |
-| `majflt` | Major page faults — pages requiring I/O to load (int) |
-| `inblock` | Block input operations (int) |
-| `oublock` | Block output operations (int) |
-| `nvcsw` | Voluntary context switches (int) |
-| `nivcsw` | Involuntary context switches (int) |
+CLI record (includes `maxrss`):
 
-All counter fields (`minflt`, `majflt`, `inblock`, `oublock`, `nvcsw`,
-`nivcsw`) are reported as the **delta** between before- and after-snapshots
-so they reflect only the benchmarked work. `maxrss` is taken from the
-post-run snapshot directly because it is a high-water mark.
+```json
+{
+  "resource_usage": {
+    "utime": 0.068,
+    "stime": 0.029,
+    "maxrss": 11386880,
+    "minflt": 621,
+    "majflt": 0,
+    "inblock": 0,
+    "oublock": 0,
+    "nvcsw": 1,
+    "nivcsw": 2
+  }
+}
+```
 
-!!! note "Platform availability"
-    The `resource` module is available on all POSIX platforms (Linux, macOS,
-    BSD). On Windows it does not exist, so `resource_usage` is recorded as an
-    empty dict without raising an error.
+| Field | Modes | Description |
+|---|---|---|
+| `utime` | Both | User CPU time in seconds (float) |
+| `stime` | Both | System CPU time in seconds (float) |
+| `maxrss` | CLI only | Peak RSS in bytes (int) — see platform notes |
+| `minflt` | Both | Minor page faults — pages reclaimed without I/O (int) |
+| `majflt` | Both | Major page faults — pages requiring disk I/O (int) |
+| `inblock` | Both | Block input operations (int) — see platform notes |
+| `oublock` | Both | Block output operations (int) — see platform notes |
+| `nvcsw` | Both | Voluntary context switches (int) |
+| `nivcsw` | Both | Involuntary context switches (int) |
 
-!!! note "macOS `majflt`, `inblock`, `oublock`"
-    On macOS these counters are often zero because the kernel charges most
-    I/O to the virtual memory subsystem rather than individual processes. This
-    is normal kernel behaviour, not a bug.
+All fields are before/after **deltas** so they reflect only the benchmarked
+work. `utime`, `stime`, `minflt`, `nvcsw`, and `nivcsw` are the most
+reliable across platforms.
+
+#### Platform notes and known quirks
+
+**`maxrss` — CLI mode (`RUSAGE_CHILDREN`)**
+
+[`RUSAGE_CHILDREN.maxrss`](https://man7.org/linux/man-pages/man2/getrusage.2.html)
+is the cumulative high-water mark across *all waited children* of the current
+process since it started. The before/after delta is the most honest
+representation: a positive value means that child set a new process-lifetime
+RSS peak; zero means it did not exceed a prior sibling's peak.
+
+Consequence for `--iterations`: if iteration 0 launches a subprocess that
+peaks at 200 MB and iteration 1 launches one that peaks at 50 MB, iteration
+1 reports `maxrss: 0` — it never exceeded the prior maximum. This is correct
+accounting, not a bug. For the common single-iteration case the value is
+exact.
+
+True per-child `maxrss` isolation requires `os.wait4()` instead of
+`subprocess.wait()`, which would give the exact RSS of each individual child
+process. This is a planned improvement.
+
+**`maxrss` — Python API mode (`RUSAGE_SELF`)**
+
+`RUSAGE_SELF.maxrss` is a lifetime high-water mark for the Python interpreter
+process. If the interpreter already allocated, say, 400 MB before the
+decorated function ran, `maxrss` will reflect that prior peak even if the
+function itself allocates nothing new. This makes it unreliable for
+isolating a single function call, so it is intentionally omitted. Use
+[`MBPeakMemory`](#mbpeakmemory) if you need per-call peak memory tracking.
+
+**`inblock` / `oublock` — macOS**
+
+These counters are **almost always zero on macOS**, even for substantial file
+I/O.  The macOS unified buffer cache charges block I/O to the *first* process
+that touches each page; subsequent reads and writes to cached pages are not
+counted against the process that performed them. In practice, nearly all file
+I/O is served from the cache and the counters never increment.
+
+This is a macOS kernel accounting limitation. It is documented in the
+[`getrusage(2)` man page](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/getrusage.2.html):
+*"The numbers ru_inblock and ru_oublock account only for real I/O; data
+supplied by the caching mechanism is charged only to the first process to
+read or write the data."*
+
+**`inblock` / `oublock` — Linux**
+
+On Linux these counters increment only for I/O that truly bypasses the page
+cache — cold-cache reads (first access to a file since it was last evicted)
+or writes with `O_DIRECT`. Warm-cache reads also show zero. Drop the page
+cache (`echo 3 > /proc/sys/vm/drop_caches` as root) before benchmarking if
+you need to measure true cold-cache I/O.
+
+**`majflt` — macOS**
+
+Major page faults are rare on macOS because the unified buffer cache handles
+most page-in activity. Zero is normal.
+
+**`utime`, `stime`, `minflt`, `nvcsw`, `nivcsw`**
+
+These are the most reliable fields across both Linux and macOS and are
+non-zero for any non-trivial workload.
+
+!!! note "Windows"
+    The `resource` module is not available on Windows. `resource_usage` is
+    recorded as an empty dict without raising an error.
 
 **CLI:** `resource-usage` is a default mixin — no flags needed:
 

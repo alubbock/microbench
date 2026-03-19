@@ -2,7 +2,7 @@
 
 All notable changes to microbench are documented here.
 
-## [Unreleased]
+## [2.1.0] - 2026-03-19
 
 ### New features
 
@@ -16,8 +16,6 @@ All notable changes to microbench are documented here.
 
   On Windows (where the `resource` module is unavailable) the mixin records an
   empty dict without raising an error.
-
-## [2.1.0] - 2026-03-19
 
 ### Enhancements
 
