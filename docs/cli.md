@@ -117,11 +117,13 @@ Every record contains the standard `mb.*` and `call.*` fields plus:
 ## Default mixins
 
 When no `--mixin` is specified, `python-info`, `host-info`, `slurm-info`,
-`loaded-modules`, and `working-dir` are included automatically, capturing
-the Python interpreter version, prefix, and executable path; hostname and
-operating system; all `SLURM_*` environment variables; the loaded
-Lmod/Environment Modules software stack; and the current working directory.
-All five degrade gracefully or produce stable values outside their respective
+`loaded-modules`, `working-dir`, and `resource-usage` are included
+automatically, capturing the Python interpreter version, prefix, and
+executable path; hostname and operating system; all `SLURM_*` environment
+variables; the loaded Lmod/Environment Modules software stack; the current
+working directory; and POSIX resource usage (CPU time, peak RSS, page faults,
+I/O, and context switches) for the benchmarked subprocess.
+All six degrade gracefully or produce stable values outside their respective
 environments.
 
 Mixin names use a short kebab-case form without the `MB` prefix
@@ -235,6 +237,14 @@ microbench \
     --nvidia-gpus 0 1 \
     -- ./run_simulation.sh
 ```
+
+### `resource-usage` options
+
+`resource-usage` has no CLI flags. It is included in the defaults and records
+POSIX `getrusage()` data automatically for the benchmarked subprocess.
+
+On Windows, `resource-usage` records an empty `resource_usage` dict and does
+not raise an error (the `resource` module is POSIX-only).
 
 ## Capture failures
 

@@ -4,6 +4,21 @@ All notable changes to microbench are documented here.
 
 ## [Unreleased]
 
+### New features
+
+- **`MBResourceUsage` mixin**: captures POSIX `getrusage()` data — user and
+  system CPU time, peak RSS (in bytes, normalised across platforms), minor and
+  major page faults, block I/O operations, and voluntary/involuntary context
+  switches. Works in both CLI and Python API modes: CLI uses `RUSAGE_CHILDREN`
+  (subprocess resources); Python API uses `RUSAGE_SELF` (current-process
+  delta). Results are stored in `resource_usage`. Added as a **default CLI
+  mixin** so every CLI run captures it automatically.
+
+  On Windows (where the `resource` module is unavailable) the mixin records an
+  empty dict without raising an error.
+
+## [2.1.0] - 2026-03-19
+
 ### Enhancements
 
 - **`--mixin defaults` keyword** (CLI): `defaults` can be used as a mixin

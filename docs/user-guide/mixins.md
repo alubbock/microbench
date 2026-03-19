@@ -19,9 +19,9 @@ to list all available mixins with descriptions:
 microbench --show-mixins
 ```
 
-By default, `python-info`, `host-info`, `slurm-info`, `loaded-modules`, and
-`working-dir` are included automatically. Specifying `--mixin` replaces the
-defaults entirely. Use `--no-mixin` to disable all mixins:
+By default, `python-info`, `host-info`, `slurm-info`, `loaded-modules`,
+`working-dir`, and `resource-usage` are included automatically. Specifying
+`--mixin` replaces the defaults entirely. Use `--no-mixin` to disable all mixins:
 
 ```bash
 # Only peak-memory — no host info or SLURM
@@ -70,6 +70,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBLoadedModules` | `loaded-modules` *(default)* | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
 | `MBWorkingDir` | `working-dir` *(default)* | `call.working_dir` — absolute path of the working directory at benchmark time | — |
 | `MBCgroupLimits` | `cgroup-limits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
+| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` dict with CPU times, peak RSS, page faults, I/O ops, and context switches (empty dict on Windows) | POSIX only (stdlib) |
 | `MBGitInfo` | `git-info` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | Python only | `python.loaded_packages` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `installed-packages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
@@ -337,6 +338,94 @@ platforms or when the cgroup filesystem is unavailable.
     Pair with `MBSlurmInfo` for full HPC context — `MBSlurmInfo` captures
     scheduler metadata (job ID, node list, etc.) while `MBCgroupLimits` captures
     the kernel-enforced resource limits.
+
+### `MBResourceUsage`
+
+Captures POSIX `getrusage()` data — CPU time, peak resident set size (RSS),
+page faults, block I/O operations, and context switches — using only the
+Python standard library (`resource` module). No extra dependencies are
+required.
+
+**Modes**
+
+- **CLI mode**: uses `RUSAGE_CHILDREN`, which accumulates the resources
+  consumed by the benchmarked subprocess and all its descendants. A
+  before/after delta isolates each iteration's cost.
+- **Python API mode**: uses `RUSAGE_SELF`, which captures resources consumed
+  by the current Python process since the last snapshot.
+
+**`maxrss` is always reported in bytes**, regardless of platform. Linux
+reports kilobytes and is automatically converted.
+
+```python
+from microbench import MicroBench, MBResourceUsage
+
+class Bench(MicroBench, MBResourceUsage):
+    pass
+
+bench = Bench()
+
+@bench
+def work():
+    return list(range(1_000_000))
+
+work()
+```
+
+Each record will contain:
+
+```json
+{
+  "resource_usage": {
+    "utime": 0.052,
+    "stime": 0.003,
+    "maxrss": 41943040,
+    "minflt": 1024,
+    "majflt": 0,
+    "inblock": 0,
+    "oublock": 0,
+    "nvcsw": 2,
+    "nivcsw": 1
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `utime` | User CPU time in seconds (float) |
+| `stime` | System CPU time in seconds (float) |
+| `maxrss` | Peak resident set size in bytes (int) — high-water mark, not a delta |
+| `minflt` | Minor page faults — pages reclaimed without I/O (int) |
+| `majflt` | Major page faults — pages requiring I/O to load (int) |
+| `inblock` | Block input operations (int) |
+| `oublock` | Block output operations (int) |
+| `nvcsw` | Voluntary context switches (int) |
+| `nivcsw` | Involuntary context switches (int) |
+
+All counter fields (`minflt`, `majflt`, `inblock`, `oublock`, `nvcsw`,
+`nivcsw`) are reported as the **delta** between before- and after-snapshots
+so they reflect only the benchmarked work. `maxrss` is taken from the
+post-run snapshot directly because it is a high-water mark.
+
+!!! note "Platform availability"
+    The `resource` module is available on all POSIX platforms (Linux, macOS,
+    BSD). On Windows it does not exist, so `resource_usage` is recorded as an
+    empty dict without raising an error.
+
+!!! note "macOS `majflt`, `inblock`, `oublock`"
+    On macOS these counters are often zero because the kernel charges most
+    I/O to the virtual memory subsystem rather than individual processes. This
+    is normal kernel behaviour, not a bug.
+
+**CLI:** `resource-usage` is a default mixin — no flags needed:
+
+```bash
+# Included automatically
+microbench --outfile results.jsonl -- ./run_simulation.sh
+
+# Explicit, if defaults have been overridden
+microbench --mixin resource-usage -- ./run_simulation.sh
+```
 
 ## Code provenance
 
