@@ -36,13 +36,27 @@ class _FakeRusage:
         self.ru_nivcsw = nivcsw
 
 
+class _MockPipe:
+    """Iterable pipe mock that supports .close(), as real subprocess pipes do."""
+
+    def __init__(self, lines):
+        self._iter = iter(lines)
+        self.closed = False
+
+    def __iter__(self):
+        return self._iter
+
+    def close(self):
+        self.closed = True
+
+
 def _make_mock_popen(returncode=0, stdout_lines=None, stderr_lines=None, pid=12345):
     """Create a mock Popen process."""
     mock_proc = MagicMock()
     mock_proc.returncode = returncode
     mock_proc.pid = pid
-    mock_proc.stdout = iter(stdout_lines) if stdout_lines is not None else None
-    mock_proc.stderr = iter(stderr_lines) if stderr_lines is not None else None
+    mock_proc.stdout = _MockPipe(stdout_lines) if stdout_lines is not None else None
+    mock_proc.stderr = _MockPipe(stderr_lines) if stderr_lines is not None else None
     return mock_proc
 
 
@@ -877,7 +891,7 @@ def test_cli_monitor_interval_requires_psutil():
 def test_cli_monitor_interval_with_stdout_capture():
     """--monitor-interval and --stdout can be combined."""
     mock_proc = _make_mock_popen_for_monitor(pid=55)
-    mock_proc.stdout = iter([b'hello\n'])
+    mock_proc.stdout = _MockPipe([b'hello\n'])
     mock_proc.stderr = None
     fake_samples = [{'timestamp': 'T', 'cpu_percent': 8.0, 'rss_bytes': 2048}]
 
@@ -1634,6 +1648,43 @@ def test_cli_timeout_during_warmup_does_not_set_timed_out():
     record = json.loads(buf.getvalue())
     assert record['call']['returncode'] == [0]
     assert 'timed_out' not in record['call']
+
+
+def test_cli_keyboard_interrupt_kills_child():
+    """KeyboardInterrupt during wait4 join causes proc.kill() and re-raises."""
+    mock_proc = _make_mock_popen()
+
+    def _wait4_interrupt(pid, options):
+        raise KeyboardInterrupt
+
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('os.wait4', side_effect=_wait4_interrupt):
+            with pytest.raises(KeyboardInterrupt):
+                main(['--no-mixin', '--', 'sleep', '100'])
+
+    mock_proc.kill.assert_called()
+    mock_proc.wait.assert_called()
+
+
+def test_cli_pipe_fds_closed_after_run():
+    """stdout and stderr pipe FDs are closed after a normal run."""
+    mock_proc = _make_mock_popen(
+        returncode=0,
+        stdout_lines=[b'out\n'],
+        stderr_lines=[b'err\n'],
+    )
+
+    buf = io.StringIO()
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', io.StringIO()):
+                    with patch('sys.__stderr__', io.StringIO()):
+                        with pytest.raises(SystemExit):
+                            main(['--stdout', '--stderr', '--', 'cmd'])
+
+    assert mock_proc.stdout.closed
+    assert mock_proc.stderr.closed
 
 
 def test_cli_version(capsys):

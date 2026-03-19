@@ -316,122 +316,139 @@ def main(argv=None):
             popen_kwargs['stderr'] = subprocess.PIPE
 
         proc = subprocess.Popen(cmd, **popen_kwargs)
+        try:
+            threads = []
+            if capture_stdout:
+                t = threading.Thread(
+                    target=_reader,
+                    args=(
+                        proc.stdout,
+                        stdout_chunks,
+                        _real_stdout,
+                        args.stdout == 'capture',
+                    ),
+                    daemon=True,
+                )
+                t.start()
+                threads.append(t)
+            if capture_stderr:
+                t = threading.Thread(
+                    target=_reader,
+                    args=(
+                        proc.stderr,
+                        stderr_chunks,
+                        _real_stderr,
+                        args.stderr == 'capture',
+                    ),
+                    daemon=True,
+                )
+                t.start()
+                threads.append(t)
 
-        threads = []
-        if capture_stdout:
-            t = threading.Thread(
-                target=_reader,
-                args=(
-                    proc.stdout,
-                    stdout_chunks,
-                    _real_stdout,
-                    args.stdout == 'capture',
-                ),
-                daemon=True,
-            )
-            t.start()
-            threads.append(t)
-        if capture_stderr:
-            t = threading.Thread(
-                target=_reader,
-                args=(
-                    proc.stderr,
-                    stderr_chunks,
-                    _real_stderr,
-                    args.stderr == 'capture',
-                ),
-                daemon=True,
-            )
-            t.start()
-            threads.append(t)
+            monitor_thread = None
+            if monitor_interval is not None and bench._subprocess_timed_phase:
+                monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
+                monitor_thread.start()
 
-        monitor_thread = None
-        if monitor_interval is not None and bench._subprocess_timed_phase:
-            monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
-            monitor_thread.start()
+            timed_out = False
+            child_rusage = None
 
-        timed_out = False
-        child_rusage = None
+            if _resource is not None:
+                # os.wait4() reaps the child and returns its exact per-child rusage
+                # in a single syscall.  It must be called *instead* of proc.wait().
+                #
+                # Timeout handling: os.wait4() is a blocking call with no built-in
+                # deadline.  We handle it by running wait4 in a daemon thread and
+                # joining with a timeout.  If the join times out, we terminate/kill
+                # the child, then block on wait4 (the child is now dying so this
+                # completes quickly).
+                _wait4_result = [None]  # [(pid, status, rusage)]
+                _wait4_error = [None]
 
-        if _resource is not None:
-            # os.wait4() reaps the child and returns its exact per-child rusage
-            # in a single syscall.  It must be called *instead* of proc.wait().
-            #
-            # Timeout handling: os.wait4() is a blocking call with no built-in
-            # deadline.  We handle it by running wait4 in a daemon thread and
-            # joining with a timeout.  If the join times out, we terminate/kill
-            # the child, then block on wait4 (the child is now dying so this
-            # completes quickly).
-            _wait4_result = [None]  # [(pid, status, rusage)]
-            _wait4_error = [None]
+                def _do_wait4():
+                    try:
+                        _wait4_result[0] = os.wait4(proc.pid, 0)
+                    except BaseException as exc:  # pragma: no cover - defensive
+                        _wait4_error[0] = exc
 
-            def _do_wait4():
-                try:
-                    _wait4_result[0] = os.wait4(proc.pid, 0)
-                except BaseException as exc:  # pragma: no cover - defensive
-                    _wait4_error[0] = exc
+                _wait4_thread = threading.Thread(target=_do_wait4, daemon=True)
+                _wait4_thread.start()
+                _wait4_thread.join(timeout=timeout)
 
-            _wait4_thread = threading.Thread(target=_do_wait4, daemon=True)
-            _wait4_thread.start()
-            _wait4_thread.join(timeout=timeout)
-
-            if _wait4_thread.is_alive():
-                # Timed out — terminate/kill the child and wait for it to exit.
-                timed_out = True
-                proc.terminate()
-                try:
-                    grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
-                    _wait4_thread.join(timeout=grace)
-                except Exception:
-                    pass
                 if _wait4_thread.is_alive():
-                    proc.kill()
-                    _wait4_thread.join()  # child is dead; this will return quickly
+                    # Timed out — terminate/kill the child and wait for it to exit.
+                    timed_out = True
+                    proc.terminate()
+                    try:
+                        grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
+                        _wait4_thread.join(timeout=grace)
+                    except Exception:
+                        pass
+                    if _wait4_thread.is_alive():
+                        proc.kill()
+                        _wait4_thread.join()  # child is dead; this will return quickly
 
-            if _wait4_error[0] is not None:
-                raise _wait4_error[0]
+                if _wait4_error[0] is not None:
+                    raise _wait4_error[0]
 
-            if _wait4_result[0] is None:  # pragma: no cover - defensive
-                raise RuntimeError('os.wait4() returned no child status')
+                if _wait4_result[0] is None:  # pragma: no cover - defensive
+                    raise RuntimeError('os.wait4() returned no child status')
 
-            _, wait_status, raw_ru = _wait4_result[0]
-            proc.returncode = os.waitstatus_to_exitcode(wait_status)
-            child_rusage = raw_ru
-        else:
-            # No resource module available: use proc.wait() with optional timeout.
-            try:
-                proc.wait(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                timed_out = True
-                proc.terminate()
+                _, wait_status, raw_ru = _wait4_result[0]
+                proc.returncode = os.waitstatus_to_exitcode(wait_status)
+                child_rusage = raw_ru
+            else:
+                # No resource module available: use proc.wait() with optional timeout.
                 try:
-                    grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
-                    proc.wait(timeout=grace)
+                    proc.wait(timeout=timeout)
                 except subprocess.TimeoutExpired:
-                    proc.kill()
-                    proc.wait()
+                    timed_out = True
+                    proc.terminate()
+                    try:
+                        grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
+                        proc.wait(timeout=grace)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait()
 
-        if monitor_thread is not None:
-            monitor_thread.stop()
-            monitor_thread.join()
-            bench._subprocess_monitor.append(monitor_thread.samples)
+            if monitor_thread is not None:
+                monitor_thread.stop()
+                monitor_thread.join()
+                bench._subprocess_monitor.append(monitor_thread.samples)
 
-        for t in threads:
-            t.join()
+            for t in threads:
+                t.join()
 
-        if timed_out and bench._subprocess_timed_phase:
-            bench._subprocess_timed_out = True
-        bench._subprocess_returncodes.append(proc.returncode)
-        if capture_stdout:
-            bench._subprocess_stdout.append(''.join(stdout_chunks))
-        if capture_stderr:
-            bench._subprocess_stderr.append(''.join(stderr_chunks))
+            if timed_out and bench._subprocess_timed_phase:
+                bench._subprocess_timed_out = True
+            bench._subprocess_returncodes.append(proc.returncode)
+            if capture_stdout:
+                bench._subprocess_stdout.append(''.join(stdout_chunks))
+            if capture_stderr:
+                bench._subprocess_stderr.append(''.join(stderr_chunks))
 
-        # Accumulate per-iteration resource usage (only during timed phase).
-        if bench._subprocess_timed_phase and child_rusage is not None:
-            from microbench.mixins.system import _rusage_from_wait4
+            # Accumulate per-iteration resource usage (only during timed phase).
+            if bench._subprocess_timed_phase and child_rusage is not None:
+                from microbench.mixins.system import _rusage_from_wait4
 
-            bench._subprocess_resource_usage.append(_rusage_from_wait4(child_rusage))
+                bench._subprocess_resource_usage.append(
+                    _rusage_from_wait4(child_rusage)
+                )
+        except BaseException:
+            # Ensure the child is not left running as an orphan on any unexpected
+            # exception (including KeyboardInterrupt during a join).
+            # proc.kill() is safe after os.wait4() has already reaped the child
+            # (it sends SIGKILL to a dead PID which Popen silently ignores).
+            # proc.wait() is safe after os.wait4() too: returncode is already set.
+            proc.kill()
+            proc.wait()
+            raise
+        finally:
+            # Always close pipe FDs to prevent file-descriptor leaks.
+            if proc.stdout is not None:
+                proc.stdout.close()
+            if proc.stderr is not None:
+                proc.stderr.close()
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()
