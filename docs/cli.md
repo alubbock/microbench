@@ -243,8 +243,9 @@ microbench \
 `resource-usage` has no CLI flags. It is included in the defaults and records
 POSIX `getrusage()` data automatically for the benchmarked subprocess.
 
-On Windows, `resource-usage` records an empty `resource_usage` list and does
-not raise an error (the Python `resource` module is POSIX-only).
+On platforms where the Python `resource` module is unavailable,
+`resource-usage` records an empty `resource_usage` list and does not raise an
+error.
 
 ## Capture failures
 

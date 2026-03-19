@@ -70,7 +70,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBLoadedModules` | `loaded-modules` *(default)* | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
 | `MBWorkingDir` | `working-dir` *(default)* | `call.working_dir` — absolute path of the working directory at benchmark time | — |
 | `MBCgroupLimits` | `cgroup-limits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
-| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` list of dicts with CPU times, peak RSS, page faults, I/O ops, and context switches per iteration (empty list on Windows) | POSIX only (stdlib) |
+| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` list of dicts with CPU times, peak RSS, page faults, I/O ops, and context switches (`[]` when the stdlib `resource` module is unavailable) | POSIX only (stdlib) |
 | `MBGitInfo` | `git-info` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | Python only | `python.loaded_packages` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `installed-packages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
@@ -348,19 +348,19 @@ dependencies are required.
 
 **Modes**
 
-- **CLI mode**: uses `os.wait4()` (all POSIX platforms) to get the exact
-  rusage of each child process as reported by the kernel — one dict per
-  timed iteration, aligned index-for-index with `call.durations`.
-  `maxrss` is the child's own peak RSS.  On Windows (where `os.wait4()`
-  is unavailable), falls back to a `RUSAGE_CHILDREN` before/after delta;
-  `maxrss` is omitted when `--warmup > 0` or `--iterations > 1` because
-  the cumulative HWM cannot be attributed to a single child.
+- **CLI mode**: on POSIX, uses `os.wait4()` to get the exact rusage of each
+  child process as reported by the kernel — one dict per timed iteration,
+  aligned index-for-index with `call.durations`.
+  `maxrss` is the child's own peak RSS.
 - **Python API mode**: uses `RUSAGE_SELF` — a single aggregate before/after
   delta across **all** iterations (the list always has exactly one entry).
   `maxrss` is **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process
   high-water mark that reflects the peak since the interpreter started,
   not just since the decorated function was called, making it unreliable
   for function-level measurement.
+
+On platforms where the stdlib `resource` module is unavailable, `resource_usage`
+is recorded as an empty list.
 
 ```python
 from microbench import MicroBench, MBResourceUsage
@@ -452,15 +452,6 @@ reported by the kernel. `maxrss` is the child's own peak RSS, accurate
 regardless of iteration count or warmup. Values are normalised to bytes
 (Linux reports kilobytes; macOS already reports bytes).
 
-**`maxrss` — CLI mode without `os.wait4()` (Windows fallback)**
-
-Falls back to a `RUSAGE_CHILDREN` before/after delta.
-[`RUSAGE_CHILDREN.maxrss`](https://man7.org/linux/man-pages/man2/getrusage.2.html)
-is the cumulative high-water mark across *all waited children* since process
-start. When `--warmup > 0` or `--iterations > 1`, `maxrss` is omitted
-entirely — the delta cannot be attributed to a single child and would silently
-report misleading zeros.
-
 **`maxrss` — Python API mode (`RUSAGE_SELF`)**
 
 `RUSAGE_SELF.maxrss` is a lifetime high-water mark for the Python interpreter
@@ -499,8 +490,8 @@ most page-in activity. Zero is normal.
 These are the most reliable fields across both Linux and macOS and are
 non-zero for any non-trivial workload.
 
-!!! note "Windows"
-    The `resource` module is not available on Windows. `resource_usage` is
+!!! note "Non-POSIX platforms"
+    When the Python `resource` module is unavailable, `resource_usage` is
     recorded as an empty list without raising an error.
 
 **CLI:** `resource-usage` is a default mixin — no flags needed:

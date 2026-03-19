@@ -319,9 +319,7 @@ def _rusage_from_wait4(raw_ru):
 def _rusage_delta(before, after):
     """Return ``after - before`` for all accumulator fields.
 
-    ``maxrss`` is only included when ``before`` has a ``maxrss`` key (CLI
-    fallback mode — see ``_rusage_to_dict``).  When ``os.wait4()`` is used,
-    this function is not called; ``_rusage_from_wait4`` is used instead.
+    ``maxrss`` is only included when ``before`` has a ``maxrss`` key.
     """
     d = {
         'utime': after['utime'] - before['utime'],
@@ -338,10 +336,6 @@ def _rusage_delta(before, after):
     return d
 
 
-# True when os.wait4() is available (all POSIX; absent on Windows).
-_HAVE_WAIT4 = hasattr(os, 'wait4')
-
-
 class MBResourceUsage:
     """Capture POSIX ``getrusage()`` data for the benchmarked code.
 
@@ -353,15 +347,10 @@ class MBResourceUsage:
 
     **Modes**
 
-    - *CLI mode* (subprocess): uses ``RUSAGE_CHILDREN`` / ``os.wait4()`` —
-      resources consumed by the benchmarked subprocess and all its descendants.
-      When ``os.wait4()`` is available (all POSIX platforms), each entry
-      contains the exact rusage of that child process as reported by the
-      kernel.  On platforms where ``os.wait4()`` is unavailable (Windows),
-      a before/after delta of ``RUSAGE_CHILDREN`` is used instead and
-      ``maxrss`` is omitted when ``warmup > 0`` or ``iterations > 1`` because
-      the cumulative high-water mark cannot be meaningfully attributed to a
-      single child.
+    - *CLI mode* (subprocess): on POSIX, uses ``os.wait4()`` to capture the
+      exact rusage of each child process as reported by the kernel — one entry
+      per timed iteration, aligned with ``call.durations`` and
+      ``call.returncode``.
 
     - *Python API mode* (function): uses ``RUSAGE_SELF`` — a single aggregate
       before/after delta across **all** iterations (list always has exactly
@@ -371,10 +360,10 @@ class MBResourceUsage:
       function.  Use ``MBPeakMemory`` for per-call peak RSS in Python API
       mode.
 
-    On Windows (where the ``resource`` module is unavailable), this mixin
-    records an empty list without raising an error.
+    On non-POSIX platforms where the ``resource`` module is unavailable, this
+    mixin records an empty list without raising an error.
 
-    Output key: ``resource_usage`` (list of dicts, one per iteration)
+    Output key: ``resource_usage`` (list of dicts)
 
     Fields per entry (CLI mode with ``os.wait4()`` — the common POSIX case):
 
@@ -395,12 +384,6 @@ class MBResourceUsage:
     *maxrss* (CLI mode with ``os.wait4()``):
         Reported directly by the kernel as the child's own peak RSS.  Exact
         and per-child regardless of iteration count or warmup.
-
-    *maxrss* (CLI mode without ``os.wait4()`` — Windows fallback):
-        Uses ``RUSAGE_CHILDREN`` before/after delta.  Omitted entirely when
-        ``warmup > 0`` or ``iterations > 1`` because ``RUSAGE_CHILDREN.maxrss``
-        is a cumulative HWM across all waited children since process start;
-        the delta cannot be attributed to a single child in those cases.
 
     *inblock / oublock* (macOS):
         These counters are almost always zero on macOS regardless of actual
@@ -461,10 +444,6 @@ class MBResourceUsage:
         if hasattr(self, '_subprocess_command'):
             # CLI mode: accumulator populated by run() in main.py.
             self._subprocess_resource_usage = []
-            if not _HAVE_WAIT4:
-                # Fallback: RUSAGE_CHILDREN before/after delta per iteration.
-                ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
-                self._rusage_before = _rusage_to_dict(ru, include_maxrss=True)
         else:
             # Python API mode: snapshot RUSAGE_SELF once before all iterations.
             # pre/post_run_triggers are not used because MicroBenchBase does not
@@ -481,16 +460,9 @@ class MBResourceUsage:
             return
         if hasattr(self, '_subprocess_command'):
             # CLI mode: list already populated by run() in main.py.
-            entries = list(getattr(self, '_subprocess_resource_usage', []))
-            # Fallback path (no os.wait4): maxrss is a RUSAGE_CHILDREN delta
-            # which is unreliable when warmup>0 or iterations>1.  Strip it so
-            # we never silently report misleading zeros.
-            if not _HAVE_WAIT4 and (
-                getattr(self, 'warmup', 0) > 0 or getattr(self, 'iterations', 1) > 1
-            ):
-                for entry in entries:
-                    entry.pop('maxrss', None)
-            bm_data['resource_usage'] = entries
+            bm_data['resource_usage'] = list(
+                getattr(self, '_subprocess_resource_usage', [])
+            )
         else:
             # Python API mode: single aggregate delta across all iterations.
             before = getattr(self, '_rusage_before', None)

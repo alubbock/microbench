@@ -14,20 +14,16 @@ All notable changes to microbench are documented here.
   `call.returncode`. Added as a **default CLI mixin** so every CLI run captures
   it automatically.
 
-  - *CLI mode*: uses `os.wait4()` (available on all POSIX platforms) to capture
-    the exact rusage of each individual child process as reported by the kernel,
-    including a reliable `maxrss` per iteration regardless of `--iterations` or
-    `--warmup` count. On Windows (where `os.wait4()` is unavailable), falls back
-    to a `RUSAGE_CHILDREN` before/after delta; `maxrss` is omitted when
-    `--warmup > 0` or `--iterations > 1` to avoid misleading cumulative HWM
-    values.
+  - *CLI mode*: on POSIX, uses `os.wait4()` to capture the exact rusage of each
+    individual child process as reported by the kernel, including a reliable
+    `maxrss` per iteration regardless of `--iterations` or `--warmup` count.
   - *Python API mode*: uses `RUSAGE_SELF` for a single aggregate before/after
     delta across all iterations (list always has exactly one entry). `maxrss` is
     omitted (lifetime process HWM, not per-call). Use `MBPeakMemory` for
     per-call peak memory in Python API mode.
 
-  On Windows (where the `resource` module is unavailable) the mixin records an
-  empty list without raising an error.
+  On platforms where the stdlib `resource` module is unavailable, the mixin
+  records an empty list without raising an error.
 
 ### Enhancements
 

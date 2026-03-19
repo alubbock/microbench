@@ -13,9 +13,6 @@ from microbench.cli.parser import (
 from microbench.cli.registry import MIXIN_REGISTRY
 from microbench.cli.runner import _SubprocessMonitorThread
 
-# os.wait4() is available on all POSIX platforms; absent on Windows.
-_HAVE_WAIT4 = hasattr(os, 'wait4')
-
 _DEFAULT_MIXINS = (
     'python-info',
     'host-info',
@@ -301,11 +298,6 @@ def main(argv=None):
         monitor_interval = args.monitor_interval
         timeout = args.timeout
 
-        # Snapshot RUSAGE_CHILDREN before launching the child (fallback path only).
-        rusage_before = None
-        if _resource is not None and not _HAVE_WAIT4:
-            rusage_before = _resource.getrusage(_resource.RUSAGE_CHILDREN)
-
         stdout_chunks = []
         stderr_chunks = []
 
@@ -361,7 +353,7 @@ def main(argv=None):
         timed_out = False
         child_rusage = None
 
-        if _HAVE_WAIT4 and _resource is not None:
+        if _resource is not None:
             # os.wait4() reaps the child and returns its exact per-child rusage
             # in a single syscall.  It must be called *instead* of proc.wait().
             #
@@ -370,13 +362,14 @@ def main(argv=None):
             # joining with a timeout.  If the join times out, we terminate/kill
             # the child, then block on wait4 (the child is now dying so this
             # completes quickly).
-            _wait4_result = [None]  # [(pid, status, rusage)] or None
+            _wait4_result = [None]  # [(pid, status, rusage)]
+            _wait4_error = [None]
 
             def _do_wait4():
                 try:
                     _wait4_result[0] = os.wait4(proc.pid, 0)
-                except ChildProcessError:
-                    pass  # child already reaped
+                except BaseException as exc:  # pragma: no cover - defensive
+                    _wait4_error[0] = exc
 
             _wait4_thread = threading.Thread(target=_do_wait4, daemon=True)
             _wait4_thread.start()
@@ -395,15 +388,17 @@ def main(argv=None):
                     proc.kill()
                     _wait4_thread.join()  # child is dead; this will return quickly
 
-            if _wait4_result[0] is not None:
-                _, wait_status, raw_ru = _wait4_result[0]
-                proc.returncode = os.waitstatus_to_exitcode(wait_status)
-                child_rusage = raw_ru
-            elif proc.returncode is None:
-                # wait4 failed (ChildProcessError); fall back to proc.wait().
-                proc.wait()
+            if _wait4_error[0] is not None:
+                raise _wait4_error[0]
+
+            if _wait4_result[0] is None:  # pragma: no cover - defensive
+                raise RuntimeError('os.wait4() returned no child status')
+
+            _, wait_status, raw_ru = _wait4_result[0]
+            proc.returncode = os.waitstatus_to_exitcode(wait_status)
+            child_rusage = raw_ru
         else:
-            # Fallback: use proc.wait() with optional timeout.
+            # No resource module available: use proc.wait() with optional timeout.
             try:
                 proc.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
@@ -433,23 +428,10 @@ def main(argv=None):
             bench._subprocess_stderr.append(''.join(stderr_chunks))
 
         # Accumulate per-iteration resource usage (only during timed phase).
-        if bench._subprocess_timed_phase and _resource is not None:
-            if child_rusage is not None:
-                # os.wait4() path: exact per-child rusage from the kernel.
-                from microbench.mixins.system import _rusage_from_wait4
+        if bench._subprocess_timed_phase and child_rusage is not None:
+            from microbench.mixins.system import _rusage_from_wait4
 
-                bench._subprocess_resource_usage.append(
-                    _rusage_from_wait4(child_rusage)
-                )
-            elif rusage_before is not None:
-                # Fallback: RUSAGE_CHILDREN before/after delta.
-                from microbench.mixins.system import _rusage_delta, _rusage_to_dict
-
-                rusage_after = _resource.getrusage(_resource.RUSAGE_CHILDREN)
-                after_dict = _rusage_to_dict(rusage_after, include_maxrss=True)
-                before_dict = _rusage_to_dict(rusage_before, include_maxrss=True)
-                entry = _rusage_delta(before_dict, after_dict)
-                bench._subprocess_resource_usage.append(entry)
+            bench._subprocess_resource_usage.append(_rusage_from_wait4(child_rusage))
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()

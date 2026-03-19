@@ -11,6 +11,31 @@ from microbench import __version__
 from microbench.__main__ import main
 
 
+class _FakeRusage:
+    def __init__(
+        self,
+        *,
+        utime=0.0,
+        stime=0.0,
+        maxrss=1,
+        minflt=0,
+        majflt=0,
+        inblock=0,
+        oublock=0,
+        nvcsw=0,
+        nivcsw=0,
+    ):
+        self.ru_utime = utime
+        self.ru_stime = stime
+        self.ru_maxrss = maxrss
+        self.ru_minflt = minflt
+        self.ru_majflt = majflt
+        self.ru_inblock = inblock
+        self.ru_oublock = oublock
+        self.ru_nvcsw = nvcsw
+        self.ru_nivcsw = nivcsw
+
+
 def _make_mock_popen(returncode=0, stdout_lines=None, stderr_lines=None, pid=12345):
     """Create a mock Popen process."""
     mock_proc = MagicMock()
@@ -22,20 +47,49 @@ def _make_mock_popen(returncode=0, stdout_lines=None, stderr_lines=None, pid=123
 
 
 def _run_main(argv, mock_returncode=0):
-    """Run main() with a mocked subprocess and captured stdout.
-
-    Patches subprocess.Popen and forces _HAVE_WAIT4=False so tests exercise
-    the simple proc.wait() fallback path, independent of os.wait4 availability.
-    """
+    """Run main() with a mocked subprocess and captured stdout."""
     mock_proc = _make_mock_popen(returncode=mock_returncode)
 
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc) as mock_popen:
+    wait_status = 0 if mock_returncode == 0 else mock_returncode << 8
+    fake_wait4 = (mock_proc.pid, wait_status, _FakeRusage())
+    with patch('subprocess.Popen', return_value=mock_proc) as mock_popen:
+        with patch('os.wait4', return_value=fake_wait4):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(argv)
     return exc.value.code, json.loads(buf.getvalue()), mock_popen
+
+
+def _patch_wait4_success(mock_proc, *, rusage=None, status=0):
+    if rusage is None:
+        rusage = _FakeRusage()
+    return patch('os.wait4', return_value=(mock_proc.pid, status, rusage))
+
+
+def _patch_wait4_sleep(mock_proc, delay, *, status=0, rusage=None):
+    if rusage is None:
+        rusage = _FakeRusage()
+
+    def _wait4(pid, options):
+        import time
+
+        time.sleep(delay)
+        return (mock_proc.pid, status, rusage)
+
+    return patch('os.wait4', side_effect=_wait4)
+
+
+def _patch_wait4_sequence(*results):
+    iterator = iter(results)
+
+    def _wait4(pid, options):
+        result = next(iterator)
+        if callable(result):
+            return result(pid, options)
+        return result
+
+    return patch('os.wait4', side_effect=_wait4)
 
 
 def test_cli_records_command_and_timing():
@@ -180,8 +234,8 @@ def test_cli_outfile(tmp_path):
     outfile = tmp_path / 'results.jsonl'
     mock_proc = _make_mock_popen(returncode=0)
 
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with pytest.raises(SystemExit):
                 main(['--outfile', str(outfile), '--', 'true'])
 
@@ -237,8 +291,8 @@ def test_cli_all_flag_includes_all_mixins():
     # Patch every mixin's capture methods to no-ops to avoid external calls
     mock_proc = _make_mock_popen(returncode=0)
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
                     with patch(
@@ -314,8 +368,12 @@ def test_cli_returncode_is_first_nonzero_across_iterations():
         _make_mock_popen(returncode=1),
     ]
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', side_effect=mock_procs):
+    with patch('subprocess.Popen', side_effect=mock_procs):
+        with _patch_wait4_sequence(
+            (mock_procs[0].pid, 0, _FakeRusage()),
+            (mock_procs[1].pid, 2 << 8, _FakeRusage()),
+            (mock_procs[2].pid, 1 << 8, _FakeRusage()),
+        ):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(['--iterations', '3', '--', 'true'])
@@ -332,8 +390,12 @@ def test_cli_returncode_preserves_first_nonzero_even_if_later_is_larger():
         _make_mock_popen(returncode=2),
     ]
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', side_effect=mock_procs):
+    with patch('subprocess.Popen', side_effect=mock_procs):
+        with _patch_wait4_sequence(
+            (mock_procs[0].pid, 0, _FakeRusage()),
+            (mock_procs[1].pid, 1 << 8, _FakeRusage()),
+            (mock_procs[2].pid, 2 << 8, _FakeRusage()),
+        ):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(['--iterations', '3', '--', 'true'])
@@ -350,8 +412,12 @@ def test_cli_returncode_preserves_first_nonzero_signal_code():
         _make_mock_popen(returncode=1),
     ]
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', side_effect=mock_procs):
+    with patch('subprocess.Popen', side_effect=mock_procs):
+        with _patch_wait4_sequence(
+            (mock_procs[0].pid, 0, _FakeRusage()),
+            (mock_procs[1].pid, 15, _FakeRusage()),
+            (mock_procs[2].pid, 1 << 8, _FakeRusage()),
+        ):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(['--iterations', '3', '--', 'true'])
@@ -372,8 +438,8 @@ def test_cli_all_overrides_mixin():
     """--all takes precedence over --mixin."""
     mock_proc = _make_mock_popen(returncode=0)
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
                     with patch(
@@ -428,10 +494,11 @@ def test_cli_capture_stdout_records_output():
     buf = io.StringIO()
     terminal = io.StringIO()
     with patch('subprocess.Popen', return_value=mock_proc) as mock_popen:
-        with patch('sys.stdout', buf):
-            with patch('sys.__stdout__', terminal):
-                with pytest.raises(SystemExit):
-                    main(['--stdout', '--', 'echo', 'hello'])
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', terminal):
+                    with pytest.raises(SystemExit):
+                        main(['--stdout', '--', 'echo', 'hello'])
 
     record = json.loads(buf.getvalue())
     assert record['call']['stdout'] == ['hello\n']
@@ -447,10 +514,11 @@ def test_cli_capture_stdout_suppress():
     buf = io.StringIO()
     terminal = io.StringIO()
     with patch('subprocess.Popen', return_value=mock_proc):
-        with patch('sys.stdout', buf):
-            with patch('sys.__stdout__', terminal):
-                with pytest.raises(SystemExit):
-                    main(['--stdout=suppress', '--', 'echo', 'hello'])
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', terminal):
+                    with pytest.raises(SystemExit):
+                        main(['--stdout=suppress', '--', 'echo', 'hello'])
 
     record = json.loads(buf.getvalue())
     assert record['call']['stdout'] == ['hello\n']
@@ -464,10 +532,11 @@ def test_cli_capture_stderr_records_output():
     buf = io.StringIO()
     terminal_err = io.StringIO()
     with patch('subprocess.Popen', return_value=mock_proc):
-        with patch('sys.stdout', buf):
-            with patch('sys.__stderr__', terminal_err):
-                with pytest.raises(SystemExit):
-                    main(['--stderr', '--', 'cmd'])
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stderr__', terminal_err):
+                    with pytest.raises(SystemExit):
+                        main(['--stderr', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
     assert record['call']['stderr'] == ['warning\n']
@@ -482,10 +551,11 @@ def test_cli_capture_stderr_suppress():
     buf = io.StringIO()
     terminal_err = io.StringIO()
     with patch('subprocess.Popen', return_value=mock_proc):
-        with patch('sys.stdout', buf):
-            with patch('sys.__stderr__', terminal_err):
-                with pytest.raises(SystemExit):
-                    main(['--stderr=suppress', '--', 'cmd'])
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stderr__', terminal_err):
+                    with pytest.raises(SystemExit):
+                        main(['--stderr=suppress', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
     assert record['call']['stderr'] == ['warning\n']
@@ -503,12 +573,26 @@ def test_cli_capture_stdout_multiple_iterations():
 
     buf = io.StringIO()
     with patch('subprocess.Popen', side_effect=mock_procs):
-        with patch('sys.stdout', buf):
-            with patch('sys.__stdout__', io.StringIO()):
-                with pytest.raises(SystemExit):
-                    main(
-                        ['--stdout', '--warmup', '1', '--iterations', '3', '--', 'cmd']
-                    )
+        with _patch_wait4_sequence(
+            (mock_procs[0].pid, 0, _FakeRusage()),
+            (mock_procs[1].pid, 0, _FakeRusage()),
+            (mock_procs[2].pid, 0, _FakeRusage()),
+            (mock_procs[3].pid, 0, _FakeRusage()),
+        ):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', io.StringIO()):
+                    with pytest.raises(SystemExit):
+                        main(
+                            [
+                                '--stdout',
+                                '--warmup',
+                                '1',
+                                '--iterations',
+                                '3',
+                                '--',
+                                'cmd',
+                            ]
+                        )
 
     record = json.loads(buf.getvalue())
     assert record['call']['stdout'] == ['run1\n', 'run2\n', 'run3\n']
@@ -523,11 +607,12 @@ def test_cli_capture_stdout_and_stderr():
 
     buf = io.StringIO()
     with patch('subprocess.Popen', return_value=mock_proc):
-        with patch('sys.stdout', buf):
-            with patch('sys.__stdout__', io.StringIO()):
-                with patch('sys.__stderr__', io.StringIO()):
-                    with pytest.raises(SystemExit):
-                        main(['--stdout', '--stderr', '--', 'cmd'])
+        with _patch_wait4_success(mock_proc):
+            with patch('sys.stdout', buf):
+                with patch('sys.__stdout__', io.StringIO()):
+                    with patch('sys.__stderr__', io.StringIO()):
+                        with pytest.raises(SystemExit):
+                            main(['--stdout', '--stderr', '--', 'cmd'])
 
     record = json.loads(buf.getvalue())
     assert record['call']['stdout'] == ['out\n']
@@ -624,8 +709,8 @@ def _run_main_with_monitor(argv, mock_pid=12345, mock_returncode=0, fake_samples
         MockThread.return_value = mock_thread
 
         buf = io.StringIO()
-        with patch('microbench.cli.main._HAVE_WAIT4', False):
-            with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with _patch_wait4_success(mock_proc):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit):
                         main(argv)
@@ -706,8 +791,8 @@ def test_cli_monitor_interval_multiple_iterations():
 
     buf = io.StringIO()
     with patch('microbench.cli.main._SubprocessMonitorThread', side_effect=make_thread):
-        with patch('microbench.cli.main._HAVE_WAIT4', False):
-            with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with _patch_wait4_success(mock_proc):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit):
                         main(
@@ -744,8 +829,8 @@ def test_cli_monitor_interval_warmup_excluded():
 
     buf = io.StringIO()
     with patch('microbench.cli.main._SubprocessMonitorThread', side_effect=make_thread):
-        with patch('microbench.cli.main._HAVE_WAIT4', False):
-            with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with _patch_wait4_success(mock_proc):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit):
                         main(
@@ -801,8 +886,8 @@ def test_cli_monitor_interval_with_stdout_capture():
         mock_thread = MagicMock()
         mock_thread.samples = fake_samples
         MockThread.return_value = mock_thread
-        with patch('microbench.cli.main._HAVE_WAIT4', False):
-            with patch('subprocess.Popen', return_value=mock_proc):
+        with patch('subprocess.Popen', return_value=mock_proc):
+            with _patch_wait4_success(mock_proc):
                 with patch('sys.stdout', buf):
                     with patch('sys.__stdout__', io.StringIO()):
                         with pytest.raises(SystemExit):
@@ -835,8 +920,8 @@ def _run_main_http(argv, fake_status=200):
 
     mock_proc = _make_mock_popen(returncode=0)
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch(
                 'urllib.request.urlopen', return_value=mock_response
             ) as mock_urlopen:
@@ -866,8 +951,8 @@ def test_cli_http_output_no_stdout_record():
     mock_response.__enter__ = lambda s: s
     mock_response.__exit__ = MagicMock(return_value=False)
     mock_proc = _make_mock_popen(returncode=0)
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch('urllib.request.urlopen', return_value=mock_response):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit):
@@ -890,8 +975,8 @@ def test_cli_http_output_and_outfile(tmp_path):
     mock_response.__enter__ = lambda s: s
     mock_response.__exit__ = MagicMock(return_value=False)
     mock_proc = _make_mock_popen(returncode=0)
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch(
                 'urllib.request.urlopen', return_value=mock_response
             ) as mock_urlopen:
@@ -1027,8 +1112,8 @@ def _run_main_redis(argv):
     mock_redis.StrictRedis.return_value = mock_client
     mock_proc = _make_mock_popen(returncode=0)
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch.dict('sys.modules', {'redis': mock_redis}):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit) as exc:
@@ -1063,8 +1148,8 @@ def test_cli_redis_output_no_stdout_record():
     mock_redis = MagicMock()
     mock_redis.StrictRedis.return_value = mock_client
     mock_proc = _make_mock_popen(returncode=0)
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch.dict('sys.modules', {'redis': mock_redis}):
                 with patch('sys.stdout', buf):
                     with pytest.raises(SystemExit):
@@ -1087,8 +1172,8 @@ def test_cli_redis_output_and_outfile(tmp_path):
     mock_redis = MagicMock()
     mock_redis.StrictRedis.return_value = mock_client
     mock_proc = _make_mock_popen(returncode=0)
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch.dict('sys.modules', {'redis': mock_redis}):
                 with pytest.raises(SystemExit):
                     main(
@@ -1454,8 +1539,8 @@ def test_cli_timeout_not_exceeded():
     mock_proc.returncode = 0
 
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_success(mock_proc):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(['--no-mixin', '--timeout', '30', '--', 'sleep', '1'])
@@ -1469,17 +1554,13 @@ def test_cli_timeout_sigterm_sufficient():
     """--timeout: process exits after SIGTERM; SIGKILL is not sent."""
     mock_proc = _make_mock_popen()
     mock_proc.returncode = -15  # killed by SIGTERM
-    mock_proc.wait.side_effect = [
-        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # main timeout
-        None,  # exits cleanly after SIGTERM (within grace period)
-    ]
 
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_sleep(mock_proc, 0.05, status=15):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
-                    main(['--no-mixin', '--timeout', '5', '--', 'sleep', '100'])
+                    main(['--no-mixin', '--timeout', '0.001', '--', 'sleep', '100'])
     record = json.loads(buf.getvalue())
     assert record['call']['timed_out'] is True
     mock_proc.terminate.assert_called_once()
@@ -1490,18 +1571,24 @@ def test_cli_timeout_sigkill_required():
     """--timeout: SIGKILL sent when process ignores SIGTERM past the grace period."""
     mock_proc = _make_mock_popen()
     mock_proc.returncode = -9  # killed by SIGKILL
-    mock_proc.wait.side_effect = [
-        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # main timeout
-        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),  # grace period
-        None,  # exits after SIGKILL
-    ]
 
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', return_value=mock_proc):
+    with patch('subprocess.Popen', return_value=mock_proc):
+        with _patch_wait4_sleep(mock_proc, 0.05, status=9):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit):
-                    main(['--no-mixin', '--timeout', '5', '--', 'sleep', '100'])
+                    main(
+                        [
+                            '--no-mixin',
+                            '--timeout',
+                            '0.001',
+                            '--timeout-grace-period',
+                            '0.001',
+                            '--',
+                            'sleep',
+                            '100',
+                        ]
+                    )
     record = json.loads(buf.getvalue())
     assert record['call']['timed_out'] is True
     mock_proc.terminate.assert_called_once()
@@ -1512,17 +1599,22 @@ def test_cli_timeout_during_warmup_does_not_set_timed_out():
     """A timeout in warmup is discarded along with other warmup-only state."""
     warmup_proc = _make_mock_popen()
     warmup_proc.returncode = -15
-    warmup_proc.wait.side_effect = [
-        subprocess.TimeoutExpired(cmd=['sleep', '100'], timeout=5),
-        None,
-    ]
 
     timed_proc = _make_mock_popen()
     timed_proc.returncode = 0
 
+    def warmup_wait4(pid, options):
+        import time
+
+        time.sleep(0.05)
+        return (warmup_proc.pid, 15, _FakeRusage())
+
     buf = io.StringIO()
-    with patch('microbench.cli.main._HAVE_WAIT4', False):
-        with patch('subprocess.Popen', side_effect=[warmup_proc, timed_proc]):
+    with patch('subprocess.Popen', side_effect=[warmup_proc, timed_proc]):
+        with _patch_wait4_sequence(
+            warmup_wait4,
+            (timed_proc.pid, 0, _FakeRusage()),
+        ):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(
@@ -1531,7 +1623,7 @@ def test_cli_timeout_during_warmup_does_not_set_timed_out():
                             '--warmup',
                             '1',
                             '--timeout',
-                            '5',
+                            '0.001',
                             '--',
                             'sleep',
                             '100',
