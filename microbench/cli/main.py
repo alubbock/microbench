@@ -368,7 +368,7 @@ def main(argv=None):
                 def _do_wait4():
                     try:
                         _wait4_result[0] = os.wait4(proc.pid, 0)
-                    except BaseException as exc:  # pragma: no cover - defensive
+                    except BaseException as exc:
                         _wait4_error[0] = exc
 
                 _wait4_thread = threading.Thread(target=_do_wait4, daemon=True)
