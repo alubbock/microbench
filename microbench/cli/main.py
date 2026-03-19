@@ -19,6 +19,7 @@ _DEFAULT_MIXINS = (
     'slurm-info',
     'loaded-modules',
     'working-dir',
+    'resource-usage',
 )
 
 

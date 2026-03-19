@@ -1,6 +1,7 @@
 """System-info mixins.
 
-Classes: MBHostInfo, MBWorkingDir, MBSlurmInfo, MBCgroupLimits, MBLoadedModules.
+Classes: MBHostInfo, MBWorkingDir, MBSlurmInfo, MBCgroupLimits, MBLoadedModules,
+MBResourceUsage.
 """
 
 import os
@@ -11,6 +12,11 @@ try:
     import psutil
 except ImportError:
     psutil = None
+
+try:
+    import resource as _resource
+except ImportError:
+    _resource = None
 
 
 class MBHostInfo:
@@ -256,3 +262,129 @@ class MBCgroupLimits:
                 bm_data['cgroups'] = _read_cgroup_v1()
         except (OSError, ValueError, ZeroDivisionError):
             bm_data['cgroups'] = {}
+
+
+def _rusage_to_dict(ru):
+    """Convert a ``struct_rusage`` to a plain dict with normalised fields.
+
+    ``maxrss`` is normalised to bytes: macOS already reports bytes; Linux
+    reports kilobytes and is multiplied by 1024.
+    """
+    maxrss = ru.ru_maxrss
+    if sys.platform == 'linux':
+        maxrss *= 1024
+    return {
+        'utime': ru.ru_utime,
+        'stime': ru.ru_stime,
+        'maxrss': maxrss,
+        'minflt': ru.ru_minflt,
+        'majflt': ru.ru_majflt,
+        'inblock': ru.ru_inblock,
+        'oublock': ru.ru_oublock,
+        'nvcsw': ru.ru_nvcsw,
+        'nivcsw': ru.ru_nivcsw,
+    }
+
+
+def _rusage_delta(before, after):
+    """Return ``after - before`` for all accumulator fields.
+
+    ``maxrss`` is intentionally *not* delta'd — it is a high-water mark, not
+    an accumulator, so the post-run value is used directly.
+    """
+    return {
+        'utime': after['utime'] - before['utime'],
+        'stime': after['stime'] - before['stime'],
+        'maxrss': after['maxrss'],
+        'minflt': after['minflt'] - before['minflt'],
+        'majflt': after['majflt'] - before['majflt'],
+        'inblock': after['inblock'] - before['inblock'],
+        'oublock': after['oublock'] - before['oublock'],
+        'nvcsw': after['nvcsw'] - before['nvcsw'],
+        'nivcsw': after['nivcsw'] - before['nivcsw'],
+    }
+
+
+class MBResourceUsage:
+    """Capture POSIX ``getrusage()`` data for the benchmarked code.
+
+    Records CPU time, peak resident set size (RSS), page faults, block I/O
+    operations, and context switches. All values are taken from a
+    before/after delta so they reflect only the benchmarked work — not
+    cumulative process overhead.
+
+    ``maxrss`` is a **high-water mark** (not an accumulator), so it is
+    taken from the post-run snapshot directly. It is always normalised to
+    **bytes** regardless of platform (Linux reports kilobytes; macOS reports
+    bytes).
+
+    **Modes**
+
+    - *CLI mode* (subprocess): uses ``RUSAGE_CHILDREN`` — resources
+      consumed by the benchmarked subprocess and all its descendants.
+    - *Python API mode* (function): uses ``RUSAGE_SELF`` — resources
+      consumed by the current process since the last snapshot.
+
+    On Windows (where the ``resource`` module is unavailable), this mixin
+    records an empty dict without raising an error.
+
+    Output key: ``resource_usage``
+
+    Fields recorded:
+
+    - ``utime``: user CPU time (seconds, float)
+    - ``stime``: system CPU time (seconds, float)
+    - ``maxrss``: peak RSS in bytes (int)
+    - ``minflt``: minor page faults (int)
+    - ``majflt``: major page faults (int)
+    - ``inblock``: block input operations (int)
+    - ``oublock``: block output operations (int)
+    - ``nvcsw``: voluntary context switches (int)
+    - ``nivcsw``: involuntary context switches (int)
+
+    Example output::
+
+        {
+            "resource_usage": {
+                "utime": 0.123456,
+                "stime": 0.012345,
+                "maxrss": 10485760,
+                "minflt": 512,
+                "majflt": 0,
+                "inblock": 0,
+                "oublock": 8,
+                "nvcsw": 3,
+                "nivcsw": 1
+            }
+        }
+
+    Note:
+        CLI compatible.
+    """
+
+    def capture_resource_usage(self, bm_data):
+        """Take a pre-run snapshot of resource usage."""
+        if _resource is None:
+            return
+        if hasattr(self, '_subprocess_command'):
+            # CLI mode: measure the child process.
+            ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+        else:
+            # Python API mode: measure the current process.
+            ru = _resource.getrusage(_resource.RUSAGE_SELF)
+        self._rusage_before = _rusage_to_dict(ru)
+
+    def capturepost_resource_usage(self, bm_data):
+        """Compute the delta and store resource usage results."""
+        if _resource is None:
+            bm_data['resource_usage'] = {}
+            return
+        if not hasattr(self, '_rusage_before'):
+            bm_data['resource_usage'] = {}
+            return
+        if hasattr(self, '_subprocess_command'):
+            ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+        else:
+            ru = _resource.getrusage(_resource.RUSAGE_SELF)
+        after = _rusage_to_dict(ru)
+        bm_data['resource_usage'] = _rusage_delta(self._rusage_before, after)

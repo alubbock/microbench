@@ -12,6 +12,7 @@ from microbench.mixins.system import (
     MBCgroupLimits,
     MBHostInfo,
     MBLoadedModules,
+    MBResourceUsage,
     MBSlurmInfo,
     MBWorkingDir,
 )
@@ -28,6 +29,7 @@ MIXIN_REGISTRY: dict = {
     'cgroup-limits': MBCgroupLimits,
     'git-info': MBGitInfo,
     'file-hash': MBFileHash,
+    'resource-usage': MBResourceUsage,
     'installed-packages': MBInstalledPackages,
     'conda-packages': MBCondaPackages,
     'peak-memory': MBPeakMemory,
