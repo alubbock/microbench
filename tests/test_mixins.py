@@ -843,10 +843,9 @@ def test_cgroup_limits_unavailable():
 # MBResourceUsage
 # ---------------------------------------------------------------------------
 
-_RUSAGE_FIELDS = {
+_RUSAGE_FIELDS_PYTHON_API = {
     'utime',
     'stime',
-    'maxrss',
     'minflt',
     'majflt',
     'inblock',
@@ -873,14 +872,14 @@ def test_resource_usage_python_api_fields():
 
     work()
     ru = bench.get_results()[0].get('resource_usage', {})
-    assert set(ru.keys()) == _RUSAGE_FIELDS
+    assert set(ru.keys()) == _RUSAGE_FIELDS_PYTHON_API
 
 
 @pytest.mark.skipif(
     sys.platform == 'win32', reason='resource module not available on Windows'
 )
-def test_resource_usage_python_api_maxrss_positive():
-    """maxrss is a positive integer (bytes) after running a Python function."""
+def test_resource_usage_python_api_maxrss_absent():
+    """maxrss is absent in Python API mode (RUSAGE_SELF.maxrss is a lifetime HWM)."""
 
     class Bench(MicroBench, MBResourceUsage):
         pass
@@ -892,9 +891,12 @@ def test_resource_usage_python_api_maxrss_positive():
         return list(range(10000))
 
     work()
-    maxrss = bench.get_results()[0]['resource_usage']['maxrss']
-    assert isinstance(maxrss, int)
-    assert maxrss > 0
+    ru = bench.get_results()[0].get('resource_usage', {})
+    assert 'maxrss' not in ru, (
+        'maxrss must not appear in Python API mode records because '
+        'RUSAGE_SELF.maxrss is a lifetime process high-water mark and '
+        'cannot isolate a single function call'
+    )
 
 
 @pytest.mark.skipif(
