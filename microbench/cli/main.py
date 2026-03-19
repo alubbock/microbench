@@ -123,7 +123,13 @@ def main(argv=None):
     elif args.no_mixins:
         mixin_names = []
     elif args.mixins is not None:
-        mixin_names = list(dict.fromkeys(args.mixins))
+        expanded = []
+        for name in args.mixins:
+            if name == 'defaults':
+                expanded.extend(_DEFAULT_MIXINS)
+            else:
+                expanded.append(name)
+        mixin_names = list(dict.fromkeys(expanded))
     else:
         mixin_names = list(_DEFAULT_MIXINS)
 

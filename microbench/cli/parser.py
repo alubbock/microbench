@@ -44,9 +44,11 @@ def _make_mixin_type(mixin_map):
     """Return an argparse type function that normalises and validates mixin names."""
 
     def _parse(value):
+        if value == 'defaults':
+            return 'defaults'
         canonical = _mb_name_to_cli(value) if value.startswith('MB') else value
         if canonical not in mixin_map:
-            valid = ', '.join(sorted(mixin_map))
+            valid = 'defaults, ' + ', '.join(sorted(mixin_map))
             raise argparse.ArgumentTypeError(
                 f'unknown mixin {value!r}. Available: {valid}'
             )
@@ -163,6 +165,8 @@ def _build_parser(mixin_map):
         type=_make_mixin_type(mixin_map),
         help=(
             'One or more mixins to include. Replaces defaults when specified. '
+            'Use the special name "defaults" to include the default set '
+            '(e.g. --mixin defaults file-hash). '
             'Use --show-mixins to list available options. '
             'MB-prefixed names (e.g. MBHostInfo) are also accepted.'
         ),

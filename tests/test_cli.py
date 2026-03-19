@@ -125,6 +125,54 @@ def test_cli_explicit_mixin_replaces_defaults():
     assert 'slurm' not in record
 
 
+def test_cli_mixin_defaults_keyword_alone():
+    """--mixin defaults alone is equivalent to omitting --mixin."""
+    _, record_explicit, _ = _run_main(['--mixin', 'defaults', '--', 'true'])
+    _, record_implicit, _ = _run_main(['--', 'true'])
+
+    for key in ('python', 'host', 'slurm', 'loaded_modules'):
+        assert key in record_explicit
+    assert record_explicit['python']['version'] == record_implicit['python']['version']
+
+
+def test_cli_mixin_defaults_keyword_extends_defaults():
+    """--mixin defaults plus a default mixin on top works."""
+    _, record, _ = _run_main(['--mixin', 'defaults', 'working-dir', '--', 'true'])
+
+    # All defaults present
+    assert 'python' in record
+    assert 'host' in record
+    assert 'slurm' in record
+    assert 'loaded_modules' in record
+    # working-dir is already in defaults, so no duplicate effect needed — just check
+    assert 'working_dir' in record['call']
+
+
+def test_cli_mixin_defaults_keyword_with_extra_mixin():
+    """--mixin defaults file-hash produces defaults plus file-hash."""
+    _, record, _ = _run_main(['--mixin', 'defaults', 'peak-memory', '--', 'true'])
+
+    assert 'python' in record
+    assert 'host' in record
+    # peak-memory records to call.peak_memory_bytes
+    assert 'peak_memory_bytes' in record['call']
+
+
+def test_cli_mixin_defaults_keyword_deduplicates():
+    """Repeating defaults in --mixin does not produce duplicate mixins."""
+    _, record, _ = _run_main(['--mixin', 'defaults', 'defaults', '--', 'true'])
+
+    assert 'python' in record
+    assert 'host' in record
+
+
+def test_cli_mixin_defaults_keyword_invalid_extra():
+    """An unknown mixin alongside defaults exits non-zero."""
+    with pytest.raises(SystemExit) as exc:
+        main(['--mixin', 'defaults', 'no-such-mixin', '--', 'true'])
+    assert exc.value.code != 0
+
+
 def test_cli_outfile(tmp_path):
     """--outfile writes JSONL to the specified file."""
     outfile = tmp_path / 'results.jsonl'

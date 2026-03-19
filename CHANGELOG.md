@@ -6,6 +6,12 @@ All notable changes to microbench are documented here.
 
 ### Enhancements
 
+- **`--mixin defaults` keyword** (CLI): `defaults` can be used as a mixin
+  name to expand to the standard default set (`python-info`, `host-info`,
+  `slurm-info`, `loaded-modules`, `working-dir`). This makes it easy to add
+  one or more extra mixins without listing all five defaults explicitly:
+  `microbench --mixin defaults file-hash -- ./job.sh`.
+
 - **`file-hash` mixin — automatic argument file scanning** (CLI): the
   default hash list now includes not only the command executable (`cmd[0]`)
   but also any command-line arguments (`cmd[1:]`) that resolve to existing
