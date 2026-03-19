@@ -133,8 +133,20 @@ mixins with descriptions:
 microbench --show-mixins
 ```
 
-Specifying `--mixin` replaces the defaults entirely. Use `--no-mixin` to
-disable all mixins and record only timing and command fields:
+Specifying `--mixin` replaces the defaults entirely. Use the special name
+`defaults` in a `--mixin` list to include the standard default set, so you
+can extend it without listing all of them explicitly:
+
+```bash
+# Defaults plus file-hash
+microbench --mixin defaults file-hash -- ./job.sh
+
+# Defaults plus git-info and cgroup-limits
+microbench --mixin defaults git-info cgroup-limits -- ./job.sh
+```
+
+Use `--no-mixin` to disable all mixins and record only timing and command
+fields:
 
 ```bash
 # Only Python info — no host info or SLURM
