@@ -243,7 +243,7 @@ microbench \
 `resource-usage` has no CLI flags. It is included in the defaults and records
 POSIX `getrusage()` data automatically for the benchmarked subprocess.
 
-On Windows, `resource-usage` records an empty `resource_usage` dict and does
+On Windows, `resource-usage` records an empty `resource_usage` list and does
 not raise an error (the Python `resource` module is POSIX-only).
 
 ## Capture failures
@@ -299,6 +299,7 @@ With 10 iterations and 2 warmup runs, the record contains:
 - `call.durations` — list of 10 wall-clock durations in seconds
 - `call.returncode` — list of 10 exit codes (one per timed iteration)
 - `call.stdout` / `call.stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
+- `resource_usage` — list of 10 per-iteration rusage dicts (when `resource-usage` mixin is active)
 
 Warmup runs are excluded from all three lists. The process exits with
 the first non-zero return code, if present, so any failing iteration

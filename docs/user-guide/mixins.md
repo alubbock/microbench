@@ -70,7 +70,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBLoadedModules` | `loaded-modules` *(default)* | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
 | `MBWorkingDir` | `working-dir` *(default)* | `call.working_dir` — absolute path of the working directory at benchmark time | — |
 | `MBCgroupLimits` | `cgroup-limits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
-| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` dict with CPU times, peak RSS, page faults, I/O ops, and context switches (empty dict on Windows) | POSIX only (stdlib) |
+| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` list of dicts with CPU times, peak RSS, page faults, I/O ops, and context switches per iteration (empty list on Windows) | POSIX only (stdlib) |
 | `MBGitInfo` | `git-info` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | Python only | `python.loaded_packages` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `installed-packages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
@@ -348,16 +348,19 @@ dependencies are required.
 
 **Modes**
 
-- **CLI mode**: uses `RUSAGE_CHILDREN`, which accumulates resources consumed
-  by the benchmarked subprocess and all its descendants. A before/after
-  delta isolates each iteration's cost. `maxrss` is also recorded (see
-  platform notes below).
-- **Python API mode**: uses `RUSAGE_SELF`, which captures resources consumed
-  by the current Python process since the last snapshot. `maxrss` is
-  **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process high-water mark
-  that reflects the peak since the interpreter started, not just since the
-  decorated function was called, making it unreliable for function-level
-  measurement.
+- **CLI mode**: uses `os.wait4()` (all POSIX platforms) to get the exact
+  rusage of each child process as reported by the kernel — one dict per
+  timed iteration, aligned index-for-index with `call.durations`.
+  `maxrss` is the child's own peak RSS.  On Windows (where `os.wait4()`
+  is unavailable), falls back to a `RUSAGE_CHILDREN` before/after delta;
+  `maxrss` is omitted when `--warmup > 0` or `--iterations > 1` because
+  the cumulative HWM cannot be attributed to a single child.
+- **Python API mode**: uses `RUSAGE_SELF` — a single aggregate before/after
+  delta across **all** iterations (the list always has exactly one entry).
+  `maxrss` is **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process
+  high-water mark that reflects the peak since the interpreter started,
+  not just since the decorated function was called, making it unreliable
+  for function-level measurement.
 
 ```python
 from microbench import MicroBench, MBResourceUsage
@@ -374,38 +377,53 @@ def work():
 work()
 ```
 
-Python API record (no `maxrss`):
+Python API record (single aggregate entry, no `maxrss`):
 
 ```json
 {
-  "resource_usage": {
-    "utime": 0.052,
-    "stime": 0.003,
-    "minflt": 1024,
-    "majflt": 0,
-    "inblock": 0,
-    "oublock": 0,
-    "nvcsw": 2,
-    "nivcsw": 1
-  }
+  "resource_usage": [
+    {
+      "utime": 0.052,
+      "stime": 0.003,
+      "minflt": 1024,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 2,
+      "nivcsw": 1
+    }
+  ]
 }
 ```
 
-CLI record (includes `maxrss`):
+CLI record with `--iterations 2` (one entry per iteration, includes `maxrss`):
 
 ```json
 {
-  "resource_usage": {
-    "utime": 0.068,
-    "stime": 0.029,
-    "maxrss": 11386880,
-    "minflt": 621,
-    "majflt": 0,
-    "inblock": 0,
-    "oublock": 0,
-    "nvcsw": 1,
-    "nivcsw": 2
-  }
+  "resource_usage": [
+    {
+      "utime": 0.068,
+      "stime": 0.029,
+      "maxrss": 11386880,
+      "minflt": 621,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 1,
+      "nivcsw": 2
+    },
+    {
+      "utime": 0.071,
+      "stime": 0.031,
+      "maxrss": 11386880,
+      "minflt": 618,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 1,
+      "nivcsw": 3
+    }
+  ]
 }
 ```
 
@@ -427,31 +445,26 @@ reliable across platforms.
 
 #### Platform notes and known quirks
 
-**`maxrss` — CLI mode (`RUSAGE_CHILDREN`)**
+**`maxrss` — CLI mode with `os.wait4()` (all POSIX)**
 
+`os.wait4()` returns the exact rusage of each individual child process as
+reported by the kernel. `maxrss` is the child's own peak RSS, accurate
+regardless of iteration count or warmup. Values are normalised to bytes
+(Linux reports kilobytes; macOS already reports bytes).
+
+**`maxrss` — CLI mode without `os.wait4()` (Windows fallback)**
+
+Falls back to a `RUSAGE_CHILDREN` before/after delta.
 [`RUSAGE_CHILDREN.maxrss`](https://man7.org/linux/man-pages/man2/getrusage.2.html)
-is the cumulative high-water mark across *all waited children* of the current
-process since it started. The before/after delta is the most honest
-representation: a positive value means that child set a new process-lifetime
-RSS peak; zero means it did not exceed a prior sibling's peak.
-
-Consequence for `--iterations`: if iteration 0 launches a subprocess that
-peaks at 200 MB and iteration 1 launches one that peaks at 50 MB, iteration
-1 reports `maxrss: 0` — it never exceeded the prior maximum. This is correct
-accounting, not a bug. For the common single-iteration case the value is
-exact.
-
-True per-child `maxrss` isolation requires `os.wait4()` instead of
-`subprocess.wait()`, which would give the exact RSS of each individual child
-process. This is a planned improvement.
+is the cumulative high-water mark across *all waited children* since process
+start. When `--warmup > 0` or `--iterations > 1`, `maxrss` is omitted
+entirely — the delta cannot be attributed to a single child and would silently
+report misleading zeros.
 
 **`maxrss` — Python API mode (`RUSAGE_SELF`)**
 
 `RUSAGE_SELF.maxrss` is a lifetime high-water mark for the Python interpreter
-process. If the interpreter already allocated, say, 400 MB before the
-decorated function ran, `maxrss` will reflect that prior peak even if the
-function itself allocates nothing new. This makes it unreliable for
-isolating a single function call, so it is intentionally omitted. Use
+process. It is intentionally omitted. Use
 [`MBPeakMemory`](#mbpeakmemory) if you need per-call peak memory tracking.
 
 **`inblock` / `oublock` — macOS**
@@ -488,7 +501,7 @@ non-zero for any non-trivial workload.
 
 !!! note "Windows"
     The `resource` module is not available on Windows. `resource_usage` is
-    recorded as an empty dict without raising an error.
+    recorded as an empty list without raising an error.
 
 **CLI:** `resource-usage` is a default mixin — no flags needed:
 

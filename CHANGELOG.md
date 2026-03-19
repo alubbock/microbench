@@ -9,20 +9,33 @@ All notable changes to microbench are documented here.
 - **`MBResourceUsage` mixin**: captures POSIX `getrusage()` data — user and
   system CPU time, peak RSS (in bytes, normalised across platforms), minor and
   major page faults, block I/O operations, and voluntary/involuntary context
-  switches. Works in both CLI and Python API modes: CLI uses `RUSAGE_CHILDREN`
-  (subprocess resources); Python API uses `RUSAGE_SELF` (current-process
-  delta). Results are stored in `resource_usage`. Added as a **default CLI
-  mixin** so every CLI run captures it automatically.
+  switches. Results are stored as a **list** in `resource_usage`, one entry per
+  timed iteration, aligned index-for-index with `call.durations` and
+  `call.returncode`. Added as a **default CLI mixin** so every CLI run captures
+  it automatically.
+
+  - *CLI mode*: uses `os.wait4()` (available on all POSIX platforms) to capture
+    the exact rusage of each individual child process as reported by the kernel,
+    including a reliable `maxrss` per iteration regardless of `--iterations` or
+    `--warmup` count. On Windows (where `os.wait4()` is unavailable), falls back
+    to a `RUSAGE_CHILDREN` before/after delta; `maxrss` is omitted when
+    `--warmup > 0` or `--iterations > 1` to avoid misleading cumulative HWM
+    values.
+  - *Python API mode*: uses `RUSAGE_SELF` for a single aggregate before/after
+    delta across all iterations (list always has exactly one entry). `maxrss` is
+    omitted (lifetime process HWM, not per-call). Use `MBPeakMemory` for
+    per-call peak memory in Python API mode.
 
   On Windows (where the `resource` module is unavailable) the mixin records an
-  empty dict without raising an error.
+  empty list without raising an error.
 
 ### Enhancements
 
 - **`--mixin defaults` keyword** (CLI): `defaults` can be used as a mixin
   name to expand to the standard default set (`python-info`, `host-info`,
-  `slurm-info`, `loaded-modules`, `working-dir`). This makes it easy to add
-  one or more extra mixins without listing all five defaults explicitly:
+  `slurm-info`, `loaded-modules`, `working-dir`, `resource-usage`). This
+  makes it easy to add one or more extra mixins without listing all six
+  defaults explicitly:
   `microbench --mixin defaults file-hash -- ./job.sh`.
 
 - **`file-hash` mixin — automatic argument file scanning** (CLI): the

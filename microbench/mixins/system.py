@@ -292,20 +292,36 @@ def _rusage_to_dict(ru, *, include_maxrss=True):
     return d
 
 
+def _rusage_from_wait4(raw_ru):
+    """Convert the raw rusage object returned by ``os.wait4()`` to a dict.
+
+    ``os.wait4()`` returns a ``resource.struct_rusage``-compatible object
+    whose ``ru_maxrss`` already reflects **only that child process** — no
+    cumulative HWM subtraction is needed.  ``maxrss`` is normalised to bytes
+    using the same platform rule as ``_rusage_to_dict``.
+    """
+    maxrss = raw_ru.ru_maxrss
+    if sys.platform == 'linux':
+        maxrss *= 1024
+    return {
+        'utime': raw_ru.ru_utime,
+        'stime': raw_ru.ru_stime,
+        'maxrss': maxrss,
+        'minflt': raw_ru.ru_minflt,
+        'majflt': raw_ru.ru_majflt,
+        'inblock': raw_ru.ru_inblock,
+        'oublock': raw_ru.ru_oublock,
+        'nvcsw': raw_ru.ru_nvcsw,
+        'nivcsw': raw_ru.ru_nivcsw,
+    }
+
+
 def _rusage_delta(before, after):
-    """Return ``after - before`` for all accumulator fields including ``maxrss``.
+    """Return ``after - before`` for all accumulator fields.
 
-    All fields — including ``maxrss`` — are delta'd.  For ``RUSAGE_CHILDREN``,
-    ``maxrss`` is the **cumulative** high-water mark across all waited children
-    in the current process's lifetime.  Taking the delta isolates the
-    contribution of the most recent child: a positive value means that child
-    set a new process-lifetime RSS peak; zero means it did not exceed the
-    previous maximum.  This is honest for multi-iteration runs: a child that
-    uses less memory than a prior sibling correctly reports ``maxrss: 0``
-    rather than repeating the prior child's peak.
-
-    ``maxrss`` is absent when ``before`` has no ``maxrss`` key (Python API
-    mode — see ``_rusage_to_dict``).
+    ``maxrss`` is only included when ``before`` has a ``maxrss`` key (CLI
+    fallback mode — see ``_rusage_to_dict``).  When ``os.wait4()`` is used,
+    this function is not called; ``_rusage_from_wait4`` is used instead.
     """
     d = {
         'utime': after['utime'] - before['utime'],
@@ -322,56 +338,69 @@ def _rusage_delta(before, after):
     return d
 
 
+# True when os.wait4() is available (all POSIX; absent on Windows).
+_HAVE_WAIT4 = hasattr(os, 'wait4')
+
+
 class MBResourceUsage:
     """Capture POSIX ``getrusage()`` data for the benchmarked code.
 
-    Records CPU time, page faults, block I/O operations, and context switches
-    from a before/after delta so values reflect only the benchmarked work.
-    In CLI mode, ``maxrss`` (peak RSS in bytes) is also recorded.
+    Records CPU time, page faults, block I/O operations, and context switches.
+    Results are stored as a **list** of dicts.  In CLI mode, one entry per
+    timed iteration (aligning index-for-index with ``call.durations`` and
+    ``call.returncode``).  In Python API mode, a single aggregate entry
+    spanning all iterations.
 
     **Modes**
 
-    - *CLI mode* (subprocess): uses ``RUSAGE_CHILDREN`` — resources consumed
-      by the benchmarked subprocess and all its descendants, isolated via a
-      before/after delta.
-    - *Python API mode* (function): uses ``RUSAGE_SELF`` — resources consumed
-      by the current process. ``maxrss`` is **omitted** in this mode because
-      ``RUSAGE_SELF.maxrss`` is a lifetime process high-water mark that
-      reflects peak usage since program start, not just during the decorated
-      function.  The remaining fields (CPU times, page faults, I/O, context
-      switches) are deltas and correctly isolate the function's contribution.
+    - *CLI mode* (subprocess): uses ``RUSAGE_CHILDREN`` / ``os.wait4()`` —
+      resources consumed by the benchmarked subprocess and all its descendants.
+      When ``os.wait4()`` is available (all POSIX platforms), each entry
+      contains the exact rusage of that child process as reported by the
+      kernel.  On platforms where ``os.wait4()`` is unavailable (Windows),
+      a before/after delta of ``RUSAGE_CHILDREN`` is used instead and
+      ``maxrss`` is omitted when ``warmup > 0`` or ``iterations > 1`` because
+      the cumulative high-water mark cannot be meaningfully attributed to a
+      single child.
+
+    - *Python API mode* (function): uses ``RUSAGE_SELF`` — a single aggregate
+      before/after delta across **all** iterations (list always has exactly
+      one entry).  ``maxrss`` is **always omitted** in this mode because
+      ``RUSAGE_SELF.maxrss`` is a lifetime process high-water mark; it
+      reflects peak usage since program start, not just the decorated
+      function.  Use ``MBPeakMemory`` for per-call peak RSS in Python API
+      mode.
 
     On Windows (where the ``resource`` module is unavailable), this mixin
-    records an empty dict without raising an error.
+    records an empty list without raising an error.
 
-    Output key: ``resource_usage``
+    Output key: ``resource_usage`` (list of dicts, one per iteration)
 
-    Fields recorded (CLI mode):
+    Fields per entry (CLI mode with ``os.wait4()`` — the common POSIX case):
 
-    - ``utime``: user CPU time (seconds, float)
-    - ``stime``: system CPU time (seconds, float)
-    - ``maxrss``: peak RSS in bytes (int) — see platform notes below
+    - ``utime``: user CPU time consumed by the child (seconds, float)
+    - ``stime``: system CPU time consumed by the child (seconds, float)
+    - ``maxrss``: peak RSS of the child in bytes (int) — see platform notes
     - ``minflt``: minor page faults (int)
     - ``majflt``: major page faults (int)
-    - ``inblock``: block input operations (int) — see platform notes below
-    - ``oublock``: block output operations (int) — see platform notes below
+    - ``inblock``: block input operations (int) — see platform notes
+    - ``oublock``: block output operations (int) — see platform notes
     - ``nvcsw``: voluntary context switches (int)
     - ``nivcsw``: involuntary context switches (int)
 
-    Fields recorded (Python API mode): all of the above **except** ``maxrss``.
+    Fields per entry (Python API mode): all of the above **except** ``maxrss``.
 
     **Platform notes**
 
-    *maxrss* (CLI mode, ``RUSAGE_CHILDREN``):
-        ``RUSAGE_CHILDREN.maxrss`` is the cumulative maximum RSS across *all*
-        waited children of the current process since it started.  The
-        before/after delta is the most honest representation available: a
-        positive value means the child set a new process-lifetime peak; zero
-        means it did not exceed a prior sibling's peak.  With ``--iterations``
-        this means subsequent iterations that use less memory than the first
-        will report ``maxrss: 0``.  For single-iteration runs (the common
-        case) the value is exact.  True per-child ``maxrss`` isolation
-        requires ``os.wait4()`` integration, which is a planned improvement.
+    *maxrss* (CLI mode with ``os.wait4()``):
+        Reported directly by the kernel as the child's own peak RSS.  Exact
+        and per-child regardless of iteration count or warmup.
+
+    *maxrss* (CLI mode without ``os.wait4()`` — Windows fallback):
+        Uses ``RUSAGE_CHILDREN`` before/after delta.  Omitted entirely when
+        ``warmup > 0`` or ``iterations > 1`` because ``RUSAGE_CHILDREN.maxrss``
+        is a cumulative HWM across all waited children since process start;
+        the delta cannot be attributed to a single child in those cases.
 
     *inblock / oublock* (macOS):
         These counters are almost always zero on macOS regardless of actual
@@ -392,20 +421,33 @@ class MBResourceUsage:
         These are the most reliable fields across both Linux and macOS and
         should be non-zero for any non-trivial workload.
 
-    Example output (CLI mode)::
+    Example output (CLI mode, 2 iterations)::
 
         {
-            "resource_usage": {
-                "utime": 0.123456,
-                "stime": 0.012345,
-                "maxrss": 10485760,
-                "minflt": 512,
-                "majflt": 0,
-                "inblock": 0,
-                "oublock": 0,
-                "nvcsw": 3,
-                "nivcsw": 1
-            }
+            "resource_usage": [
+                {
+                    "utime": 0.123456,
+                    "stime": 0.012345,
+                    "maxrss": 10485760,
+                    "minflt": 512,
+                    "majflt": 0,
+                    "inblock": 0,
+                    "oublock": 0,
+                    "nvcsw": 3,
+                    "nivcsw": 1
+                },
+                {
+                    "utime": 0.118000,
+                    "stime": 0.011000,
+                    "maxrss": 10485760,
+                    "minflt": 498,
+                    "majflt": 0,
+                    "inblock": 0,
+                    "oublock": 0,
+                    "nvcsw": 2,
+                    "nivcsw": 1
+                }
+            ]
         }
 
     Note:
@@ -413,32 +455,48 @@ class MBResourceUsage:
     """
 
     def capture_resource_usage(self, bm_data):
-        """Take a pre-run snapshot of resource usage."""
+        """Initialise resource-usage accumulator before all iterations."""
         if _resource is None:
             return
         if hasattr(self, '_subprocess_command'):
-            # CLI mode: measure child processes; include maxrss.
-            ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
-            self._rusage_before = _rusage_to_dict(ru, include_maxrss=True)
+            # CLI mode: accumulator populated by run() in main.py.
+            self._subprocess_resource_usage = []
+            if not _HAVE_WAIT4:
+                # Fallback: RUSAGE_CHILDREN before/after delta per iteration.
+                ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+                self._rusage_before = _rusage_to_dict(ru, include_maxrss=True)
         else:
-            # Python API mode: measure the current process.
-            # Omit maxrss — RUSAGE_SELF.maxrss is a lifetime process HWM and
-            # cannot isolate a single function call's peak RSS.
+            # Python API mode: snapshot RUSAGE_SELF once before all iterations.
+            # pre/post_run_triggers are not used because MicroBenchBase does not
+            # call super() in its trigger methods, so MRO chaining is unreliable.
+            # A single aggregate delta (before all / after all) is the only safe
+            # approach; maxrss is omitted (lifetime HWM, not per-call).
             ru = _resource.getrusage(_resource.RUSAGE_SELF)
             self._rusage_before = _rusage_to_dict(ru, include_maxrss=False)
 
     def capturepost_resource_usage(self, bm_data):
-        """Compute the delta and store resource usage results."""
+        """Write the resource_usage list to bm_data after all iterations."""
         if _resource is None:
-            bm_data['resource_usage'] = {}
-            return
-        if not hasattr(self, '_rusage_before'):
-            bm_data['resource_usage'] = {}
+            bm_data['resource_usage'] = []
             return
         if hasattr(self, '_subprocess_command'):
-            ru = _resource.getrusage(_resource.RUSAGE_CHILDREN)
-            after = _rusage_to_dict(ru, include_maxrss=True)
+            # CLI mode: list already populated by run() in main.py.
+            entries = list(getattr(self, '_subprocess_resource_usage', []))
+            # Fallback path (no os.wait4): maxrss is a RUSAGE_CHILDREN delta
+            # which is unreliable when warmup>0 or iterations>1.  Strip it so
+            # we never silently report misleading zeros.
+            if not _HAVE_WAIT4 and (
+                getattr(self, 'warmup', 0) > 0 or getattr(self, 'iterations', 1) > 1
+            ):
+                for entry in entries:
+                    entry.pop('maxrss', None)
+            bm_data['resource_usage'] = entries
         else:
+            # Python API mode: single aggregate delta across all iterations.
+            before = getattr(self, '_rusage_before', None)
+            if before is None:
+                bm_data['resource_usage'] = []
+                return
             ru = _resource.getrusage(_resource.RUSAGE_SELF)
             after = _rusage_to_dict(ru, include_maxrss=False)
-        bm_data['resource_usage'] = _rusage_delta(self._rusage_before, after)
+            bm_data['resource_usage'] = [_rusage_delta(before, after)]

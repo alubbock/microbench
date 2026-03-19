@@ -871,8 +871,10 @@ def test_resource_usage_python_api_fields():
         return sum(range(50000))
 
     work()
-    ru = bench.get_results()[0].get('resource_usage', {})
-    assert set(ru.keys()) == _RUSAGE_FIELDS_PYTHON_API
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert isinstance(ru_list, list)
+    assert len(ru_list) == 1
+    assert set(ru_list[0].keys()) == _RUSAGE_FIELDS_PYTHON_API
 
 
 @pytest.mark.skipif(
@@ -891,8 +893,10 @@ def test_resource_usage_python_api_maxrss_absent():
         return list(range(10000))
 
     work()
-    ru = bench.get_results()[0].get('resource_usage', {})
-    assert 'maxrss' not in ru, (
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert isinstance(ru_list, list)
+    assert len(ru_list) == 1
+    assert 'maxrss' not in ru_list[0], (
         'maxrss must not appear in Python API mode records because '
         'RUSAGE_SELF.maxrss is a lifetime process high-water mark and '
         'cannot isolate a single function call'
@@ -915,7 +919,7 @@ def test_resource_usage_python_api_cpu_nonnegative():
         return sum(range(10000))
 
     work()
-    ru = bench.get_results()[0]['resource_usage']
+    ru = bench.get_results()[0]['resource_usage'][0]
     assert ru['utime'] >= 0.0
     assert ru['stime'] >= 0.0
 
@@ -936,13 +940,13 @@ def test_resource_usage_python_api_counts_nonnegative():
         pass
 
     noop()
-    ru = bench.get_results()[0]['resource_usage']
+    ru = bench.get_results()[0]['resource_usage'][0]
     for field in ('minflt', 'majflt', 'inblock', 'oublock', 'nvcsw', 'nivcsw'):
         assert ru[field] >= 0, f'{field} should be non-negative'
 
 
 def test_resource_usage_windows_fallback():
-    """Records empty dict when the resource module is unavailable (Windows guard)."""
+    """Records empty list when the resource module is unavailable (Windows guard)."""
 
     class Bench(MicroBench, MBResourceUsage):
         pass
@@ -962,4 +966,4 @@ def test_resource_usage_windows_fallback():
     finally:
         _sys_mod._resource = original
 
-    assert bench.get_results()[0].get('resource_usage') == {}
+    assert bench.get_results()[0].get('resource_usage') == []

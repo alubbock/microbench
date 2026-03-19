@@ -13,6 +13,9 @@ from microbench.cli.parser import (
 from microbench.cli.registry import MIXIN_REGISTRY
 from microbench.cli.runner import _SubprocessMonitorThread
 
+# os.wait4() is available on all POSIX platforms; absent on Windows.
+_HAVE_WAIT4 = hasattr(os, 'wait4')
+
 _DEFAULT_MIXINS = (
     'python-info',
     'host-info',
@@ -200,6 +203,8 @@ def main(argv=None):
             self._subprocess_monitor = []
             self._subprocess_timed_out = False
             self._subprocess_timed_phase = True
+            # Reset resource-usage accumulator (populated by run() per iteration).
+            self._subprocess_resource_usage = []
 
         def capturepost_subprocess_result(self, bm_data):
             call = bm_data.setdefault('call', {})
@@ -276,6 +281,7 @@ def main(argv=None):
     bench._subprocess_stdout = []
     bench._subprocess_stderr = []
     bench._subprocess_monitor = []
+    bench._subprocess_resource_usage = []
     bench._subprocess_timed_out = False
     bench._subprocess_timed_phase = False  # becomes True after warmup
 
@@ -283,24 +289,23 @@ def main(argv=None):
     _real_stdout = sys.__stdout__
     _real_stderr = sys.__stderr__
 
+    # Lazy import: resource module is POSIX-only.
+    try:
+        import resource as _resource
+    except ImportError:
+        _resource = None
+
     def run():
         capture_stdout = args.stdout in _CAPTURE_CHOICES
         capture_stderr = args.stderr in _CAPTURE_CHOICES
         monitor_interval = args.monitor_interval
         timeout = args.timeout
 
-        if (
-            not capture_stdout
-            and not capture_stderr
-            and monitor_interval is None
-            and timeout is None
-        ):
-            result = subprocess.run(cmd)
-            bench._subprocess_returncodes.append(result.returncode)
-            return
+        # Snapshot RUSAGE_CHILDREN before launching the child (fallback path only).
+        rusage_before = None
+        if _resource is not None and not _HAVE_WAIT4:
+            rusage_before = _resource.getrusage(_resource.RUSAGE_CHILDREN)
 
-        # Use Popen so we have the PID (needed for monitoring) and can read
-        # stdout/stderr pipes in real time when capture is requested.
         stdout_chunks = []
         stderr_chunks = []
 
@@ -318,41 +323,87 @@ def main(argv=None):
         if capture_stderr:
             popen_kwargs['stderr'] = subprocess.PIPE
 
-        with subprocess.Popen(cmd, **popen_kwargs) as proc:
-            threads = []
-            if capture_stdout:
-                t = threading.Thread(
-                    target=_reader,
-                    args=(
-                        proc.stdout,
-                        stdout_chunks,
-                        _real_stdout,
-                        args.stdout == 'capture',
-                    ),
-                    daemon=True,
-                )
-                t.start()
-                threads.append(t)
-            if capture_stderr:
-                t = threading.Thread(
-                    target=_reader,
-                    args=(
-                        proc.stderr,
-                        stderr_chunks,
-                        _real_stderr,
-                        args.stderr == 'capture',
-                    ),
-                    daemon=True,
-                )
-                t.start()
-                threads.append(t)
+        proc = subprocess.Popen(cmd, **popen_kwargs)
 
-            monitor_thread = None
-            if monitor_interval is not None and bench._subprocess_timed_phase:
-                monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
-                monitor_thread.start()
+        threads = []
+        if capture_stdout:
+            t = threading.Thread(
+                target=_reader,
+                args=(
+                    proc.stdout,
+                    stdout_chunks,
+                    _real_stdout,
+                    args.stdout == 'capture',
+                ),
+                daemon=True,
+            )
+            t.start()
+            threads.append(t)
+        if capture_stderr:
+            t = threading.Thread(
+                target=_reader,
+                args=(
+                    proc.stderr,
+                    stderr_chunks,
+                    _real_stderr,
+                    args.stderr == 'capture',
+                ),
+                daemon=True,
+            )
+            t.start()
+            threads.append(t)
 
-            timed_out = False
+        monitor_thread = None
+        if monitor_interval is not None and bench._subprocess_timed_phase:
+            monitor_thread = _SubprocessMonitorThread(proc.pid, monitor_interval)
+            monitor_thread.start()
+
+        timed_out = False
+        child_rusage = None
+
+        if _HAVE_WAIT4 and _resource is not None:
+            # os.wait4() reaps the child and returns its exact per-child rusage
+            # in a single syscall.  It must be called *instead* of proc.wait().
+            #
+            # Timeout handling: os.wait4() is a blocking call with no built-in
+            # deadline.  We handle it by running wait4 in a daemon thread and
+            # joining with a timeout.  If the join times out, we terminate/kill
+            # the child, then block on wait4 (the child is now dying so this
+            # completes quickly).
+            _wait4_result = [None]  # [(pid, status, rusage)] or None
+
+            def _do_wait4():
+                try:
+                    _wait4_result[0] = os.wait4(proc.pid, 0)
+                except ChildProcessError:
+                    pass  # child already reaped
+
+            _wait4_thread = threading.Thread(target=_do_wait4, daemon=True)
+            _wait4_thread.start()
+            _wait4_thread.join(timeout=timeout)
+
+            if _wait4_thread.is_alive():
+                # Timed out — terminate/kill the child and wait for it to exit.
+                timed_out = True
+                proc.terminate()
+                try:
+                    grace = args.timeout_grace_period or _SIGTERM_GRACE_PERIOD
+                    _wait4_thread.join(timeout=grace)
+                except Exception:
+                    pass
+                if _wait4_thread.is_alive():
+                    proc.kill()
+                    _wait4_thread.join()  # child is dead; this will return quickly
+
+            if _wait4_result[0] is not None:
+                _, wait_status, raw_ru = _wait4_result[0]
+                proc.returncode = os.waitstatus_to_exitcode(wait_status)
+                child_rusage = raw_ru
+            elif proc.returncode is None:
+                # wait4 failed (ChildProcessError); fall back to proc.wait().
+                proc.wait()
+        else:
+            # Fallback: use proc.wait() with optional timeout.
             try:
                 proc.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
@@ -365,13 +416,13 @@ def main(argv=None):
                     proc.kill()
                     proc.wait()
 
-            if monitor_thread is not None:
-                monitor_thread.stop()
-                monitor_thread.join()
-                bench._subprocess_monitor.append(monitor_thread.samples)
+        if monitor_thread is not None:
+            monitor_thread.stop()
+            monitor_thread.join()
+            bench._subprocess_monitor.append(monitor_thread.samples)
 
-            for t in threads:
-                t.join()
+        for t in threads:
+            t.join()
 
         if timed_out and bench._subprocess_timed_phase:
             bench._subprocess_timed_out = True
@@ -380,6 +431,25 @@ def main(argv=None):
             bench._subprocess_stdout.append(''.join(stdout_chunks))
         if capture_stderr:
             bench._subprocess_stderr.append(''.join(stderr_chunks))
+
+        # Accumulate per-iteration resource usage (only during timed phase).
+        if bench._subprocess_timed_phase and _resource is not None:
+            if child_rusage is not None:
+                # os.wait4() path: exact per-child rusage from the kernel.
+                from microbench.mixins.system import _rusage_from_wait4
+
+                bench._subprocess_resource_usage.append(
+                    _rusage_from_wait4(child_rusage)
+                )
+            elif rusage_before is not None:
+                # Fallback: RUSAGE_CHILDREN before/after delta.
+                from microbench.mixins.system import _rusage_delta, _rusage_to_dict
+
+                rusage_after = _resource.getrusage(_resource.RUSAGE_CHILDREN)
+                after_dict = _rusage_to_dict(rusage_after, include_maxrss=True)
+                before_dict = _rusage_to_dict(rusage_before, include_maxrss=True)
+                entry = _rusage_delta(before_dict, after_dict)
+                bench._subprocess_resource_usage.append(entry)
 
     run.__name__ = os.path.basename(cmd[0])
     bench(run)()
