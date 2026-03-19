@@ -2,7 +2,7 @@
 
 All notable changes to microbench are documented here.
 
-## [2.1.0] - 2026-03-19
+## [Unreleased]
 
 ### New features
 
@@ -17,10 +17,10 @@ All notable changes to microbench are documented here.
   - *CLI mode*: on POSIX, uses `os.wait4()` to capture the exact rusage of each
     individual child process as reported by the kernel, including a reliable
     `maxrss` per iteration regardless of `--iterations` or `--warmup` count.
-  - *Python API mode*: uses `RUSAGE_SELF` for a single aggregate before/after
-    delta across all iterations (list always has exactly one entry). `maxrss` is
-    omitted (lifetime process HWM, not per-call). Use `MBPeakMemory` for
-    per-call peak memory in Python API mode.
+  - *Python API mode*: uses `RUSAGE_SELF` with a before/after delta around each
+    individual call — one entry per timed iteration, aligned with
+    `call.durations`. Warmup calls are excluded. `maxrss` is omitted (lifetime
+    process HWM, not per-call). Use `MBPeakMemory` for per-call peak memory.
 
   On platforms where the stdlib `resource` module is unavailable, the mixin
   records an empty list without raising an error.

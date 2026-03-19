@@ -248,8 +248,16 @@ class MicroBenchBase:
 
     def pre_run_triggers(self, bm_data):
         bm_data['_run_start'] = self._duration_counter()
+        # Forward to mixin overrides via cooperative super() chaining.
+        parent = super()
+        if hasattr(parent, 'pre_run_triggers'):
+            parent.pre_run_triggers(bm_data)
 
     def post_run_triggers(self, bm_data):
+        # Forward to mixin overrides before recording the elapsed time.
+        parent = super()
+        if hasattr(parent, 'post_run_triggers'):
+            parent.post_run_triggers(bm_data)
         bm_data['call']['durations'].append(
             self._duration_counter() - bm_data['_run_start']
         )

@@ -873,8 +873,50 @@ def test_resource_usage_python_api_fields():
     work()
     ru_list = bench.get_results()[0].get('resource_usage', [])
     assert isinstance(ru_list, list)
-    assert len(ru_list) == 1
+    assert len(ru_list) == 1  # 1 timed iteration
     assert set(ru_list[0].keys()) == _RUSAGE_FIELDS_PYTHON_API
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_one_entry_per_iteration():
+    """resource_usage has one entry per timed iteration in Python API mode."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench(iterations=3)
+
+    @bench
+    def work():
+        return sum(range(1000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert len(ru_list) == 3
+    for entry in ru_list:
+        assert set(entry.keys()) == _RUSAGE_FIELDS_PYTHON_API
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_warmup_excluded():
+    """Warmup iterations are not counted in resource_usage."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench(iterations=2, warmup=3)
+
+    @bench
+    def work():
+        return sum(range(1000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert len(ru_list) == 2  # only timed iterations
 
 
 @pytest.mark.skipif(

@@ -340,10 +340,9 @@ class MBResourceUsage:
     """Capture POSIX ``getrusage()`` data for the benchmarked code.
 
     Records CPU time, page faults, block I/O operations, and context switches.
-    Results are stored as a **list** of dicts.  In CLI mode, one entry per
-    timed iteration (aligning index-for-index with ``call.durations`` and
-    ``call.returncode``).  In Python API mode, a single aggregate entry
-    spanning all iterations.
+    Results are stored as a **list** of dicts, one entry per timed iteration
+    in both CLI and Python API mode, aligning index-for-index with
+    ``call.durations`` and ``call.returncode``.
 
     **Modes**
 
@@ -352,13 +351,13 @@ class MBResourceUsage:
       per timed iteration, aligned with ``call.durations`` and
       ``call.returncode``.
 
-    - *Python API mode* (function): uses ``RUSAGE_SELF`` — a single aggregate
-      before/after delta across **all** iterations (list always has exactly
-      one entry).  ``maxrss`` is **always omitted** in this mode because
-      ``RUSAGE_SELF.maxrss`` is a lifetime process high-water mark; it
-      reflects peak usage since program start, not just the decorated
-      function.  Use ``MBPeakMemory`` for per-call peak RSS in Python API
-      mode.
+    - *Python API mode* (function): uses ``RUSAGE_SELF`` — one entry per
+      timed iteration (matching ``call.durations`` index-for-index), each a
+      before/after delta around that single call.  ``maxrss`` is **always
+      omitted** in this mode because ``RUSAGE_SELF.maxrss`` is a lifetime
+      process high-water mark; it reflects peak usage since program start,
+      not just the decorated function.  Use ``MBPeakMemory`` for per-call
+      peak RSS in Python API mode.
 
     On non-POSIX platforms where the ``resource`` module is unavailable, this
     mixin records an empty list without raising an error.
@@ -445,13 +444,23 @@ class MBResourceUsage:
             # CLI mode: accumulator populated by run() in main.py.
             self._subprocess_resource_usage = []
         else:
-            # Python API mode: snapshot RUSAGE_SELF once before all iterations.
-            # pre/post_run_triggers are not used because MicroBenchBase does not
-            # call super() in its trigger methods, so MRO chaining is unreliable.
-            # A single aggregate delta (before all / after all) is the only safe
-            # approach; maxrss is omitted (lifetime HWM, not per-call).
-            ru = _resource.getrusage(_resource.RUSAGE_SELF)
-            self._rusage_before = _rusage_to_dict(ru, include_maxrss=False)
+            # Python API mode: per-iteration list populated by pre/post_run_triggers.
+            self._rusage_iter_entries = []
+
+    def pre_run_triggers(self, bm_data):
+        if _resource is not None and not hasattr(self, '_subprocess_command'):
+            self._rusage_iter_before = _rusage_to_dict(
+                _resource.getrusage(_resource.RUSAGE_SELF), include_maxrss=False
+            )
+
+    def post_run_triggers(self, bm_data):
+        if _resource is not None and not hasattr(self, '_subprocess_command'):
+            after = _rusage_to_dict(
+                _resource.getrusage(_resource.RUSAGE_SELF), include_maxrss=False
+            )
+            self._rusage_iter_entries.append(
+                _rusage_delta(self._rusage_iter_before, after)
+            )
 
     def capturepost_resource_usage(self, bm_data):
         """Write the resource_usage list to bm_data after all iterations."""
@@ -464,11 +473,5 @@ class MBResourceUsage:
                 getattr(self, '_subprocess_resource_usage', [])
             )
         else:
-            # Python API mode: single aggregate delta across all iterations.
-            before = getattr(self, '_rusage_before', None)
-            if before is None:
-                bm_data['resource_usage'] = []
-                return
-            ru = _resource.getrusage(_resource.RUSAGE_SELF)
-            after = _rusage_to_dict(ru, include_maxrss=False)
-            bm_data['resource_usage'] = [_rusage_delta(before, after)]
+            # Python API mode: one entry per timed iteration.
+            bm_data['resource_usage'] = list(getattr(self, '_rusage_iter_entries', []))

@@ -352,8 +352,9 @@ dependencies are required.
   child process as reported by the kernel — one dict per timed iteration,
   aligned index-for-index with `call.durations`.
   `maxrss` is the child's own peak RSS.
-- **Python API mode**: uses `RUSAGE_SELF` — a single aggregate before/after
-  delta across **all** iterations (the list always has exactly one entry).
+- **Python API mode**: uses `RUSAGE_SELF` — one dict per timed iteration,
+  each a before/after delta around that single call (aligned index-for-index
+  with `call.durations`). Warmup calls are excluded.
   `maxrss` is **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process
   high-water mark that reflects the peak since the interpreter started,
   not just since the decorated function was called, making it unreliable
@@ -377,7 +378,7 @@ def work():
 work()
 ```
 
-Python API record (single aggregate entry, no `maxrss`):
+Python API record (one entry per timed iteration, no `maxrss`):
 
 ```json
 {
