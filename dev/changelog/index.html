@@ -986,12 +986,21 @@
 <h2 id="unreleased">[Unreleased]</h2>
 <h3 id="enhancements">Enhancements</h3>
 <ul>
-<li><strong><code>file-hash</code> mixin — automatic argument file scanning</strong> (CLI): the
+<li>
+<p><strong><code>--mixin defaults</code> keyword</strong> (CLI): <code>defaults</code> can be used as a mixin
+  name to expand to the standard default set (<code>python-info</code>, <code>host-info</code>,
+  <code>slurm-info</code>, <code>loaded-modules</code>, <code>working-dir</code>). This makes it easy to add
+  one or more extra mixins without listing all five defaults explicitly:
+  <code>microbench --mixin defaults file-hash -- ./job.sh</code>.</p>
+</li>
+<li>
+<p><strong><code>file-hash</code> mixin — automatic argument file scanning</strong> (CLI): the
   default hash list now includes not only the command executable (<code>cmd[0]</code>)
   but also any command-line arguments (<code>cmd[1:]</code>) that resolve to existing
   files on disk prior to command execution. Passing <code>--hash-file</code> still
   overrides the default entirely; the Python API is unaffected. The hash
-  algorithm name is now stored under <code>mb.file_hash_algorithm</code>.</li>
+  algorithm name is now stored under <code>mb.file_hash_algorithm</code>.</p>
+</li>
 </ul>
 <h3 id="documentation">Documentation</h3>
 <ul>
