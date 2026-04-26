@@ -988,7 +988,7 @@ def test_resource_usage_python_api_counts_nonnegative():
 
 
 def test_resource_usage_windows_fallback():
-    """Records empty list when the resource module is unavailable (Windows guard)."""
+    """Omits resource_usage key when the resource module is unavailable."""
 
     class Bench(MicroBench, MBResourceUsage):
         pass
@@ -1008,4 +1008,4 @@ def test_resource_usage_windows_fallback():
     finally:
         _sys_mod._resource = original
 
-    assert bench.get_results()[0].get('resource_usage') == []
+    assert 'resource_usage' not in bench.get_results()[0]

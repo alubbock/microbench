@@ -317,11 +317,7 @@ def _rusage_from_wait4(raw_ru):
 
 
 def _rusage_delta(before, after):
-    """Return ``after - before`` for all accumulator fields.
-
-    ``maxrss`` is only included when ``before`` has a ``maxrss`` key.
-    """
-    d = {
+    return {
         'utime': after['utime'] - before['utime'],
         'stime': after['stime'] - before['stime'],
         'minflt': after['minflt'] - before['minflt'],
@@ -331,9 +327,6 @@ def _rusage_delta(before, after):
         'nvcsw': after['nvcsw'] - before['nvcsw'],
         'nivcsw': after['nivcsw'] - before['nivcsw'],
     }
-    if 'maxrss' in before:
-        d['maxrss'] = after['maxrss'] - before['maxrss']
-    return d
 
 
 class MBResourceUsage:
@@ -360,7 +353,7 @@ class MBResourceUsage:
       peak RSS in Python API mode.
 
     On non-POSIX platforms where the ``resource`` module is unavailable, this
-    mixin records an empty list without raising an error.
+    mixin omits the ``resource_usage`` key entirely.
 
     Output key: ``resource_usage`` (list of dicts)
 
@@ -465,7 +458,6 @@ class MBResourceUsage:
     def capturepost_resource_usage(self, bm_data):
         """Write the resource_usage list to bm_data after all iterations."""
         if _resource is None:
-            bm_data['resource_usage'] = []
             return
         if hasattr(self, '_subprocess_command'):
             # CLI mode: list already populated by run() in main.py.

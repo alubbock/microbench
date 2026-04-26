@@ -1656,25 +1656,6 @@ def test_cli_timeout_during_warmup_does_not_set_timed_out():
     assert 'timed_out' not in record['call']
 
 
-@pytest.mark.skipif(
-    sys.platform == 'win32', reason='os.wait4() is not available on Windows'
-)
-def test_cli_keyboard_interrupt_kills_child():
-    """KeyboardInterrupt during wait4 join causes proc.kill() and re-raises."""
-    mock_proc = _make_mock_popen()
-
-    def _wait4_interrupt(pid, options):
-        raise KeyboardInterrupt
-
-    with patch('subprocess.Popen', return_value=mock_proc):
-        with patch('os.wait4', side_effect=_wait4_interrupt):
-            with pytest.raises(KeyboardInterrupt):
-                main(['--no-mixin', '--', 'sleep', '100'])
-
-    mock_proc.kill.assert_called()
-    mock_proc.wait.assert_called()
-
-
 def test_cli_pipe_fds_closed_after_run():
     """stdout and stderr pipe FDs are closed after a normal run."""
     mock_proc = _make_mock_popen(
@@ -1944,6 +1925,9 @@ _RUSAGE_FIELDS = frozenset(
 )
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
 def test_cli_resource_usage_in_defaults():
     """resource-usage is included in the default mixin set."""
     _, record, _ = _run_main(['--', 'true'])

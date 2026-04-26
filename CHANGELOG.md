@@ -22,8 +22,8 @@ All notable changes to microbench are documented here.
     `call.durations`. Warmup calls are excluded. `maxrss` is omitted (lifetime
     process HWM, not per-call). Use `MBPeakMemory` for per-call peak memory.
 
-  On platforms where the stdlib `resource` module is unavailable, the mixin
-  records an empty list without raising an error.
+  On platforms where the stdlib `resource` module is unavailable, the
+  `resource_usage` key is omitted from the record entirely.
 
 ### Enhancements
 

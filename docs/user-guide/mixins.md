@@ -360,8 +360,8 @@ dependencies are required.
   not just since the decorated function was called, making it unreliable
   for function-level measurement.
 
-On platforms where the stdlib `resource` module is unavailable, `resource_usage`
-is recorded as an empty list.
+On platforms where the stdlib `resource` module is unavailable, the
+`resource_usage` key is omitted from the record entirely.
 
 ```python
 from microbench import MicroBench, MBResourceUsage
@@ -492,8 +492,8 @@ These are the most reliable fields across both Linux and macOS and are
 non-zero for any non-trivial workload.
 
 !!! note "Non-POSIX platforms"
-    When the Python `resource` module is unavailable, `resource_usage` is
-    recorded as an empty list without raising an error.
+    When the Python `resource` module is unavailable, the `resource_usage`
+    key is omitted from the record entirely.
 
 **CLI:** `resource-usage` is a default mixin — no flags needed:
 

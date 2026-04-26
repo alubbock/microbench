@@ -244,8 +244,7 @@ microbench \
 POSIX `getrusage()` data automatically for the benchmarked subprocess.
 
 On platforms where the Python `resource` module is unavailable,
-`resource-usage` records an empty `resource_usage` list and does not raise an
-error.
+`resource-usage` omits the `resource_usage` key from the record entirely.
 
 ## Capture failures
 
