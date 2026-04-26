@@ -674,6 +674,34 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mbresourceusage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBResourceUsage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MBResourceUsage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#platform-notes-and-known-quirks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform notes and known quirks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1276,6 +1304,34 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#mbresourceusage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MBResourceUsage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MBResourceUsage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#platform-notes-and-known-quirks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform notes and known quirks
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1463,9 +1519,9 @@ available from both the CLI and the Python API.</p>
 to list all available mixins with descriptions:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench<span class="w"> </span>--show-mixins
 </code></pre></div>
-<p>By default, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, and
-<code>working-dir</code> are included automatically. Specifying <code>--mixin</code> replaces the
-defaults entirely. Use <code>--no-mixin</code> to disable all mixins:</p>
+<p>By default, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>,
+<code>working-dir</code>, and <code>resource-usage</code> are included automatically. Specifying
+<code>--mixin</code> replaces the defaults entirely. Use <code>--no-mixin</code> to disable all mixins:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Only peak-memory — no host info or SLURM</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>peak-memory<span class="w"> </span>--<span class="w"> </span>./job.sh
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
@@ -1560,6 +1616,12 @@ combine any number of microbench mixins without conflicts, and their
 <td><code>cgroup-limits</code></td>
 <td><code>cgroups</code> dict with <code>cpu_cores_limit</code>, <code>memory_bytes_limit</code>, <code>version</code> (empty dict if not on Linux or cgroup fs unavailable)</td>
 <td>Linux only</td>
+</tr>
+<tr>
+<td><code>MBResourceUsage</code></td>
+<td><code>resource-usage</code> <em>(default)</em></td>
+<td><code>resource_usage</code> list of dicts with CPU times, peak RSS, page faults, I/O ops, and context switches (<code>[]</code> when the stdlib <code>resource</code> module is unavailable)</td>
+<td>POSIX only (stdlib)</td>
 </tr>
 <tr>
 <td><code>MBGitInfo</code></td>
@@ -1810,25 +1872,207 @@ platforms or when the cgroup filesystem is unavailable.</p>
 scheduler metadata (job ID, node list, etc.) while <code>MBCgroupLimits</code> captures
 the kernel-enforced resource limits.</p>
 </div>
+<h3 id="mbresourceusage"><code>MBResourceUsage</code></h3>
+<p>Captures POSIX <a href="https://man7.org/linux/man-pages/man2/getrusage.2.html"><code>getrusage(2)</code></a>
+data — CPU time, page faults, block I/O operations, and context switches —
+using only the Python standard library (<code>resource</code> module). No extra
+dependencies are required.</p>
+<p><strong>Modes</strong></p>
+<ul>
+<li><strong>CLI mode</strong>: on POSIX, uses <code>os.wait4()</code> to get the exact rusage of each
+  child process as reported by the kernel — one dict per timed iteration,
+  aligned index-for-index with <code>call.durations</code>.
+  <code>maxrss</code> is the child's own peak RSS.</li>
+<li><strong>Python API mode</strong>: uses <code>RUSAGE_SELF</code> — one dict per timed iteration,
+  each a before/after delta around that single call (aligned index-for-index
+  with <code>call.durations</code>). Warmup calls are excluded.
+  <code>maxrss</code> is <strong>omitted</strong> — <code>RUSAGE_SELF.maxrss</code> is a lifetime process
+  high-water mark that reflects the peak since the interpreter started,
+  not just since the decorated function was called, making it unreliable
+  for function-level measurement.</li>
+</ul>
+<p>On platforms where the stdlib <code>resource</code> module is unavailable, the
+<code>resource_usage</code> key is omitted from the record entirely.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBResourceUsage</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBResourceUsage</span><span class="p">):</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>
+<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">work</span><span class="p">():</span>
+<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1_000_000</span><span class="p">))</span>
+<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
+<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="n">work</span><span class="p">()</span>
+</code></pre></div>
+<p>Python API record (one entry per timed iteration, no <code>maxrss</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;resource_usage&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">      </span><span class="nt">&quot;utime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.052</span><span class="p">,</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">&quot;stime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.003</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">&quot;minflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">&quot;majflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="nt">&quot;inblock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">      </span><span class="nt">&quot;oublock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">      </span><span class="nt">&quot;nvcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="nt">&quot;nivcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="p">}</span>
+</code></pre></div>
+<p>CLI record with <code>--iterations 2</code> (one entry per iteration, includes <code>maxrss</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="p">{</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">  </span><span class="nt">&quot;resource_usage&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">      </span><span class="nt">&quot;utime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.068</span><span class="p">,</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">      </span><span class="nt">&quot;stime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.029</span><span class="p">,</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="w">      </span><span class="nt">&quot;maxrss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">11386880</span><span class="p">,</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a><span class="w">      </span><span class="nt">&quot;minflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">621</span><span class="p">,</span>
+<a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="w">      </span><span class="nt">&quot;majflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a><span class="w">      </span><span class="nt">&quot;inblock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a><span class="w">      </span><span class="nt">&quot;oublock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a><span class="w">      </span><span class="nt">&quot;nvcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a><span class="w">      </span><span class="nt">&quot;nivcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a><span class="w">    </span><span class="p">{</span>
+<a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="w">      </span><span class="nt">&quot;utime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.071</span><span class="p">,</span>
+<a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a><span class="w">      </span><span class="nt">&quot;stime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.031</span><span class="p">,</span>
+<a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="w">      </span><span class="nt">&quot;maxrss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">11386880</span><span class="p">,</span>
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a><span class="w">      </span><span class="nt">&quot;minflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">618</span><span class="p">,</span>
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a><span class="w">      </span><span class="nt">&quot;majflt&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-20" name="__codelineno-19-20" href="#__codelineno-19-20"></a><span class="w">      </span><span class="nt">&quot;inblock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-21" name="__codelineno-19-21" href="#__codelineno-19-21"></a><span class="w">      </span><span class="nt">&quot;oublock&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<a id="__codelineno-19-22" name="__codelineno-19-22" href="#__codelineno-19-22"></a><span class="w">      </span><span class="nt">&quot;nvcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-19-23" name="__codelineno-19-23" href="#__codelineno-19-23"></a><span class="w">      </span><span class="nt">&quot;nivcsw&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<a id="__codelineno-19-24" name="__codelineno-19-24" href="#__codelineno-19-24"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-19-25" name="__codelineno-19-25" href="#__codelineno-19-25"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-19-26" name="__codelineno-19-26" href="#__codelineno-19-26"></a><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Modes</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utime</code></td>
+<td>Both</td>
+<td>User CPU time in seconds (float)</td>
+</tr>
+<tr>
+<td><code>stime</code></td>
+<td>Both</td>
+<td>System CPU time in seconds (float)</td>
+</tr>
+<tr>
+<td><code>maxrss</code></td>
+<td>CLI only</td>
+<td>Peak RSS in bytes (int) — see platform notes</td>
+</tr>
+<tr>
+<td><code>minflt</code></td>
+<td>Both</td>
+<td>Minor page faults — pages reclaimed without I/O (int)</td>
+</tr>
+<tr>
+<td><code>majflt</code></td>
+<td>Both</td>
+<td>Major page faults — pages requiring disk I/O (int)</td>
+</tr>
+<tr>
+<td><code>inblock</code></td>
+<td>Both</td>
+<td>Block input operations (int) — see platform notes</td>
+</tr>
+<tr>
+<td><code>oublock</code></td>
+<td>Both</td>
+<td>Block output operations (int) — see platform notes</td>
+</tr>
+<tr>
+<td><code>nvcsw</code></td>
+<td>Both</td>
+<td>Voluntary context switches (int)</td>
+</tr>
+<tr>
+<td><code>nivcsw</code></td>
+<td>Both</td>
+<td>Involuntary context switches (int)</td>
+</tr>
+</tbody>
+</table>
+<p>All fields are before/after <strong>deltas</strong> so they reflect only the benchmarked
+work. <code>utime</code>, <code>stime</code>, <code>minflt</code>, <code>nvcsw</code>, and <code>nivcsw</code> are the most
+reliable across platforms.</p>
+<h4 id="platform-notes-and-known-quirks">Platform notes and known quirks</h4>
+<p><strong><code>maxrss</code> — CLI mode with <code>os.wait4()</code> (all POSIX)</strong></p>
+<p><code>os.wait4()</code> returns the exact rusage of each individual child process as
+reported by the kernel. <code>maxrss</code> is the child's own peak RSS, accurate
+regardless of iteration count or warmup. Values are normalised to bytes
+(Linux reports kilobytes; macOS already reports bytes).</p>
+<p><strong><code>maxrss</code> — Python API mode (<code>RUSAGE_SELF</code>)</strong></p>
+<p><code>RUSAGE_SELF.maxrss</code> is a lifetime high-water mark for the Python interpreter
+process. It is intentionally omitted. Use
+<a href="#mbpeakmemory"><code>MBPeakMemory</code></a> if you need per-call peak memory tracking.</p>
+<p><strong><code>inblock</code> / <code>oublock</code> — macOS</strong></p>
+<p>These counters are <strong>almost always zero on macOS</strong>, even for substantial file
+I/O.  The macOS unified buffer cache charges block I/O to the <em>first</em> process
+that touches each page; subsequent reads and writes to cached pages are not
+counted against the process that performed them. In practice, nearly all file
+I/O is served from the cache and the counters never increment.</p>
+<p>This is a macOS kernel accounting limitation. It is documented in the
+<a href="https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/getrusage.2.html"><code>getrusage(2)</code> man page</a>:
+<em>"The numbers ru_inblock and ru_oublock account only for real I/O; data
+supplied by the caching mechanism is charged only to the first process to
+read or write the data."</em></p>
+<p><strong><code>inblock</code> / <code>oublock</code> — Linux</strong></p>
+<p>On Linux these counters increment only for I/O that truly bypasses the page
+cache — cold-cache reads (first access to a file since it was last evicted)
+or writes with <code>O_DIRECT</code>. Warm-cache reads also show zero. Drop the page
+cache (<code>echo 3 &gt; /proc/sys/vm/drop_caches</code> as root) before benchmarking if
+you need to measure true cold-cache I/O.</p>
+<p><strong><code>majflt</code> — macOS</strong></p>
+<p>Major page faults are rare on macOS because the unified buffer cache handles
+most page-in activity. Zero is normal.</p>
+<p><strong><code>utime</code>, <code>stime</code>, <code>minflt</code>, <code>nvcsw</code>, <code>nivcsw</code></strong></p>
+<p>These are the most reliable fields across both Linux and macOS and are
+non-zero for any non-trivial workload.</p>
+<div class="admonition note">
+<p class="admonition-title">Non-POSIX platforms</p>
+<p>When the Python <code>resource</code> module is unavailable, the <code>resource_usage</code>
+key is omitted from the record entirely.</p>
+</div>
+<p><strong>CLI:</strong> <code>resource-usage</code> is a default mixin — no flags needed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Included automatically</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Explicit, if defaults have been overridden</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>resource-usage<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
 <h2 id="code-provenance">Code provenance</h2>
 <h3 id="mbgitinfo"><code>MBGitInfo</code></h3>
 <p>Captures the current git repo, commit hash, branch name, and dirty flag
 (whether there are uncommitted changes in the working tree). Requires
 <code>git</code> ≥ 2.11 on <code>PATH</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="k">pass</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="k">pass</span>
 </code></pre></div>
 <p>Each record will contain:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;git&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/project&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">    </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">    </span><span class="nt">&quot;dirty&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="p">{</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">  </span><span class="nt">&quot;git&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span><span class="nt">&quot;repo&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/project&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span><span class="nt">&quot;commit&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span><span class="nt">&quot;branch&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">    </span><span class="nt">&quot;dirty&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="p">}</span>
 </code></pre></div>
 <p><code>dirty</code> is <code>True</code> if there are any staged or unstaged changes to tracked
 files. <code>branch</code> is an empty string in detached HEAD state.</p>
@@ -1837,14 +2081,14 @@ files. <code>branch</code> is an empty string in detached HEAD state.</p>
 absolute path from a different working directory (e.g. cluster job
 submission). Falls back to the shell's working directory in interactive
 Python sessions. Set <code>git_repo</code> to target a specific directory explicitly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
-<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">git_repo</span> <span class="o">=</span> <span class="s1">&#39;/path/to/repo&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGitInfo</span><span class="p">):</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="n">git_repo</span> <span class="o">=</span> <span class="s1">&#39;/path/to/repo&#39;</span>
 </code></pre></div>
 <p>Use <code>capture_optional = True</code> to silently skip git capture on machines
 without git or when running outside a repository.</p>
 <p><strong>CLI:</strong> use <code>--git-repo DIR</code> to specify the repository directory (defaults
 to the current working directory):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>git-info<span class="w"> </span>--git-repo<span class="w"> </span>/path/to/repo<span class="w"> </span>--<span class="w"> </span>./run.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>git-info<span class="w"> </span>--git-repo<span class="w"> </span>/path/to/repo<span class="w"> </span>--<span class="w"> </span>./run.sh
 </code></pre></div>
 <h3 id="mbfilehash"><code>MBFileHash</code></h3>
 <p>Records a cryptographic checksum of one or more files alongside benchmark
@@ -1852,49 +2096,49 @@ results. This ties a result to the exact version of the script that produced
 it — useful when benchmarks evolve over time and you need to know which code
 generated which numbers. Hashes are computed as a pre-hook, i.e. before the
 enclosed code is run.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="k">pass</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
 </code></pre></div>
 <p>By default, <code>MBFileHash</code> hashes <code>sys.argv[0]</code> — the script that was run. To
 hash specific files instead, set <code>hash_files</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;run_experiment.py&#39;</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;run_experiment.py&#39;</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">]</span>
 </code></pre></div>
 <p>Relative paths in <code>hash_files</code> are resolved against the <strong>working directory
 at the time the benchmarked function is called</strong>, which may differ from the
 script's location (especially on clusters where a job scheduler launches
 scripts from a scratch directory). Use absolute paths to be safe:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">SCRIPT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;run_experiment.py&#39;</span><span class="p">),</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">),</span>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="p">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="n">SCRIPT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;run_experiment.py&#39;</span><span class="p">),</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">SCRIPT_DIR</span><span class="p">,</span> <span class="s1">&#39;config.yaml&#39;</span><span class="p">),</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>    <span class="p">]</span>
 </code></pre></div>
 <p>Each record will contain a <code>file_hashes</code> dict mapping each path to its
 hex digest. The hashing algorithm is stored under <code>mb.file_hash_algorithm</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="p">{</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">  </span><span class="nt">&quot;mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="nt">&quot;file_hash_algorithm&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256&quot;</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="w">  </span><span class="nt">&quot;file_hashes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="w">    </span><span class="nt">&quot;run_experiment.py&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;</span><span class="p">,</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">    </span><span class="nt">&quot;config.yaml&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824&quot;</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="p">{</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">  </span><span class="nt">&quot;mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span><span class="nt">&quot;file_hash_algorithm&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sha256&quot;</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="w">  </span><span class="nt">&quot;file_hashes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a><span class="w">    </span><span class="nt">&quot;run_experiment.py&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;</span><span class="p">,</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">    </span><span class="nt">&quot;config.yaml&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824&quot;</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a><span class="p">}</span>
 </code></pre></div>
 <p>The default algorithm is SHA-256. Use <code>hash_algorithm</code> to select a different
 algorithm from Python's <a href="https://docs.python.org/3/library/hashlib.html"><code>hashlib</code></a>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;large_model_weights.bin&#39;</span><span class="p">]</span>
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="n">hash_algorithm</span> <span class="o">=</span> <span class="s1">&#39;md5&#39;</span>   <span class="c1"># faster for large files</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;large_model_weights.bin&#39;</span><span class="p">]</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>    <span class="n">hash_algorithm</span> <span class="o">=</span> <span class="s1">&#39;md5&#39;</span>   <span class="c1"># faster for large files</span>
 </code></pre></div>
 <p>Any algorithm name accepted by <code>hashlib.new()</code> works: <code>'sha256'</code> (default),
 <code>'md5'</code>, <code>'sha1'</code>, <code>'blake2b'</code>, etc.</p>
@@ -1902,32 +2146,32 @@ algorithm from Python's <a href="https://docs.python.org/3/library/hashlib.html"
 <p class="admonition-title">Tip</p>
 <p>Pair <code>MBFileHash</code> with <code>capture_optional = True</code> if the script path
 may not always be available (e.g. interactive Python sessions):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sometimes_missing.dat&#39;</span><span class="p">]</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">capture_optional</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBFileHash</span><span class="p">):</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">hash_files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sometimes_missing.dat&#39;</span><span class="p">]</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">capture_optional</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
 </div>
 <p><strong>CLI:</strong> use <code>--hash-file FILE [FILE ...]</code> and <code>--hash-algorithm ALGORITHM</code>.
 The CLI default hashes the benchmarked command executable <em>plus</em> any
 arguments that resolve to existing files on disk:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Automatically hashes run.sh, input.csv, and params.yaml</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--<span class="w"> </span>./run.sh<span class="w"> </span>input.csv<span class="w"> </span>--config<span class="w"> </span>params.yaml
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Hash a specific set of files (overrides the default entirely)</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-file<span class="w"> </span>run_experiment.py<span class="w"> </span>config.yaml<span class="w"> </span>--<span class="w"> </span>./run.sh
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Change the hash algorithm</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-algorithm<span class="w"> </span>md5<span class="w"> </span>--<span class="w"> </span>./run.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Automatically hashes run.sh, input.csv, and params.yaml</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--<span class="w"> </span>./run.sh<span class="w"> </span>input.csv<span class="w"> </span>--config<span class="w"> </span>params.yaml
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Hash a specific set of files (overrides the default entirely)</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-file<span class="w"> </span>run_experiment.py<span class="w"> </span>config.yaml<span class="w"> </span>--<span class="w"> </span>./run.sh
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="c1"># Change the hash algorithm</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--hash-algorithm<span class="w"> </span>md5<span class="w"> </span>--<span class="w"> </span>./run.sh
 </code></pre></div>
 <h2 id="package-versions">Package versions</h2>
 <h3 id="mbglobalpackages"><code>MBGlobalPackages</code></h3>
 <p>Captures the version of every module imported in the caller's global
 namespace:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>    <span class="k">pass</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBGlobalPackages</span><span class="p">):</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="k">pass</span>
 </code></pre></div>
 <p>The <code>python.loaded_packages</code> field will contain <code>{"numpy": "1.26.0", "pandas": "2.1.0", ...}</code>.</p>
 <h3 id="mbinstalledpackages"><code>MBInstalledPackages</code></h3>
@@ -1936,8 +2180,8 @@ Results are stored in <code>python.installed_packages</code>. Useful for full
 reproducibility audits. Can be slow on environments with many packages.</p>
 <p>Set <code>capture_paths = True</code> to also record installation paths in
 <code>python.installed_package_paths</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBInstalledPackages</span><span class="p">):</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>    <span class="n">capture_paths</span> <span class="o">=</span> <span class="kc">True</span>
 </code></pre></div>
 <h3 id="mbcondapackages"><code>MBCondaPackages</code></h3>
 <p>Captures the active conda environment's identity and package list using the
@@ -1951,39 +2195,39 @@ If <code>conda</code> is not on <code>PATH</code>, the <code>CONDA_EXE</code> en
 <li><code>path</code> (<code>CONDA_PREFIX</code>) — may be <code>None</code> if unset.</li>
 <li><code>packages</code> — dict mapping package name to version string.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
-<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
-<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBCondaPackages</span><span class="p">):</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>    <span class="n">include_builds</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># include build string (default: True)</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="n">include_channels</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># include channel name (default: False)</span>
 </code></pre></div>
 <h3 id="capture_versions"><code>capture_versions</code></h3>
 <p>To capture specific package versions without a mixin, list them on the
 class. Results are stored in <code>python.loaded_packages</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
-<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
-<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="o">,</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">):</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>    <span class="n">capture_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">pandas</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="nvidia-gpu-mbnvidiasmi">NVIDIA GPU — <code>MBNvidiaSmi</code></h2>
 <p>Captures attributes for each installed GPU via <code>nvidia-smi</code>. Results are stored
 in <code>nvidia</code> as a list of per-GPU dicts, each containing a <code>uuid</code> key plus one
 key per queried attribute:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="p">{</span>
-<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">  </span><span class="nt">&quot;nvidia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GPU-abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;gpu_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NVIDIA A100&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;memory.total&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;40960 MiB&quot;</span><span class="p">}</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="p">{</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">  </span><span class="nt">&quot;nvidia&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;uuid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GPU-abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;gpu_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NVIDIA A100&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;memory.total&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;40960 MiB&quot;</span><span class="p">}</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="choosing-attributes">Choosing attributes</h3>
 <p>By default, <code>gpu_name</code> and <code>memory.total</code> are captured. To record additional
 attributes — power draw, temperature, utilisation, etc. — set <code>nvidia_attributes</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span>
-<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>
-<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;power.draw&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.gpu&#39;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>    <span class="n">nvidia_attributes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;gpu_name&#39;</span><span class="p">,</span> <span class="s1">&#39;memory.total&#39;</span><span class="p">,</span> <span class="s1">&#39;power.draw&#39;</span><span class="p">,</span> <span class="s1">&#39;temperature.gpu&#39;</span><span class="p">)</span>
 </code></pre></div>
 <p>Run <code>nvidia-smi --help-query-gpu</code> for the full list of available attribute names.</p>
 <p><strong>CLI:</strong> use <code>--nvidia-attributes ATTR [ATTR ...]</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span>temperature.gpu<span class="w"> </span>--<span class="w"> </span>./run.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span>temperature.gpu<span class="w"> </span>--<span class="w"> </span>./run.sh
 </code></pre></div>
 <h3 id="selecting-specific-gpus">Selecting specific GPUs</h3>
 <p>By default all installed GPUs are captured. To restrict to a subset, set
@@ -1996,38 +2240,38 @@ attributes — power draw, temperature, utilisation, etc. — set <code>nvidia_a
 <li><strong>PCI bus ID</strong> — <code>00000000:01:00.0</code> format. Stable and unique when multiple
   GPUs share the same model name.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
-<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123def456&#39;</span><span class="p">,)</span>   <span class="c1"># single GPU by UUID</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;GPU-abc123def456&#39;</span><span class="p">,)</span>   <span class="c1"># single GPU by UUID</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
-<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># first two GPUs by index</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">GpuBench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBNvidiaSmi</span><span class="p">):</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>    <span class="n">nvidia_gpus</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># first two GPUs by index</span>
 </code></pre></div>
 <p>Omit <code>nvidia_gpus</code> entirely to capture all GPUs.</p>
 <p><strong>CLI:</strong> use <code>--nvidia-gpus GPU [GPU ...]</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--<span class="w"> </span>./run.sh
-<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span>GPU-abc123def456<span class="w"> </span>--<span class="w"> </span>./run.sh
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--<span class="w"> </span>./run.sh
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span>--nvidia-gpus<span class="w"> </span>GPU-abc123def456<span class="w"> </span>--<span class="w"> </span>./run.sh
 </code></pre></div>
 <h2 id="line-profiler-mblineprofiler">Line profiler — <code>MBLineProfiler</code></h2>
 <p>Captures a line-by-line timing profile of the decorated function using
 <a href="https://github.com/rkern/line_profiler">line_profiler</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
-<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>
-<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
-<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>    <span class="k">pass</span>
-<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a>
-<a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
-<a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a>
-<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a><span class="nd">@bench</span>
-<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
-<a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
-<a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
-<a id="__codelineno-38-13" name="__codelineno-38-13" href="#__codelineno-38-13"></a>    <span class="k">return</span> <span class="n">acc</span>
-<a id="__codelineno-38-14" name="__codelineno-38-14" href="#__codelineno-38-14"></a>
-<a id="__codelineno-38-15" name="__codelineno-38-15" href="#__codelineno-38-15"></a><span class="n">my_function</span><span class="p">()</span>
-<a id="__codelineno-38-16" name="__codelineno-38-16" href="#__codelineno-38-16"></a>
-<a id="__codelineno-38-17" name="__codelineno-38-17" href="#__codelineno-38-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
-<a id="__codelineno-38-18" name="__codelineno-38-18" href="#__codelineno-38-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">])</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBLineProfiler</span><span class="p">):</span>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a>    <span class="k">pass</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">Bench</span><span class="p">()</span>
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a>
+<a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a><span class="nd">@bench</span>
+<a id="__codelineno-42-9" name="__codelineno-42-9" href="#__codelineno-42-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-42-10" name="__codelineno-42-10" href="#__codelineno-42-10"></a>    <span class="n">acc</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-42-11" name="__codelineno-42-11" href="#__codelineno-42-11"></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
+<a id="__codelineno-42-12" name="__codelineno-42-12" href="#__codelineno-42-12"></a>        <span class="n">acc</span> <span class="o">+=</span> <span class="n">i</span>
+<a id="__codelineno-42-13" name="__codelineno-42-13" href="#__codelineno-42-13"></a>    <span class="k">return</span> <span class="n">acc</span>
+<a id="__codelineno-42-14" name="__codelineno-42-14" href="#__codelineno-42-14"></a>
+<a id="__codelineno-42-15" name="__codelineno-42-15" href="#__codelineno-42-15"></a><span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-42-16" name="__codelineno-42-16" href="#__codelineno-42-16"></a>
+<a id="__codelineno-42-17" name="__codelineno-42-17" href="#__codelineno-42-17"></a><span class="n">results</span> <span class="o">=</span> <span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-42-18" name="__codelineno-42-18" href="#__codelineno-42-18"></a><span class="n">MBLineProfiler</span><span class="o">.</span><span class="n">print_line_profile</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;line_profiler&#39;</span><span class="p">])</span>
 </code></pre></div>
 <p>The profile is stored as a base64-encoded pickle in the <code>call.line_profiler</code> field.
 Use <code>MBLineProfiler.decode_line_profile()</code> to deserialise it, or

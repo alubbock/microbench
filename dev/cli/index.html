@@ -459,6 +459,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#resource-usage-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource-usage options
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1011,6 +1022,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#resource-usage-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource-usage options
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1336,11 +1358,13 @@ always available in the environment where microbench is installed:</p>
 </table>
 <h2 id="default-mixins">Default mixins</h2>
 <p>When no <code>--mixin</code> is specified, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>,
-<code>loaded-modules</code>, and <code>working-dir</code> are included automatically, capturing
-the Python interpreter version, prefix, and executable path; hostname and
-operating system; all <code>SLURM_*</code> environment variables; the loaded
-Lmod/Environment Modules software stack; and the current working directory.
-All five degrade gracefully or produce stable values outside their respective
+<code>loaded-modules</code>, <code>working-dir</code>, and <code>resource-usage</code> are included
+automatically, capturing the Python interpreter version, prefix, and
+executable path; hostname and operating system; all <code>SLURM_*</code> environment
+variables; the loaded Lmod/Environment Modules software stack; the current
+working directory; and POSIX resource usage (CPU time, peak RSS, page faults,
+I/O, and context switches) for the benchmarked subprocess.
+All six degrade gracefully or produce stable values outside their respective
 environments.</p>
 <p>Mixin names use a short kebab-case form without the <code>MB</code> prefix
 (e.g. <code>host-info</code> instead of <code>MBHostInfo</code>). MB-prefixed names are also
@@ -1464,6 +1488,11 @@ command being benchmarked instead.</p>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--nvidia-gpus<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
 </code></pre></div>
+<h3 id="resource-usage-options"><code>resource-usage</code> options</h3>
+<p><code>resource-usage</code> has no CLI flags. It is included in the defaults and records
+POSIX <code>getrusage()</code> data automatically for the benchmarked subprocess.</p>
+<p>On platforms where the Python <code>resource</code> module is unavailable,
+<code>resource-usage</code> omits the <code>resource_usage</code> key from the record entirely.</p>
 <h2 id="capture-failures">Capture failures</h2>
 <p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
 script not in a git repository) are caught automatically and recorded in
@@ -1503,6 +1532,7 @@ per-record overhead or reduce timing noise:</p>
 <li><code>call.durations</code> — list of 10 wall-clock durations in seconds</li>
 <li><code>call.returncode</code> — list of 10 exit codes (one per timed iteration)</li>
 <li><code>call.stdout</code> / <code>call.stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
+<li><code>resource_usage</code> — list of 10 per-iteration rusage dicts (when <code>resource-usage</code> mixin is active)</li>
 </ul>
 <p>Warmup runs are excluded from all three lists. The process exits with
 the first non-zero return code, if present, so any failing iteration
