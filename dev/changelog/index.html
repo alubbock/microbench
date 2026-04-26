@@ -750,6 +750,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -894,6 +905,17 @@
     <span class="md-ellipsis">
       
         Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
       
     </span>
   </a>
@@ -1047,6 +1069,14 @@
   overrides the default entirely; the Python API is unaffected. The hash
   algorithm name is now stored under <code>mb.file_hash_algorithm</code>.</p>
 </li>
+</ul>
+<h3 id="bug-fixes">Bug fixes</h3>
+<ul>
+<li><strong><code>MBResourceUsage</code> — <code>pre_run_triggers</code>/<code>post_run_triggers</code> now forward
+  via <code>super()</code></strong>: composing <code>MBResourceUsage</code> with another mixin that also
+  implements <code>pre_run_triggers</code> or <code>post_run_triggers</code> previously caused the
+  second mixin's hooks to be silently skipped. Both methods now propagate
+  correctly through the MRO.</li>
 </ul>
 <h3 id="documentation">Documentation</h3>
 <ul>
