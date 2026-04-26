@@ -41,6 +41,14 @@ All notable changes to microbench are documented here.
   overrides the default entirely; the Python API is unaffected. The hash
   algorithm name is now stored under `mb.file_hash_algorithm`.
 
+### Bug fixes
+
+- **`MBResourceUsage` — `pre_run_triggers`/`post_run_triggers` now forward
+  via `super()`**: composing `MBResourceUsage` with another mixin that also
+  implements `pre_run_triggers` or `post_run_triggers` previously caused the
+  second mixin's hooks to be silently skipped. Both methods now propagate
+  correctly through the MRO.
+
 ### Documentation
 
 - Fix documentation on writing custom mixins to note that they must be

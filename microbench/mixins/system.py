@@ -445,6 +445,9 @@ class MBResourceUsage:
             self._rusage_iter_before = _rusage_to_dict(
                 _resource.getrusage(_resource.RUSAGE_SELF), include_maxrss=False
             )
+        parent = super()
+        if hasattr(parent, 'pre_run_triggers'):
+            parent.pre_run_triggers(bm_data)
 
     def post_run_triggers(self, bm_data):
         if _resource is not None and not hasattr(self, '_subprocess_command'):
@@ -454,6 +457,9 @@ class MBResourceUsage:
             self._rusage_iter_entries.append(
                 _rusage_delta(self._rusage_iter_before, after)
             )
+        parent = super()
+        if hasattr(parent, 'post_run_triggers'):
+            parent.post_run_triggers(bm_data)
 
     def capturepost_resource_usage(self, bm_data):
         """Write the resource_usage list to bm_data after all iterations."""
