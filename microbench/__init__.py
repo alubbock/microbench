@@ -43,6 +43,7 @@ from microbench.mixins.system import (  # noqa: F401
     MBCgroupLimits,
     MBHostInfo,
     MBLoadedModules,
+    MBResourceUsage,
     MBSlurmInfo,
     MBWorkingDir,
 )
@@ -77,6 +78,7 @@ __all__ = [
     'MBCgroupLimits',
     'MBGitInfo',
     'MBFileHash',
+    'MBResourceUsage',
     'MBGlobalPackages',
     'MBInstalledPackages',
     'MBCondaPackages',

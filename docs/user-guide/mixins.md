@@ -19,9 +19,9 @@ to list all available mixins with descriptions:
 microbench --show-mixins
 ```
 
-By default, `python-info`, `host-info`, `slurm-info`, `loaded-modules`, and
-`working-dir` are included automatically. Specifying `--mixin` replaces the
-defaults entirely. Use `--no-mixin` to disable all mixins:
+By default, `python-info`, `host-info`, `slurm-info`, `loaded-modules`,
+`working-dir`, and `resource-usage` are included automatically. Specifying
+`--mixin` replaces the defaults entirely. Use `--no-mixin` to disable all mixins:
 
 ```bash
 # Only peak-memory — no host info or SLURM
@@ -70,6 +70,7 @@ combine any number of microbench mixins without conflicts, and their
 | `MBLoadedModules` | `loaded-modules` *(default)* | `loaded_modules` dict mapping module name to version (empty dict if no Lmod/Environment Modules are loaded) | — |
 | `MBWorkingDir` | `working-dir` *(default)* | `call.working_dir` — absolute path of the working directory at benchmark time | — |
 | `MBCgroupLimits` | `cgroup-limits` | `cgroups` dict with `cpu_cores_limit`, `memory_bytes_limit`, `version` (empty dict if not on Linux or cgroup fs unavailable) | Linux only |
+| `MBResourceUsage` | `resource-usage` *(default)* | `resource_usage` list of dicts with CPU times, peak RSS, page faults, I/O ops, and context switches (`[]` when the stdlib `resource` module is unavailable) | POSIX only (stdlib) |
 | `MBGitInfo` | `git-info` | `git` dict with `repo`, `commit`, `branch`, `dirty` | `git` ≥ 2.11 on PATH |
 | `MBGlobalPackages` | Python only | `python.loaded_packages` for every package in the caller's global scope | — |
 | `MBInstalledPackages` | `installed-packages` | `python.installed_packages` (and optionally `python.installed_package_paths`) for every installed package | — |
@@ -337,6 +338,172 @@ platforms or when the cgroup filesystem is unavailable.
     Pair with `MBSlurmInfo` for full HPC context — `MBSlurmInfo` captures
     scheduler metadata (job ID, node list, etc.) while `MBCgroupLimits` captures
     the kernel-enforced resource limits.
+
+### `MBResourceUsage`
+
+Captures POSIX [`getrusage(2)`](https://man7.org/linux/man-pages/man2/getrusage.2.html)
+data — CPU time, page faults, block I/O operations, and context switches —
+using only the Python standard library (`resource` module). No extra
+dependencies are required.
+
+**Modes**
+
+- **CLI mode**: on POSIX, uses `os.wait4()` to get the exact rusage of each
+  child process as reported by the kernel — one dict per timed iteration,
+  aligned index-for-index with `call.durations`.
+  `maxrss` is the child's own peak RSS.
+- **Python API mode**: uses `RUSAGE_SELF` — one dict per timed iteration,
+  each a before/after delta around that single call (aligned index-for-index
+  with `call.durations`). Warmup calls are excluded.
+  `maxrss` is **omitted** — `RUSAGE_SELF.maxrss` is a lifetime process
+  high-water mark that reflects the peak since the interpreter started,
+  not just since the decorated function was called, making it unreliable
+  for function-level measurement.
+
+On platforms where the stdlib `resource` module is unavailable, the
+`resource_usage` key is omitted from the record entirely.
+
+```python
+from microbench import MicroBench, MBResourceUsage
+
+class Bench(MicroBench, MBResourceUsage):
+    pass
+
+bench = Bench()
+
+@bench
+def work():
+    return list(range(1_000_000))
+
+work()
+```
+
+Python API record (one entry per timed iteration, no `maxrss`):
+
+```json
+{
+  "resource_usage": [
+    {
+      "utime": 0.052,
+      "stime": 0.003,
+      "minflt": 1024,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 2,
+      "nivcsw": 1
+    }
+  ]
+}
+```
+
+CLI record with `--iterations 2` (one entry per iteration, includes `maxrss`):
+
+```json
+{
+  "resource_usage": [
+    {
+      "utime": 0.068,
+      "stime": 0.029,
+      "maxrss": 11386880,
+      "minflt": 621,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 1,
+      "nivcsw": 2
+    },
+    {
+      "utime": 0.071,
+      "stime": 0.031,
+      "maxrss": 11386880,
+      "minflt": 618,
+      "majflt": 0,
+      "inblock": 0,
+      "oublock": 0,
+      "nvcsw": 1,
+      "nivcsw": 3
+    }
+  ]
+}
+```
+
+| Field | Modes | Description |
+|---|---|---|
+| `utime` | Both | User CPU time in seconds (float) |
+| `stime` | Both | System CPU time in seconds (float) |
+| `maxrss` | CLI only | Peak RSS in bytes (int) — see platform notes |
+| `minflt` | Both | Minor page faults — pages reclaimed without I/O (int) |
+| `majflt` | Both | Major page faults — pages requiring disk I/O (int) |
+| `inblock` | Both | Block input operations (int) — see platform notes |
+| `oublock` | Both | Block output operations (int) — see platform notes |
+| `nvcsw` | Both | Voluntary context switches (int) |
+| `nivcsw` | Both | Involuntary context switches (int) |
+
+All fields are before/after **deltas** so they reflect only the benchmarked
+work. `utime`, `stime`, `minflt`, `nvcsw`, and `nivcsw` are the most
+reliable across platforms.
+
+#### Platform notes and known quirks
+
+**`maxrss` — CLI mode with `os.wait4()` (all POSIX)**
+
+`os.wait4()` returns the exact rusage of each individual child process as
+reported by the kernel. `maxrss` is the child's own peak RSS, accurate
+regardless of iteration count or warmup. Values are normalised to bytes
+(Linux reports kilobytes; macOS already reports bytes).
+
+**`maxrss` — Python API mode (`RUSAGE_SELF`)**
+
+`RUSAGE_SELF.maxrss` is a lifetime high-water mark for the Python interpreter
+process. It is intentionally omitted. Use
+[`MBPeakMemory`](#mbpeakmemory) if you need per-call peak memory tracking.
+
+**`inblock` / `oublock` — macOS**
+
+These counters are **almost always zero on macOS**, even for substantial file
+I/O.  The macOS unified buffer cache charges block I/O to the *first* process
+that touches each page; subsequent reads and writes to cached pages are not
+counted against the process that performed them. In practice, nearly all file
+I/O is served from the cache and the counters never increment.
+
+This is a macOS kernel accounting limitation. It is documented in the
+[`getrusage(2)` man page](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/getrusage.2.html):
+*"The numbers ru_inblock and ru_oublock account only for real I/O; data
+supplied by the caching mechanism is charged only to the first process to
+read or write the data."*
+
+**`inblock` / `oublock` — Linux**
+
+On Linux these counters increment only for I/O that truly bypasses the page
+cache — cold-cache reads (first access to a file since it was last evicted)
+or writes with `O_DIRECT`. Warm-cache reads also show zero. Drop the page
+cache (`echo 3 > /proc/sys/vm/drop_caches` as root) before benchmarking if
+you need to measure true cold-cache I/O.
+
+**`majflt` — macOS**
+
+Major page faults are rare on macOS because the unified buffer cache handles
+most page-in activity. Zero is normal.
+
+**`utime`, `stime`, `minflt`, `nvcsw`, `nivcsw`**
+
+These are the most reliable fields across both Linux and macOS and are
+non-zero for any non-trivial workload.
+
+!!! note "Non-POSIX platforms"
+    When the Python `resource` module is unavailable, the `resource_usage`
+    key is omitted from the record entirely.
+
+**CLI:** `resource-usage` is a default mixin — no flags needed:
+
+```bash
+# Included automatically
+microbench --outfile results.jsonl -- ./run_simulation.sh
+
+# Explicit, if defaults have been overridden
+microbench --mixin resource-usage -- ./run_simulation.sh
+```
 
 ## Code provenance
 

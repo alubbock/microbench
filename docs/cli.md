@@ -117,11 +117,13 @@ Every record contains the standard `mb.*` and `call.*` fields plus:
 ## Default mixins
 
 When no `--mixin` is specified, `python-info`, `host-info`, `slurm-info`,
-`loaded-modules`, and `working-dir` are included automatically, capturing
-the Python interpreter version, prefix, and executable path; hostname and
-operating system; all `SLURM_*` environment variables; the loaded
-Lmod/Environment Modules software stack; and the current working directory.
-All five degrade gracefully or produce stable values outside their respective
+`loaded-modules`, `working-dir`, and `resource-usage` are included
+automatically, capturing the Python interpreter version, prefix, and
+executable path; hostname and operating system; all `SLURM_*` environment
+variables; the loaded Lmod/Environment Modules software stack; the current
+working directory; and POSIX resource usage (CPU time, peak RSS, page faults,
+I/O, and context switches) for the benchmarked subprocess.
+All six degrade gracefully or produce stable values outside their respective
 environments.
 
 Mixin names use a short kebab-case form without the `MB` prefix
@@ -236,6 +238,14 @@ microbench \
     -- ./run_simulation.sh
 ```
 
+### `resource-usage` options
+
+`resource-usage` has no CLI flags. It is included in the defaults and records
+POSIX `getrusage()` data automatically for the benchmarked subprocess.
+
+On platforms where the Python `resource` module is unavailable,
+`resource-usage` omits the `resource_usage` key from the record entirely.
+
 ## Capture failures
 
 Metadata capture failures (e.g. `nvidia-smi` not installed on this node,
@@ -289,6 +299,7 @@ With 10 iterations and 2 warmup runs, the record contains:
 - `call.durations` — list of 10 wall-clock durations in seconds
 - `call.returncode` — list of 10 exit codes (one per timed iteration)
 - `call.stdout` / `call.stderr` — list of 10 captured strings, if `--stdout`/`--stderr` is used
+- `resource_usage` — list of 10 per-iteration rusage dicts (when `resource-usage` mixin is active)
 
 Warmup runs are excluded from all three lists. The process exits with
 the first non-zero return code, if present, so any failing iteration

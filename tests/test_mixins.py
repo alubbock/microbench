@@ -13,6 +13,7 @@ from microbench import (
     MBLineProfiler,
     MBLoadedModules,
     MBPeakMemory,
+    MBResourceUsage,
     MBSlurmInfo,
     MBWorkingDir,
     MicroBench,
@@ -836,3 +837,175 @@ def test_cgroup_limits_unavailable():
         noop()
 
     assert bench.get_results()[0].get('cgroups', {}) == {}
+
+
+# ---------------------------------------------------------------------------
+# MBResourceUsage
+# ---------------------------------------------------------------------------
+
+_RUSAGE_FIELDS_PYTHON_API = {
+    'utime',
+    'stime',
+    'minflt',
+    'majflt',
+    'inblock',
+    'oublock',
+    'nvcsw',
+    'nivcsw',
+}
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_fields():
+    """MBResourceUsage records all expected fields in Python API mode."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return sum(range(50000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert isinstance(ru_list, list)
+    assert len(ru_list) == 1  # 1 timed iteration
+    assert set(ru_list[0].keys()) == _RUSAGE_FIELDS_PYTHON_API
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_one_entry_per_iteration():
+    """resource_usage has one entry per timed iteration in Python API mode."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench(iterations=3)
+
+    @bench
+    def work():
+        return sum(range(1000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert len(ru_list) == 3
+    for entry in ru_list:
+        assert set(entry.keys()) == _RUSAGE_FIELDS_PYTHON_API
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_warmup_excluded():
+    """Warmup iterations are not counted in resource_usage."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench(iterations=2, warmup=3)
+
+    @bench
+    def work():
+        return sum(range(1000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert len(ru_list) == 2  # only timed iterations
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_maxrss_absent():
+    """maxrss is absent in Python API mode (RUSAGE_SELF.maxrss is a lifetime HWM)."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return list(range(10000))
+
+    work()
+    ru_list = bench.get_results()[0].get('resource_usage', [])
+    assert isinstance(ru_list, list)
+    assert len(ru_list) == 1
+    assert 'maxrss' not in ru_list[0], (
+        'maxrss must not appear in Python API mode records because '
+        'RUSAGE_SELF.maxrss is a lifetime process high-water mark and '
+        'cannot isolate a single function call'
+    )
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_cpu_nonnegative():
+    """utime and stime are non-negative floats."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def work():
+        return sum(range(10000))
+
+    work()
+    ru = bench.get_results()[0]['resource_usage'][0]
+    assert ru['utime'] >= 0.0
+    assert ru['stime'] >= 0.0
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_python_api_counts_nonnegative():
+    """All integer count fields are non-negative."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+    ru = bench.get_results()[0]['resource_usage'][0]
+    for field in ('minflt', 'majflt', 'inblock', 'oublock', 'nvcsw', 'nivcsw'):
+        assert ru[field] >= 0, f'{field} should be non-negative'
+
+
+def test_resource_usage_windows_fallback():
+    """Omits resource_usage key when the resource module is unavailable."""
+
+    class Bench(MicroBench, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    import microbench.mixins.system as _sys_mod
+
+    original = _sys_mod._resource
+    try:
+        _sys_mod._resource = None
+        noop()
+    finally:
+        _sys_mod._resource = original
+
+    assert 'resource_usage' not in bench.get_results()[0]
