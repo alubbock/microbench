@@ -91,7 +91,7 @@ def _patch_wait4_sleep(mock_proc, delay, *, status=0, rusage=None):
         time.sleep(delay)
         return (mock_proc.pid, status, rusage)
 
-    return patch('os.wait4', side_effect=_wait4, create=True)
+    return patch('os.wait4', side_effect=_wait4)
 
 
 def _patch_wait4_sequence(*results):
@@ -1564,6 +1564,9 @@ def test_cli_timeout_not_exceeded():
     assert record['call']['returncode'] == [0]
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='os.wait4() timeout handling is POSIX-only'
+)
 def test_cli_timeout_sigterm_sufficient():
     """--timeout: process exits after SIGTERM; SIGKILL is not sent."""
     mock_proc = _make_mock_popen()
@@ -1581,6 +1584,9 @@ def test_cli_timeout_sigterm_sufficient():
     mock_proc.kill.assert_not_called()
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='os.wait4() timeout handling is POSIX-only'
+)
 def test_cli_timeout_sigkill_required():
     """--timeout: SIGKILL sent when process ignores SIGTERM past the grace period."""
     mock_proc = _make_mock_popen()
@@ -1650,6 +1656,9 @@ def test_cli_timeout_during_warmup_does_not_set_timed_out():
     assert 'timed_out' not in record['call']
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='os.wait4() is not available on Windows'
+)
 def test_cli_keyboard_interrupt_kills_child():
     """KeyboardInterrupt during wait4 join causes proc.kill() and re-raises."""
     mock_proc = _make_mock_popen()
@@ -1941,6 +1950,9 @@ def test_cli_resource_usage_in_defaults():
     assert 'resource_usage' in record
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
 def test_cli_resource_usage_fields_present():
     """resource-usage records all expected fields."""
     _, record, _ = _run_main(['--mixin', 'resource-usage', '--', 'true'])
@@ -1950,6 +1962,9 @@ def test_cli_resource_usage_fields_present():
     assert set(ru_list[0].keys()) == _RUSAGE_FIELDS
 
 
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
 def test_cli_resource_usage_values_are_numeric():
     """resource-usage field values are all numbers (int or float)."""
     _, record, _ = _run_main(['--mixin', 'resource-usage', '--', 'true'])
