@@ -44,6 +44,7 @@ is active out of the box.
 | All `SLURM_*` environment variables | _(default)_ | `MBSlurmInfo` |
 | Loaded Environment Modules / Lmod stack | _(default)_ | `MBLoadedModules` |
 | Current working directory | _(default)_ | `MBWorkingDir` |
+| CPU time, peak RSS, page faults, block I/O ops, and context switches (POSIX) | _(default)_ | `MBResourceUsage` |
 | Git repo, commit hash, branch, dirty flag | `--mixin git-info` | `MBGitInfo` |
 | SHA-256 (or other) hash of specified files | `--mixin file-hash` | `MBFileHash` |
 | Installed Python packages and versions | `--mixin installed-packages` | `MBInstalledPackages` |
