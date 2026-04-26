@@ -54,7 +54,6 @@ from microbench import CLIArg
 class MBOutputDir:
     """Record the output directory for this run."""
 
-    cli_compatible = True
     cli_args = [
         CLIArg(
             flags=['--output-dir'],

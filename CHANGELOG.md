@@ -51,6 +51,12 @@ All notable changes to microbench are documented here.
 
 ### Documentation
 
+- **`cli_compatible` class attribute removed from built-in mixins**: this
+  attribute was never read at runtime — CLI availability is governed solely
+  by the `MIXIN_REGISTRY` in `cli/registry.py`. The extending guide example
+  has been updated to drop it; custom mixins that set it can safely remove
+  it without any behavioural change.
+
 - Fix documentation on writing custom mixins to note that they must be
   added to the registry if they are to be detected by the CLI.
 
