@@ -1,0 +1,1800 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Micro-benchmarking and reproducibility metadata capture for Python">
+      
+      
+      
+        <link rel="canonical" href="https://alubbock.github.io/microbench/latest/cli/">
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../user-guide/configuration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Command-line interface - microbench</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#command-line-interface" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="microbench" class="md-header__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            microbench
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Command-line interface
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="microbench" class="md-nav__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    microbench
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fields-recorded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fields recorded
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default mixins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mixin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixin options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixin options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git-info-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git-info options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-hash-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file-hash options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nvidia-smi-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nvidia-smi options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-usage-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource-usage options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capture-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capture failures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slurm-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SLURM example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repeated-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeated runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra metadata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subprocess-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/mixins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Periodic monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/extending/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extending microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fields-recorded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fields recorded
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-mixins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default mixins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mixin-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixin options
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Mixin options">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#git-info-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        git-info options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-hash-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        file-hash options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nvidia-smi-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        nvidia-smi options
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-usage-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        resource-usage options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capture-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capture failures
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#slurm-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SLURM example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repeated-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeated runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#http-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#redis-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redis output
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#extra-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extra metadata
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subprocess-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subprocess monitoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="command-line-interface">Command-line interface</h1>
+<p>Microbench can wrap any external command and record host metadata
+alongside timing, without writing any Python code:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>microbench<span class="w"> </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>This is particularly useful for SLURM jobs, shell scripts, or compiled
+executables where adding a Python decorator is not practical.</p>
+<p><code>python -m microbench</code> is equivalent to the <code>microbench</code> entry point
+and can be used when you need to target a specific Python interpreter
+explicitly (e.g. <code>python3.12 -m microbench ...</code>).</p>
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>microbench [options] -- COMMAND [ARGS...]
+</code></pre></div>
+<p><strong>Output</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--outfile FILE</code> / <code>-o FILE</code></td>
+<td>Append results to FILE in JSONL format. Defaults to stdout.</td>
+</tr>
+<tr>
+<td><code>--http-output URL</code></td>
+<td>POST each record as JSON to URL. Can be combined with <code>--outfile</code>.</td>
+</tr>
+<tr>
+<td><code>--http-output-header KEY:VALUE</code></td>
+<td>Extra HTTP header for <code>--http-output</code> (repeatable). Use for authentication. Requires <code>--http-output</code>.</td>
+</tr>
+<tr>
+<td><code>--http-output-method METHOD</code></td>
+<td>HTTP method for <code>--http-output</code>. Defaults to <code>POST</code>. Requires <code>--http-output</code>.</td>
+</tr>
+<tr>
+<td><code>--redis-output KEY</code></td>
+<td>RPUSH each record as JSON to a Redis list at KEY. Can be combined with <code>--outfile</code> or <code>--http-output</code>. Requires the <code>redis</code> package.</td>
+</tr>
+<tr>
+<td><code>--redis-host HOST</code></td>
+<td>Redis server hostname for <code>--redis-output</code> (default: <code>localhost</code>).</td>
+</tr>
+<tr>
+<td><code>--redis-port PORT</code></td>
+<td>Redis server port for <code>--redis-output</code> (default: <code>6379</code>). Requires <code>--redis-output</code>.</td>
+</tr>
+<tr>
+<td><code>--redis-db DB</code></td>
+<td>Redis database index for <code>--redis-output</code> (default: <code>0</code>). Requires <code>--redis-output</code>.</td>
+</tr>
+<tr>
+<td><code>--redis-password PASSWORD</code></td>
+<td>Redis AUTH password for <code>--redis-output</code>. Requires <code>--redis-output</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mixins</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--mixin MIXIN [MIXIN ...]</code> / <code>-m MIXIN [MIXIN ...]</code></td>
+<td>One or more mixins to include. Replaces defaults when specified.</td>
+</tr>
+<tr>
+<td><code>--show-mixins</code></td>
+<td>List all available mixins with descriptions and exit.</td>
+</tr>
+<tr>
+<td><code>--all</code> / <code>-a</code></td>
+<td>Include all available mixins.</td>
+</tr>
+<tr>
+<td><code>--no-mixin</code></td>
+<td>Disable all mixins including defaults. Records only timing and command fields.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Execution</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--iterations N</code> / <code>-n N</code></td>
+<td>Run the command N times, recording each duration. Defaults to 1.</td>
+</tr>
+<tr>
+<td><code>--warmup N</code> / <code>-w N</code></td>
+<td>Run the command N times before timing begins (unrecorded). Defaults to 0.</td>
+</tr>
+<tr>
+<td><code>--stdout[=suppress]</code></td>
+<td>Capture stdout into the record and stream it to the terminal in real time. Use <code>=suppress</code> to capture without printing.</td>
+</tr>
+<tr>
+<td><code>--stderr[=suppress]</code></td>
+<td>Capture stderr into the record and stream it to the terminal in real time. Use <code>=suppress</code> to capture without printing.</td>
+</tr>
+<tr>
+<td><code>--timeout SECONDS</code></td>
+<td>Send SIGTERM to the command after SECONDS seconds per iteration. If the process has not exited after an additional grace period (default 5 s, see <code>--timeout-grace-period</code>), send SIGKILL. Timed-out iterations are recorded with <code>call.timed_out = true</code>.</td>
+</tr>
+<tr>
+<td><code>--timeout-grace-period SECONDS</code></td>
+<td>Seconds to wait after SIGTERM before sending SIGKILL. Requires <code>--timeout</code>. Default: 5.</td>
+</tr>
+<tr>
+<td><code>--monitor-interval SECONDS</code></td>
+<td>Sample the child process CPU usage and RSS memory every SECONDS seconds. Requires <code>psutil</code>. See <a href="#subprocess-monitoring">Subprocess monitoring</a> below.</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Print the resolved configuration and exit without running the command.</td>
+</tr>
+<tr>
+<td><code>--field KEY=VALUE</code> / <code>-f KEY=VALUE</code></td>
+<td>Extra metadata field. Can be repeated.</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>--</code> to separate microbench options from the command being benchmarked.</p>
+<div class="admonition note">
+<p class="admonition-title">Running scripts and shell built-ins</p>
+<p>microbench runs <code>COMMAND</code> directly as a process, not through a shell.
+The command must be an executable file — shell built-ins and script
+interpreters must be invoked explicitly.</p>
+<p><strong>POSIX (Linux / macOS) — shell scripts:</strong>
+Shell scripts can be run directly if they are executable and have a
+shebang line (<code>#!/bin/bash</code>). If not, invoke the interpreter explicitly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>microbench -- bash run_simulation.sh
+</code></pre></div>
+<p><strong>Windows — batch scripts (<code>.bat</code> / <code>.cmd</code>):</strong>
+Batch files are not standalone executables; they require <code>cmd.exe</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>microbench -- cmd /c run_simulation.bat
+</code></pre></div>
+<p><strong>Windows — PowerShell scripts (<code>.ps1</code>):</strong>
+PowerShell scripts require <code>powershell</code> (Windows PowerShell) or <code>pwsh</code>
+(PowerShell 7+). The default execution policy may also need overriding:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>microbench -- pwsh -ExecutionPolicy Bypass -File run_simulation.ps1
+</code></pre></div>
+<p><strong>Windows — shell built-ins</strong> (<code>echo</code>, <code>dir</code>, <code>type</code>, etc.) are part of
+<code>cmd.exe</code> and are not standalone executables. Use <code>cmd /c</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>microbench -- cmd /c echo hello
+</code></pre></div>
+<p>A cross-platform command for testing is <code>python -c "pass"</code>, which is
+always available in the environment where microbench is installed:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>microbench -- python -c &quot;pass&quot;
+</code></pre></div>
+</div>
+<h2 id="fields-recorded">Fields recorded</h2>
+<p>Every record contains the standard <code>mb.*</code> and <code>call.*</code> fields plus:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>call.invocation</code></td>
+<td>Always <code>'CLI'</code> for records produced by the CLI.</td>
+</tr>
+<tr>
+<td><code>call.name</code></td>
+<td>Basename of the executable, e.g. <code>"run_sim.sh"</code>.</td>
+</tr>
+<tr>
+<td><code>call.command</code></td>
+<td>Full command as a list, e.g. <code>["./run_sim.sh", "--steps", "1000"]</code>.</td>
+</tr>
+<tr>
+<td><code>call.returncode</code></td>
+<td>List of exit codes, one per timed iteration (warmup excluded). The process exits with the first non-zero return code, if present, or zero (success) otherwise.</td>
+</tr>
+<tr>
+<td><code>call.timed_out</code></td>
+<td><em>(present only when <code>--timeout</code> fires)</em> <code>true</code> when at least one timed iteration was killed due to the timeout. Absent on normal completion.</td>
+</tr>
+<tr>
+<td><code>call.monitor</code></td>
+<td><em>(present only with <code>--monitor-interval</code>)</em> List of per-iteration sample lists. See <a href="#subprocess-monitoring">Subprocess monitoring</a>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="default-mixins">Default mixins</h2>
+<p>When no <code>--mixin</code> is specified, <code>python-info</code>, <code>host-info</code>, <code>slurm-info</code>,
+<code>loaded-modules</code>, <code>working-dir</code>, and <code>resource-usage</code> are included
+automatically, capturing the Python interpreter version, prefix, and
+executable path; hostname and operating system; all <code>SLURM_*</code> environment
+variables; the loaded Lmod/Environment Modules software stack; the current
+working directory; and POSIX resource usage (CPU time, peak RSS, page faults,
+I/O, and context switches) for the benchmarked subprocess.
+All six degrade gracefully or produce stable values outside their respective
+environments.</p>
+<p>Mixin names use a short kebab-case form without the <code>MB</code> prefix
+(e.g. <code>host-info</code> instead of <code>MBHostInfo</code>). MB-prefixed names are also
+accepted for convenience. Run <code>--show-mixins</code> to list all available
+mixins with descriptions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>microbench<span class="w"> </span>--show-mixins
+</code></pre></div>
+<p>Specifying <code>--mixin</code> replaces the defaults entirely. Use the special name
+<code>defaults</code> in a <code>--mixin</code> list to include the standard default set, so you
+can extend it without listing all of them explicitly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Defaults plus file-hash</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>defaults<span class="w"> </span>file-hash<span class="w"> </span>--<span class="w"> </span>./job.sh
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Defaults plus git-info and cgroup-limits</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>defaults<span class="w"> </span>git-info<span class="w"> </span>cgroup-limits<span class="w"> </span>--<span class="w"> </span>./job.sh
+</code></pre></div>
+<p>Use <code>--no-mixin</code> to disable all mixins and record only timing and command
+fields:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Only Python info — no host info or SLURM</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>python-info<span class="w"> </span>--<span class="w"> </span>./job.sh
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># No mixins at all — timing and command only</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>microbench<span class="w"> </span>--no-mixin<span class="w"> </span>--<span class="w"> </span>./job.sh
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Python-environment mixins</p>
+<p><code>python-info</code> and <code>installed-packages</code> capture the <strong>microbench
+process's</strong> Python interpreter. In typical usage (microbench installed
+in the same environment as the benchmarked code) this is exactly what
+you want. If you need to target a different interpreter, invoke
+microbench via it: <code>python -m microbench --mixin python-info -- ./job.sh</code>.</p>
+<p><code>conda-packages</code> queries the environment identified by <code>CONDA_PREFIX</code>
+(the shell's active conda environment), not <code>sys.prefix</code>, so it
+captures the correct environment even when microbench's Python lives
+elsewhere (e.g. in base). Package versions are stored under
+<code>conda.packages</code> alongside <code>conda.name</code> and <code>conda.path</code>.</p>
+</div>
+<p>See <a href="../user-guide/mixins/">Mixins</a> for details on each.</p>
+<h2 id="mixin-options">Mixin options</h2>
+<p>Some mixins expose their own CLI flags for configuration. These are shown
+under each mixin in <code>--show-mixins</code> output and in <code>--help</code>. A mixin flag
+may only be used when its mixin is loaded; passing one without the
+corresponding mixin is an error.</p>
+<h3 id="git-info-options"><code>git-info</code> options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--git-repo DIR</code></td>
+<td>Directory to inspect for git information.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CLI default:</strong> current working directory.</p>
+<p><strong>Python API default:</strong> directory of the running script (<code>sys.argv[0]</code>).
+When using the CLI, <code>sys.argv[0]</code> points to the microbench package itself,
+so the CLI defaults to the working directory instead.</p>
+<h3 id="file-hash-options"><code>file-hash</code> options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--hash-file FILE [FILE ...]</code></td>
+<td>File(s) to hash. Overrides the default entirely.</td>
+</tr>
+<tr>
+<td><code>--hash-algorithm ALGORITHM</code></td>
+<td>Hash algorithm (e.g. <code>sha256</code>, <code>md5</code>). Default: <code>sha256</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CLI default for <code>--hash-file</code>:</strong> the benchmarked command executable
+(<code>cmd[0]</code>) <strong>plus any arguments that resolve to existing files on disk</strong>
+(<code>cmd[1:]</code>). For example, given the command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>microbench<span class="w"> </span>--mixin<span class="w"> </span>file-hash<span class="w"> </span>--<span class="w"> </span>./run.sh<span class="w"> </span>input.csv<span class="w"> </span>--config<span class="w"> </span>params.yaml
+</code></pre></div>
+<p>microbench will automatically hash <code>./run.sh</code>, <code>input.csv</code>, and
+<code>params.yaml</code> — capturing the provenance of inputs without any extra
+flags. Note that file hashes are computed prior to command execution.
+Tokens that don't correspond to existing files (flags such as
+<code>--config</code>, non-existent paths including output filenames) are
+silently ignored.</p>
+<p>Passing <code>--hash-file</code> overrides this default entirely; only the
+explicitly named files are hashed.</p>
+<p><strong>Python API default:</strong> the running script (<code>sys.argv[0]</code>). The same
+<code>sys.argv[0]</code> issue applies here, so the CLI defaults to hashing the
+command being benchmarked instead.</p>
+<h3 id="nvidia-smi-options"><code>nvidia-smi</code> options</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--nvidia-attributes ATTR [ATTR ...]</code></td>
+<td>GPU attributes to query. Run <code>nvidia-smi --help-query-gpu</code> for all names. Default: <code>gpu_name memory.total</code>.</td>
+</tr>
+<tr>
+<td><code>--nvidia-gpus GPU [GPU ...]</code></td>
+<td>GPU IDs to query: zero-based indexes, UUIDs, or PCI bus IDs. Run <code>nvidia-smi -L</code> to list UUIDs. Default: all GPUs.</td>
+</tr>
+</tbody>
+</table>
+<p>Example — record power draw and temperature for GPUs 0 and 1:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--mixin<span class="w"> </span>nvidia-smi<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span>temperature.gpu<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span>--nvidia-gpus<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<h3 id="resource-usage-options"><code>resource-usage</code> options</h3>
+<p><code>resource-usage</code> has no CLI flags. It is included in the defaults and records
+POSIX <code>getrusage()</code> data automatically for the benchmarked subprocess.</p>
+<p>On platforms where the Python <code>resource</code> module is unavailable,
+<code>resource-usage</code> omits the <code>resource_usage</code> key from the record entirely.</p>
+<h2 id="capture-failures">Capture failures</h2>
+<p>Metadata capture failures (e.g. <code>nvidia-smi</code> not installed on this node,
+script not in a git repository) are caught automatically and recorded in
+<code>call.capture_errors</code> rather than aborting the run. This makes the CLI safe
+to use across heterogeneous cluster nodes.</p>
+<h2 id="slurm-example">SLURM example</h2>
+<p>A typical SLURM job script:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="ch">#!/bin/bash</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1">#SBATCH --job-name=my-sim</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1">#SBATCH --output=slurm-%j.out</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>baseline<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
+</code></pre></div>
+<p>Each node that runs this job appends one JSONL record to <code>results.jsonl</code>,
+capturing hostname, OS, CPU count, RAM, and all SLURM variables (job ID, array
+task ID, node list, etc.) alongside the wall-clock time of the simulation.
+CPU and RAM fields are included automatically by <code>host-info</code> when psutil is
+installed.</p>
+<p>Read the results:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">df</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/scratch/user/results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;df&#39;</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.durations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;slurm.job_id&#39;</span><span class="p">)[</span><span class="s1">&#39;total_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="repeated-runs">Repeated runs</h2>
+<p>Use <code>--iterations</code> to run the command multiple times within a single record.
+This is useful when the command is short-lived and you want to amortise
+per-record overhead or reduce timing noise:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>microbench<span class="w"> </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span>--warmup<span class="w"> </span><span class="m">2</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>With 10 iterations and 2 warmup runs, the record contains:</p>
+<ul>
+<li><code>call.durations</code> — list of 10 wall-clock durations in seconds</li>
+<li><code>call.returncode</code> — list of 10 exit codes (one per timed iteration)</li>
+<li><code>call.stdout</code> / <code>call.stderr</code> — list of 10 captured strings, if <code>--stdout</code>/<code>--stderr</code> is used</li>
+<li><code>resource_usage</code> — list of 10 per-iteration rusage dicts (when <code>resource-usage</code> mixin is active)</li>
+</ul>
+<p>Warmup runs are excluded from all three lists. The process exits with
+the first non-zero return code, if present, so any failing iteration
+propagates to the shell.</p>
+<div class="admonition note">
+<p class="admonition-title">Subprocess-side buffering</p>
+<p>When stdout or stderr is captured via a pipe, many programs switch from
+line-buffered to block-buffered mode because they detect they are not
+writing to a TTY. Output will still stream to the terminal in real time
+from microbench's perspective, but the subprocess itself may batch writes
+into larger chunks. Use <code>stdbuf -oL</code> (Linux) or the program's own
+unbuffering flag (e.g. <code>python -u</code>) if you need per-line flushing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>microbench<span class="w"> </span>--stdout<span class="w"> </span>--<span class="w"> </span>stdbuf<span class="w"> </span>-oL<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+</div>
+<p>To detect failed iterations when analysing results with pandas (using <code>flat=True</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_failed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;call.returncode&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rc</span><span class="p">:</span> <span class="nb">any</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span>
+</code></pre></div>
+<h2 id="timeout">Timeout</h2>
+<p>Use <code>--timeout SECONDS</code> to limit how long each iteration is allowed to run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>microbench<span class="w"> </span>--timeout<span class="w"> </span><span class="m">120</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>After <code>SECONDS</code> seconds, microbench sends <strong>SIGTERM</strong> to the process. If the
+process has not exited after an additional grace period (default 5 s), <strong>SIGKILL</strong>
+is sent. The SIGTERM window gives well-behaved processes a chance to flush output
+and write partial results before being force-killed. Use <code>--timeout-grace-period</code>
+to adjust the gap between SIGTERM and SIGKILL:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>microbench<span class="w"> </span>--timeout<span class="w"> </span><span class="m">120</span><span class="w"> </span>--timeout-grace-period<span class="w"> </span><span class="m">30</span><span class="w"> </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>The record is always written, even for timed-out iterations. Detect timeouts in
+analysis with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">timed_out</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;call.timed_out&#39;</span><span class="p">)</span>  <span class="c1"># Check if column if present</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">df</span><span class="p">[</span><span class="s1">&#39;any_timed_out&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="n">timed_out</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">timed_out</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+</code></pre></div>
+<p>The <code>call.returncode</code> for a SIGTERM-killed process will be <code>-15</code>; for SIGKILL, <code>-9</code>.</p>
+<h2 id="http-output">HTTP output</h2>
+<p>Use <code>--http-output</code> to POST each record as JSON to an HTTP endpoint. The record
+body is identical to what <code>--outfile</code> would write. This is useful for real-time
+notifications and custom REST endpoints.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>microbench<span class="w"> </span>--http-output<span class="w"> </span>https://api.example.com/benchmarks<span class="w"> </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<p>For authenticated endpoints, pass headers with <code>--http-output-header</code>. The value
+is split on the first <code>:</code>, so bearer tokens and other header values work naturally:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span>--http-output<span class="w"> </span>https://api.example.com/benchmarks<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span>--http-output-header<span class="w"> </span><span class="s2">&quot;Authorization:Bearer </span><span class="nv">$MY_TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="w">    </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<p>Multiple headers can be supplied by repeating the flag:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span>--http-output<span class="w"> </span>https://api.example.com/benchmarks<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>--http-output-header<span class="w"> </span><span class="s2">&quot;Authorization:Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>--http-output-header<span class="w"> </span><span class="s2">&quot;X-Tenant:my-org&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="w">    </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<p><code>--outfile</code> and <code>--http-output</code> can be combined to write to both destinations simultaneously:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span>--http-output<span class="w"> </span>https://hooks.example.com/events<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span>--<span class="w"> </span>./run.sh
+</code></pre></div>
+<p>To send results to a service that requires a shaped payload (e.g. Slack's
+<code>{"text": "..."}</code> envelope), use the Python API with a <code>HttpOutput</code> subclass
+that overrides <code>format_payload</code>. The CLI always sends the raw record JSON.</p>
+<h2 id="redis-output">Redis output</h2>
+<p>Use <code>--redis-output KEY</code> to RPUSH each record as JSON to a Redis list. This is
+the natural output sink for SLURM array jobs where many nodes write concurrently
+and a shared filesystem is impractical. Requires the
+<a href="https://github.com/andymccurdy/redis-py">redis-py</a> package (<code>pip install redis</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>Use <code>--redis-port</code> and <code>--redis-db</code> to connect to a non-default port or database:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">    </span>--redis-port<span class="w"> </span><span class="m">6380</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="w">    </span>--redis-db<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>For password-protected Redis instances, pass <code>--redis-password</code>. Read it from an
+environment variable to avoid it appearing in shell history:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span>--redis-host<span class="w"> </span>redis.example.com<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">    </span>--redis-password<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$REDIS_PASSWORD</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p><code>--redis-output</code> can be combined with <code>--outfile</code> or <code>--http-output</code> to write to
+multiple destinations simultaneously:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span>--redis-output<span class="w"> </span>bench:results<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh
+</code></pre></div>
+<p>Read results back from Redis with Python:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">redis</span><span class="o">,</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="n">client</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">StrictRedis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis.example.com&#39;</span><span class="p">)</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="n">records</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">lrange</span><span class="p">(</span><span class="s1">&#39;bench:results&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+</code></pre></div>
+<p>Or via microbench's <code>RedisOutput.get_results()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">RedisOutput</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;bench:results&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis.example.com&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="dry-run">Dry run</h2>
+<p>Use <code>--dry-run</code> to verify your configuration without actually running the command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span>--dry-run<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span>--outfile<span class="w"> </span>/scratch/<span class="nv">$USER</span>/results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="w">    </span>--mixin<span class="w"> </span>host-info<span class="w"> </span>slurm-info<span class="w"> </span>nvidia-smi<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="w">    </span>--nvidia-attributes<span class="w"> </span>gpu_name<span class="w"> </span>power.draw<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="w">    </span>--iterations<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-30-7" name="__codelineno-30-7" href="#__codelineno-30-7"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">1000</span>
+</code></pre></div>
+<p>Example output:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>Dry run — command will not be executed.
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>  Command:    ./run_simulation.sh --steps 1000
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>  Output:     /scratch/user/results.jsonl
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>  Mixins:     host-info, nvidia-smi, slurm-info
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>    --nvidia-attributes gpu_name power.draw
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>  Iterations: 10
+</code></pre></div>
+<p>All argument validation still runs, so <code>--dry-run</code> will catch errors like a
+missing <code>--timeout</code> when <code>--timeout-grace-period</code> is given, or a <code>--hash-file</code>
+path that does not exist.</p>
+<h2 id="extra-metadata">Extra metadata</h2>
+<p>Use <code>--field</code> to attach experiment labels or other fixed values:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">experiment</span><span class="o">=</span>ablation-1<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="w">    </span>--field<span class="w"> </span><span class="nv">dataset</span><span class="o">=</span>large<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="w">    </span>--<span class="w"> </span>python<span class="w"> </span>train.py
+</code></pre></div>
+<p>All <code>--field</code> values are stored as strings.</p>
+<h2 id="subprocess-monitoring">Subprocess monitoring</h2>
+<p>Use <code>--monitor-interval SECONDS</code> to periodically sample the child process
+while it runs. This requires the <a href="https://psutil.readthedocs.io/"><code>psutil</code></a>
+package (<code>pip install psutil</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>microbench<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span>--outfile<span class="w"> </span>results.jsonl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span>--monitor-interval<span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="w">    </span>--<span class="w"> </span>./run_simulation.sh<span class="w"> </span>--steps<span class="w"> </span><span class="m">10000</span>
+</code></pre></div>
+<p>The record gains a <code>call.monitor</code> field: a list of per-iteration
+sample lists (one inner list per <code>--iterations</code> call, warmup excluded).
+Each sample is a dict with three keys:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>timestamp</code></td>
+<td>ISO 8601 UTC timestamp of the sample.</td>
+</tr>
+<tr>
+<td><code>cpu_percent</code></td>
+<td>CPU usage of the child process as a percentage (0–100 per core, so values above 100 are possible on multi-core machines).</td>
+</tr>
+<tr>
+<td><code>rss_bytes</code></td>
+<td>Resident set size (physical RAM) of the child process in bytes.</td>
+</tr>
+</tbody>
+</table>
+<p>Example record (single iteration, two samples):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="p">{</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">  </span><span class="nt">&quot;call&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span><span class="nt">&quot;monitor&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="w">      </span><span class="p">[</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:05Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">52428800</span><span class="p">},</span>
+<a id="__codelineno-34-6" name="__codelineno-34-6" href="#__codelineno-34-6"></a><span class="w">        </span><span class="p">{</span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:10Z&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;cpu_percent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">87.3</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rss_bytes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">61865984</span><span class="p">}</span>
+<a id="__codelineno-34-7" name="__codelineno-34-7" href="#__codelineno-34-7"></a><span class="w">      </span><span class="p">]</span>
+<a id="__codelineno-34-8" name="__codelineno-34-8" href="#__codelineno-34-8"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-34-9" name="__codelineno-34-9" href="#__codelineno-34-9"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-34-10" name="__codelineno-34-10" href="#__codelineno-34-10"></a><span class="p">}</span>
+</code></pre></div>
+<p>Only the direct child process is tracked. If the child spawns its own
+subprocesses, their CPU and memory usage are not included.</p>
+<p>If the process exits before the first sample interval fires (e.g. a very
+short-lived command with a long <code>--monitor-interval</code>), the inner list will
+be empty and <code>call.monitor</code> is omitted from the record.</p>
+<p>Analyse with <code>get_results()</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileOutput</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="n">results</span> <span class="o">=</span> <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;results.jsonl&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_results</span><span class="p">()</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="c1"># Flatten all samples for the first iteration across all records</span>
+<a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span>
+<a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a><span class="n">samples</span> <span class="o">=</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span>
+<a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>    <span class="n">s</span>
+<a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a>    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span>
+<a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">][</span><span class="s1">&#39;monitor&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># [0] = first iteration</span>
+<a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a><span class="p">])</span>
+<a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a><span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_mb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[</span><span class="s1">&#39;rss_bytes&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
+<a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">samples</span><span class="p">[[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s1">&#39;cpu_percent&#39;</span><span class="p">,</span> <span class="s1">&#39;rss_mb&#39;</span><span class="p">]])</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.sections", "navigation.top", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,1623 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Micro-benchmarking and reproducibility metadata capture for Python">
+      
+      
+      
+        <link rel="canonical" href="https://alubbock.github.io/microbench/latest/changelog/">
+      
+      
+        <link rel="prev" href="../citing/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Changelog - microbench</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="microbench" class="md-header__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            microbench
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="microbench" class="md-nav__button md-logo" aria-label="microbench" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    microbench
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/alubbock/microbench" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    alubbock/microbench
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command-line interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python API configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/mixins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/output/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Output
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Periodic monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Async functions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/extending/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Extending microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing microbench
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#210-2026-04-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.1.0] - 2026-04-26
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.1.0] - 2026-04-26">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2026-03-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] - 2026-03-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.0.0] - 2026-03-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking changes (vs v1.1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2026-03-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2026-03-13
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.1.0] - 2026-03-13">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#210-2026-04-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.1.0] - 2026-04-26
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.1.0] - 2026-04-26">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhancements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enhancements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2026-03-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] - 2026-03-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.0.0] - 2026-03-17">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes-vs-v110" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking changes (vs v1.1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2026-03-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2026-03-13
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[1.1.0] - 2026-03-13">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-features_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New features
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog</h1>
+<p>All notable changes to microbench are documented here.</p>
+<h2 id="210-2026-04-26">[2.1.0] - 2026-04-26</h2>
+<h3 id="new-features">New features</h3>
+<ul>
+<li>
+<p><strong><code>MBResourceUsage</code> mixin</strong>: captures POSIX <code>getrusage()</code> data — user and
+  system CPU time, peak RSS (in bytes, normalised across platforms), minor and
+  major page faults, block I/O operations, and voluntary/involuntary context
+  switches. Results are stored as a <strong>list</strong> in <code>resource_usage</code>, one entry per
+  timed iteration, aligned index-for-index with <code>call.durations</code> and
+  <code>call.returncode</code>. Added as a <strong>default CLI mixin</strong> so every CLI run captures
+  it automatically.</p>
+</li>
+<li>
+<p><em>CLI mode</em>: on POSIX, uses <code>os.wait4()</code> to capture the exact rusage of each
+    individual child process as reported by the kernel, including a reliable
+    <code>maxrss</code> per iteration regardless of <code>--iterations</code> or <code>--warmup</code> count.</p>
+</li>
+<li><em>Python API mode</em>: uses <code>RUSAGE_SELF</code> with a before/after delta around each
+    individual call — one entry per timed iteration, aligned with
+    <code>call.durations</code>. Warmup calls are excluded. <code>maxrss</code> is omitted (lifetime
+    process HWM, not per-call). Use <code>MBPeakMemory</code> for per-call peak memory.</li>
+</ul>
+<p>On platforms where the stdlib <code>resource</code> module is unavailable, the
+  <code>resource_usage</code> key is omitted from the record entirely.</p>
+<h3 id="enhancements">Enhancements</h3>
+<ul>
+<li>
+<p><strong><code>--mixin defaults</code> keyword</strong> (CLI): <code>defaults</code> can be used as a mixin
+  name to expand to the standard default set (<code>python-info</code>, <code>host-info</code>,
+  <code>slurm-info</code>, <code>loaded-modules</code>, <code>working-dir</code>, <code>resource-usage</code>). This
+  makes it easy to add one or more extra mixins without listing all six
+  defaults explicitly:
+  <code>microbench --mixin defaults file-hash -- ./job.sh</code>.</p>
+</li>
+<li>
+<p><strong><code>file-hash</code> mixin — automatic argument file scanning</strong> (CLI): the
+  default hash list now includes not only the command executable (<code>cmd[0]</code>)
+  but also any command-line arguments (<code>cmd[1:]</code>) that resolve to existing
+  files on disk prior to command execution. Passing <code>--hash-file</code> still
+  overrides the default entirely; the Python API is unaffected. The hash
+  algorithm name is now stored under <code>mb.file_hash_algorithm</code>.</p>
+</li>
+</ul>
+<h3 id="bug-fixes">Bug fixes</h3>
+<ul>
+<li><strong><code>MBResourceUsage</code> — <code>pre_run_triggers</code>/<code>post_run_triggers</code> now forward
+  via <code>super()</code></strong>: composing <code>MBResourceUsage</code> with another mixin that also
+  implements <code>pre_run_triggers</code> or <code>post_run_triggers</code> previously caused the
+  second mixin's hooks to be silently skipped. Both methods now propagate
+  correctly through the MRO.</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>
+<p><strong><code>cli_compatible</code> class attribute removed from built-in mixins</strong>: this
+  attribute was never read at runtime — CLI availability is governed solely
+  by the <code>MIXIN_REGISTRY</code> in <code>cli/registry.py</code>. The extending guide example
+  has been updated to drop it; custom mixins that set it can safely remove
+  it without any behavioural change.</p>
+</li>
+<li>
+<p>Fix documentation on writing custom mixins to note that they must be
+  added to the registry if they are to be detected by the CLI.</p>
+</li>
+</ul>
+<h2 id="200-2026-03-17">[2.0.0] - 2026-03-17</h2>
+<p>Microbench v2 is a significant upgrade with many new features versus v1.1.0.
+Be sure to review the breaking changes before upgrading.</p>
+<h3 id="new-features_1">New features</h3>
+<ul>
+<li>
+<p><strong>Command-line interface</strong> (<code>microbench -- COMMAND</code>): wrap any external
+  command and record host metadata alongside timing without writing Python
+  code. Useful for SLURM jobs, shell scripts, and compiled executables.</p>
+<ul>
+<li>Records <code>command</code>, <code>returncode</code> (list, one per timed iteration),
+  alongside the standard timing fields. Mixins are specified by short
+  kebab-case names without the <code>MB</code> prefix (e.g. <code>host-info</code>);
+  original MB-prefixed names are also accepted.</li>
+<li>Use
+  <code>--mixin MIXIN [MIXIN ...]</code> to select metadata to capture (defaults to
+  <code>host-info</code>, <code>slurm-info</code>, <code>loaded-modules</code>, <code>python-info</code>
+  and <code>working-dir</code>)</li>
+<li>Use <code>--show-mixins</code> to
+  list all available mixins with descriptions; use <code>--field KEY=VALUE</code> to
+  attach extra labels</li>
+<li>Use <code>--iterations N</code> and <code>--warmup N</code> for repeat
+  timing</li>
+<li>Use <code>--stdout[=suppress]</code> and <code>--stderr[=suppress]</code> to capture subprocess output into the record (output is re-printed to the terminal
+  unless <code>=suppress</code> is given)</li>
+<li>Use <code>--monitor-interval SECONDS</code> to sample
+  child process CPU and memory over time.</li>
+<li>Some mixins expose
+  their own configuration flags (shown in <code>--show-mixins</code> and <code>--help</code>)</li>
+<li>Capture failures are non-fatal by default
+  (<code>capture_optional = True</code>), making the CLI safe across heterogeneous
+  cluster nodes.</li>
+<li>The process exits with the first non-zero returncode seen
+  across all timed iterations if present, or zero (success) otherwise.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>summary(results)</code> / <code>bench.summary()</code></strong>: prints min / mean / median /
+  max / stdev of <code>call.durations</code> across all results. No dependencies required
+  beyond the Python standard library. <code>bench.summary()</code> is a one-liner
+  convenience that calls <code>bench.get_results()</code> internally. The module-level
+  <code>summary(results)</code> accepts any list of dicts and can be composed with other
+  results-processing steps.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">summary</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">()</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nd">@bench</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">my_function</span><span class="p">():</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="o">...</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">my_function</span><span class="p">()</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">bench</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># n=10  min=0.000031  mean=0.000038  median=0.000036  max=0.000059  stdev=0.000008</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># or with explicit results list:</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">summary</span><span class="p">(</span><span class="n">bench</span><span class="o">.</span><span class="n">get_results</span><span class="p">())</span>
+</code></pre></div>
+<ul>
+<li><strong><code>bench.time(name)</code> sub-timing</strong>: [Python API] label phases inside a single benchmark
+  record with named timing sections. Sub-timings accumulate in <code>call.timings</code> as
+  <code>[{"name": ..., "duration": ...}, ...]</code> in call order. Compatible with
+  <code>bench.record()</code>, <code>bench.arecord()</code>, <code>@bench</code> (sync and async), and
+  <code>bench.record_on_exit()</code>. Calling outside an active benchmark is a silent
+  no-op; <code>call.timings</code> is absent when <code>bench.time()</code> is never called.</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s1">&#39;pipeline&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;parse&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">time</span><span class="p">(</span><span class="s1">&#39;transform&#39;</span><span class="p">):</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</code></pre></div>
+<ul>
+<li><strong>Async support</strong>: [Python API] the <code>@bench</code> decorator now detects <code>async def</code> functions
+  and returns an <code>async def</code> wrapper that must be awaited. A new
+  <code>bench.arecord(name)</code> method provides the async counterpart of
+  <code>bench.record()</code> for use with <code>async with</code>. All mixins, static fields,
+  output sinks, <code>iterations</code>, and <code>warmup</code> work identically to the sync path.
+  <code>MBLineProfiler</code> raises <code>NotImplementedError</code> at decoration time when used
+  with an async function (line profiling of coroutines is not supported).</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nd">@bench</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">fetch</span><span class="p">():</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">fetch</span><span class="p">())</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">async</span> <span class="k">with</span> <span class="n">bench</span><span class="o">.</span><span class="n">arecord</span><span class="p">(</span><span class="s1">&#39;load&#39;</span><span class="p">):</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">await</span> <span class="n">load_data</span><span class="p">()</span>
+</code></pre></div>
+<p><strong>Note:</strong> elapsed time includes event-loop interleaving from other concurrent
+  tasks; run in an otherwise-idle event loop for repeatable results.</p>
+<ul>
+<li><strong><code>bench.record_on_exit(name, handle_sigterm=True)</code></strong>: [Python API]
+  registers a
+  process-exit handler that writes one benchmark record when the script
+  terminates. Captures wall-clock duration from the call site to exit plus
+  all mixin fields. Designed for SLURM jobs and batch scripts where
+  restructuring code around a decorator is impractical. Key behaviours:</li>
+<li>By default installs a SIGTERM handler (main thread only) that writes
+    the record, chains to any existing SIGTERM handler, then re-delivers
+    SIGTERM so the process exits with the conventional code 143 (128 + 15).</li>
+<li>Wraps <code>sys.excepthook</code> to capture unhandled exceptions into an
+    <code>exception</code> field before the process exits.</li>
+<li>Adds an <code>exit_signal</code> field when the exit was triggered by SIGTERM.</li>
+<li>Falls back to writing the record to <code>sys.stderr</code> if the primary output
+    sink raises (e.g. filesystem unmounted at exit time).</li>
+<li>
+<p>Calling a second time on the same instance replaces the first
+    registration and resets the start time.</p>
+</li>
+<li>
+<p><strong><code>bench.record(name)</code> context manager</strong>: [Python API] times an arbitrary code block
+  and writes one record, without requiring the code to be in a named
+  function. All mixins, static fields, and output sinks behave identically
+  to the decorator form.</p>
+</li>
+<li>
+<p><strong>Exception capture</strong>: [Python API] when a benchmarked block raises — via
+  <code>bench.record()</code> or a <code>@bench</code>-decorated function — the record is
+  written before the exception propagates. An <code>exception</code> field is added
+  containing <code>{"type": ..., "message": ...}</code>. The exception is always
+  re-raised. With <code>--iterations N</code>, timing stops at the first exception.</p>
+</li>
+<li>
+<p><strong><code>MBPythonInfo</code> mixin</strong> replaces <code>MBPythonVersion</code>: records a <code>python</code> dict
+  with <code>version</code>, <code>prefix</code> (<code>sys.prefix</code>), and <code>executable</code> (<code>sys.executable</code>),
+  giving a complete picture of the running interpreter in one field. <code>MBPythonVersion</code>
+  has been removed (see breaking changes above). <code>MBPythonInfo</code> is included
+  in <code>MicroBench</code> by default (Python API) and in the CLI default mixin set;
+  <code>--no-mixin</code> suppresses it on the CLI as usual.</p>
+</li>
+<li>
+<p><strong><code>MBLoadedModules</code> mixin</strong>: captures the loaded Lmod / Environment
+  Modules software stack into a <code>loaded_modules</code> dict mapping module name
+  to version string (e.g. <code>{"gcc": "12.2.0", "openmpi": "4.1.5"}</code>). Reads
+  the standard <code>LOADEDMODULES</code> environment variable — no subprocess, no
+  extra dependencies. Empty dict when no modules are loaded. Included in
+  the CLI defaults alongside <code>MBHostInfo</code>, <code>MBSlurmInfo</code>, and <code>MBWorkingDir</code>.</p>
+</li>
+<li>
+<p><strong><code>MBWorkingDir</code> mixin</strong>: captures the absolute path of the working
+  directory at benchmark time into <code>call.working_dir</code>. No dependencies.
+  Included in the CLI defaults — useful for reproducibility when comparing
+  results across nodes or directories.</p>
+</li>
+<li>
+<p><strong><code>MBGitInfo</code> mixin</strong>: captures the repository root path, current commit
+  hash, branch name, and dirty flag (uncommitted changes present) via
+  <code>git</code> ≥ 2.11 on PATH. Stored in <code>git</code>. Set <code>git_repo</code> to inspect
+  a specific repository directory.</p>
+</li>
+<li>
+<p><strong><code>MBPeakMemory</code> mixin</strong>: captures peak Python memory allocation during the
+  benchmarked function as <code>call.peak_memory_bytes</code> (bytes), using
+  <code>tracemalloc</code> from the standard library. No extra dependencies required.</p>
+</li>
+<li>
+<p><strong><code>MBSlurmInfo</code> mixin</strong>: captures all <code>SLURM_*</code> environment variables into
+  a <code>slurm</code> dict (keys lowercased, <code>SLURM_</code> prefix stripped). Empty dict
+  when running outside a SLURM job. Supersedes the manual
+  <code>env_vars = ('SLURM_JOB_ID', ...)</code> pattern.</p>
+</li>
+<li>
+<p><strong><code>MBFileHash</code> mixin</strong>: records a cryptographic checksum of specified files
+  in the <code>file_hashes</code> field (a dict mapping path to hex digest). Defaults to
+  hashing <code>sys.argv[0]</code> — the running script. Set <code>hash_files</code> to an iterable
+  of paths to hash specific files instead. Set <code>hash_algorithm</code> to any
+  algorithm accepted by <code>hashlib.new</code> (default: <code>'sha256'</code>).</p>
+</li>
+<li>
+<p><strong><code>MBCgroupLimits</code> mixin</strong>: captures the CPU quota and memory limit enforced by
+  the Linux cgroup filesystem. Works for SLURM jobs and Kubernetes pods (cgroup
+  v1 and v2). Fields in <code>cgroups</code>: <code>cpu_cores_limit</code> (float — quota ÷ period,
+  or <code>null</code> if unlimited), <code>memory_bytes_limit</code> (int or <code>null</code> if unlimited),
+  <code>version</code> (1 or 2). Returns <code>{}</code> on non-Linux systems or when the
+  cgroup filesystem is unavailable.</p>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">Bench</span><span class="p">(</span><span class="n">MicroBench</span><span class="p">,</span> <span class="n">MBSlurmInfo</span><span class="p">,</span> <span class="n">MBCgroupLimits</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">pass</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;cgroups&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;cpu_cores_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;memory_bytes_limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">17179869184</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong><code>MBCondaPackages</code> improvements</strong>:</li>
+<li>Queries the environment identified by <code>CONDA_PREFIX</code> (the shell's active conda
+    environment) rather than <code>sys.prefix</code>. Falls back to <code>sys.prefix</code> when
+    <code>CONDA_PREFIX</code> is not set.</li>
+<li>Falls back to <code>CONDA_EXE</code> if <code>conda</code> is not on <code>PATH</code> (common in non-interactive
+    SLURM batch scripts where conda is activated but its <code>bin/</code> is not on <code>PATH</code>).</li>
+<li>
+<p>Replaces the separate <code>conda_versions</code> field with a unified <code>conda</code> dict
+    containing <code>name</code> (<code>CONDA_DEFAULT_ENV</code>), <code>path</code> (<code>CONDA_PREFIX</code>), and
+    <code>packages</code> (the version dict). Either of <code>name</code>/<code>path</code> may be <code>None</code> if
+    the corresponding variable is unset. With <code>get_results(flat=True)</code> these
+    expand to <code>conda.name</code>, <code>conda.path</code>, <code>conda.packages.&lt;pkg&gt;</code> etc.</p>
+</li>
+<li>
+<p><strong><code>MicroBenchBase</code></strong>: the core benchmarking machinery is now exposed as
+  <code>MicroBenchBase</code> (no default mixins). <code>MicroBench</code> inherits from both
+  <code>MicroBenchBase</code> and <code>MBPythonInfo</code>. Subclass <code>MicroBenchBase</code> directly when
+  you need a completely bare benchmark class with no automatic captures.</p>
+</li>
+<li>
+<p><strong><code>warmup</code> parameter</strong>: pass <code>warmup=N</code> to run the function <code>N</code> times
+  before timing begins, priming caches or JIT compilation without affecting
+  results. Warmup calls are unrecorded and do not interact with the monitor
+  thread or capture triggers.</p>
+</li>
+<li>
+<p><strong>Multi-sink output architecture</strong> (#52): Results can now be written to
+  multiple destinations simultaneously by passing an <code>outputs</code> list to
+  <code>MicroBench</code>. Three classes make up the new output API:</p>
+</li>
+<li><code>Output</code> — abstract base class; subclass this to implement custom sinks.</li>
+<li><code>FileOutput</code> — writes JSONL to a file path or file-like object (wraps the
+    previous default behaviour).</li>
+<li><code>RedisOutput</code> — writes to a Redis list.</li>
+<li><code>HttpOutput</code> - New for v2 - POST each benchmark result to an HTTP/HTTPS endpoint.</li>
+</ul>
+<p>The existing <code>outfile</code> parameter and class-level <code>outfile</code> attribute continue
+  to work as shorthand for a single <code>FileOutput</code>. Passing both <code>outfile</code> and
+  <code>outputs</code> raises <code>ValueError</code>.</p>
+<p>Example — write to a file and Redis simultaneously:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">FileOutput</span><span class="p">,</span> <span class="n">RedisOutput</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">FileOutput</span><span class="p">(</span><span class="s1">&#39;/home/user/results.jsonl&#39;</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s1">&#39;redis-host&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">),</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">])</span>
+</code></pre></div>
+<p><code>get_results()</code> delegates to the first sink that supports reading back
+  results (<code>FileOutput</code> and <code>RedisOutput</code> both do).</p>
+<ul>
+<li><strong><code>get_results(format=..., flat=...)</code></strong>: <code>get_results</code> now accepts two
+  keyword arguments.</li>
+<li><code>format='dict'</code> (default) — returns a list of dicts; no pandas required.</li>
+<li><code>format='df'</code> — returns a pandas DataFrame (previous default behaviour).</li>
+<li>
+<p><code>flat=True</code> — flattens nested dict fields (e.g. <code>slurm</code>, <code>cgroups</code>,
+    <code>git</code>) into dot-notation keys (<code>slurm.job_id</code>, <code>call.name</code>). Works for both
+    formats without requiring pandas.</p>
+</li>
+<li>
+<p><strong><code>capture_optional</code> class attribute</strong>: set <code>capture_optional = True</code> on
+  a benchmark class to catch exceptions from <code>capture_</code> and <code>capturepost_</code>
+  methods instead of aborting the benchmark call. Failures are recorded in
+  <code>call.capture_errors</code> (a list of <code>{"method": ..., "error": ...}</code> dicts);
+  the field is absent when all captures succeed. Designed for production
+  jobs on heterogeneous cluster nodes where optional dependencies may not
+  be present on every node.</p>
+</li>
+<li>
+<p><strong><code>python-dateutil</code> dependency removed from <code>LiveStream</code></strong>: timestamp
+  parsing now uses <code>datetime.fromisoformat()</code> from the standard library.
+  Remove <code>python-dateutil</code> from your environment if it was
+  only installed for microbench.</p>
+</li>
+</ul>
+<h3 id="breaking-changes-vs-v110">Breaking changes (vs v1.1.0)</h3>
+<ul>
+<li><strong>Removed deprecated mixins</strong>: <code>MBPythonVersion</code>, <code>MBHostCpuCores</code>, and
+  <code>MBHostRamTotal</code> have been removed.</li>
+<li>Replace <code>MBPythonVersion</code> with <code>MBPythonInfo</code> (captures <code>python.version</code>,
+    <code>python.prefix</code>, <code>python.executable</code>).</li>
+<li>
+<p>Replace <code>MBHostCpuCores</code> and/or <code>MBHostRamTotal</code> with <code>MBHostInfo</code>, which
+    now captures <code>host.cpu_cores_logical</code>, <code>host.cpu_cores_physical</code>, and
+    <code>host.ram_total</code> automatically when psutil is installed.</p>
+</li>
+<li>
+<p><strong>Namespace restructuring of record fields</strong>: All benchmark record fields are
+  now grouped into top-level namespace dicts, making records self-documenting
+  and easier to query. The complete rename table is below.</p>
+</li>
+</ul>
+<p><strong>Core fields</strong> move into <code>mb</code> (static config) and <code>call</code> (per-call data):</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mb_run_id</code></td>
+<td><code>mb.run_id</code></td>
+</tr>
+<tr>
+<td><code>mb_version</code></td>
+<td><code>mb.version</code></td>
+</tr>
+<tr>
+<td><code>timestamp_tz</code></td>
+<td><code>mb.timezone</code></td>
+</tr>
+<tr>
+<td><code>duration_counter</code></td>
+<td><code>mb.duration_counter</code></td>
+</tr>
+<tr>
+<td><code>start_time</code></td>
+<td><code>call.start_time</code></td>
+</tr>
+<tr>
+<td><code>finish_time</code></td>
+<td><code>call.finish_time</code></td>
+</tr>
+<tr>
+<td><code>run_durations</code></td>
+<td><code>call.durations</code></td>
+</tr>
+<tr>
+<td><code>function_name</code></td>
+<td><code>call.name</code></td>
+</tr>
+<tr>
+<td><code>telemetry</code></td>
+<td><code>call.monitor</code></td>
+</tr>
+<tr>
+<td><code>env_*</code> (flat keys)</td>
+<td><code>env.*</code> (dict)</td>
+</tr>
+<tr>
+<td><code>package_versions</code> (from <code>capture_versions</code>)</td>
+<td><code>python.loaded_packages</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Mixin fields</strong> move to typed namespaces:</p>
+<table>
+<thead>
+<tr>
+<th>Old key</th>
+<th>New key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hostname</code></td>
+<td><code>host.hostname</code></td>
+</tr>
+<tr>
+<td><code>operating_system</code></td>
+<td><code>host.os</code></td>
+</tr>
+<tr>
+<td><code>cpu_cores_physical</code></td>
+<td><code>host.cpu_cores_physical</code></td>
+</tr>
+<tr>
+<td><code>ram_total</code></td>
+<td><code>host.ram_total</code></td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td><code>call.args</code></td>
+</tr>
+<tr>
+<td><code>kwargs</code></td>
+<td><code>call.kwargs</code></td>
+</tr>
+<tr>
+<td><code>return_value</code></td>
+<td><code>call.return_value</code></td>
+</tr>
+<tr>
+<td><code>line_profiler</code></td>
+<td><code>call.line_profiler</code></td>
+</tr>
+<tr>
+<td><code>package_versions</code> (MBGlobalPackages)</td>
+<td><code>python.loaded_packages</code></td>
+</tr>
+<tr>
+<td><code>package_versions</code> (MBInstalledPackages)</td>
+<td><code>python.installed_packages</code></td>
+</tr>
+<tr>
+<td><code>package_paths</code></td>
+<td><code>python.installed_package_paths</code></td>
+</tr>
+<tr>
+<td><code>nvidia_&lt;attr&gt;</code> (multiple flat dicts)</td>
+<td><code>nvidia</code> (list of per-GPU dicts with <code>uuid</code> key)</td>
+</tr>
+</tbody>
+</table>
+<p>Unchanged namespaces: <code>conda</code>.</p>
+<p><strong>Migration:</strong> Use <code>get_results(flat=True)</code> to access fields via dot-notation
+  keys (<code>call.name</code>, <code>mb.run_id</code>, <code>host.hostname</code>, etc.) in pandas or scripts
+  without rewriting nested dict access. Alternatively, update field access to
+  the new nested structure: <code>result['call']['name']</code>, <code>result['mb']['run_id']</code>,
+  <code>result['host']['hostname']</code>, etc.</p>
+<ul>
+<li>
+<p><strong><code>get_results()</code> now returns a list of dicts by default</strong>: The default
+  <code>format='dict'</code> returns a list of plain Python dicts and requires no
+  dependencies. Pass <code>format='df'</code> to get a pandas DataFrame (previous
+  behaviour). Update existing callers: <code>bench.get_results()</code> →
+  <code>bench.get_results(format='df')</code>.</p>
+</li>
+<li>
+<p><strong><code>telemetry</code> renamed to <code>monitor</code></strong> (#51): The background sampling thread
+  has been renamed throughout the API to better reflect its intent (continuous
+  monitoring, not data transmission).</p>
+</li>
+<li><code>TelemetryThread</code> → <code>MonitorThread</code></li>
+<li>Class variable <code>telemetry_interval</code> → <code>monitor_interval</code></li>
+<li>Class variable <code>telemetry_timeout</code> → <code>monitor_timeout</code></li>
+<li>Result field <code>bm_data['telemetry']</code> → <code>bm_data['monitor']</code></li>
+<li>
+<p>Internal attribute <code>self._telemetry_thread</code> → <code>self._monitor_thread</code></p>
+</li>
+<li>
+<p><strong><code>MicroBenchRedis</code> removed</strong> (#52): Use
+  <code>MicroBench(outputs=[RedisOutput(...)])</code> instead.</p>
+</li>
+</ul>
+<p>Before:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBenchRedis</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">RedisBench</span><span class="p">(</span><span class="n">MicroBenchRedis</span><span class="p">):</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">redis_connection</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;host&#39;</span><span class="p">:</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="s1">&#39;port&#39;</span><span class="p">:</span> <span class="mi">6379</span><span class="p">}</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">redis_key</span> <span class="o">=</span> <span class="s1">&#39;microbench:mykey&#39;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">RedisBench</span><span class="p">()</span>
+</code></pre></div></p>
+<p>After:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">microbench</span><span class="w"> </span><span class="kn">import</span> <span class="n">MicroBench</span><span class="p">,</span> <span class="n">RedisOutput</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">bench</span> <span class="o">=</span> <span class="n">MicroBench</span><span class="p">(</span><span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">RedisOutput</span><span class="p">(</span><span class="s1">&#39;microbench:mykey&#39;</span><span class="p">,</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                                         <span class="n">host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)])</span>
+</code></pre></div></p>
+<ul>
+<li><strong><code>LiveStream</code> updated for v2 record schema</strong>: field references updated from
+  the v1 flat schema (<code>function_name</code>, <code>hostname</code>, <code>start_time</code>,
+  <code>finish_time</code>) to the v2 nested schema (<code>call.name</code>, <code>host.hostname</code>,
+  <code>call.start_time</code>, <code>call.finish_time</code>). Records produced by microbench v1
+  are no longer parsed correctly by <code>LiveStream</code>; this is expected given the
+  v2 schema migration documented in the breaking changes section above.</li>
+</ul>
+<h2 id="110-2026-03-13">[1.1.0] - 2026-03-13</h2>
+<h3 id="new-features_2">New features</h3>
+<ul>
+<li><strong><code>mb_run_id</code> and <code>mb_version</code> fields added to every record</strong> (#53): Both
+  fields are included automatically without any configuration.</li>
+<li><code>mb_run_id</code> — UUID generated once at import time and shared by all
+    <code>MicroBench</code> instances in the same process. Allows records from independent
+    bench suites to be correlated with <code>groupby('mb_run_id')</code>.</li>
+<li><code>mb_version</code> — version of the <code>microbench</code> package that produced the
+    record; essential for long-running studies where the benchmark code evolves.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.sections", "navigation.top", "toc.follow", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
