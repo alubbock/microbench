@@ -1080,8 +1080,17 @@
 </ul>
 <h3 id="documentation">Documentation</h3>
 <ul>
-<li>Fix documentation on writing custom mixins to note that they must be
-  added to the registry if they are to be detected by the CLI.</li>
+<li>
+<p><strong><code>cli_compatible</code> class attribute removed from built-in mixins</strong>: this
+  attribute was never read at runtime — CLI availability is governed solely
+  by the <code>MIXIN_REGISTRY</code> in <code>cli/registry.py</code>. The extending guide example
+  has been updated to drop it; custom mixins that set it can safely remove
+  it without any behavioural change.</p>
+</li>
+<li>
+<p>Fix documentation on writing custom mixins to note that they must be
+  added to the registry if they are to be detected by the CLI.</p>
+</li>
 </ul>
 <h2 id="200-2026-03-17">[2.0.0] - 2026-03-17</h2>
 <p>Microbench v2 is a significant upgrade with many new features versus v1.1.0.
