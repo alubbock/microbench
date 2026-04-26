@@ -2,7 +2,7 @@
 
 All notable changes to microbench are documented here.
 
-## [Unreleased]
+## [2.1.0] - 2026-04-26
 
 ### New features
 
