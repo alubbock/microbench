@@ -68,7 +68,7 @@ def _run_main(argv, mock_returncode=0):
     wait_status = 0 if mock_returncode == 0 else mock_returncode << 8
     fake_wait4 = (mock_proc.pid, wait_status, _FakeRusage())
     with patch('subprocess.Popen', return_value=mock_proc) as mock_popen:
-        with patch('os.wait4', return_value=fake_wait4):
+        with patch('os.wait4', return_value=fake_wait4, create=True):
             with patch('sys.stdout', buf):
                 with pytest.raises(SystemExit) as exc:
                     main(argv)
@@ -78,7 +78,7 @@ def _run_main(argv, mock_returncode=0):
 def _patch_wait4_success(mock_proc, *, rusage=None, status=0):
     if rusage is None:
         rusage = _FakeRusage()
-    return patch('os.wait4', return_value=(mock_proc.pid, status, rusage))
+    return patch('os.wait4', return_value=(mock_proc.pid, status, rusage), create=True)
 
 
 def _patch_wait4_sleep(mock_proc, delay, *, status=0, rusage=None):
@@ -91,7 +91,7 @@ def _patch_wait4_sleep(mock_proc, delay, *, status=0, rusage=None):
         time.sleep(delay)
         return (mock_proc.pid, status, rusage)
 
-    return patch('os.wait4', side_effect=_wait4)
+    return patch('os.wait4', side_effect=_wait4, create=True)
 
 
 def _patch_wait4_sequence(*results):
@@ -103,7 +103,7 @@ def _patch_wait4_sequence(*results):
             return result(pid, options)
         return result
 
-    return patch('os.wait4', side_effect=_wait4)
+    return patch('os.wait4', side_effect=_wait4, create=True)
 
 
 def test_cli_records_command_and_timing():
