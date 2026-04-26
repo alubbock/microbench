@@ -1009,3 +1009,38 @@ def test_resource_usage_windows_fallback():
         _sys_mod._resource = original
 
     assert 'resource_usage' not in bench.get_results()[0]
+
+
+@pytest.mark.skipif(
+    sys.platform == 'win32', reason='resource module not available on Windows'
+)
+def test_resource_usage_run_trigger_chain():
+    """pre/post_run_triggers forward via super() so composed mixins all fire."""
+    calls = []
+
+    class _TrackerMixin:
+        def pre_run_triggers(self, bm_data):
+            calls.append('pre')
+            parent = super()
+            if hasattr(parent, 'pre_run_triggers'):
+                parent.pre_run_triggers(bm_data)
+
+        def post_run_triggers(self, bm_data):
+            calls.append('post')
+            parent = super()
+            if hasattr(parent, 'post_run_triggers'):
+                parent.post_run_triggers(bm_data)
+
+    class Bench(MicroBench, _TrackerMixin, MBResourceUsage):
+        pass
+
+    bench = Bench()
+
+    @bench
+    def noop():
+        pass
+
+    noop()
+
+    assert calls == ['pre', 'post']
+    assert len(bench.get_results()[0]['resource_usage']) == 1
