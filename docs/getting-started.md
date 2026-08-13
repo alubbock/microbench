@@ -46,9 +46,11 @@ from microbench import MicroBench
 
 bench = MicroBench()
 
+
 @bench
 def my_function(x):
-    return x ** 2
+    return x**2
+
 
 my_function(42)
 ```
@@ -57,7 +59,7 @@ By default results are captured into an in-memory buffer. Read them back as
 a list of dicts:
 
 ```python
-results = bench.get_results()          # list of dicts — no extra dependencies
+results = bench.get_results()  # list of dicts — no extra dependencies
 results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
@@ -87,21 +89,22 @@ Every record contains these fields automatically (all nested under `mb` or `call
 Here's an extended example to give you an idea of real-world usage.
 
 ```python
-from microbench import MicroBench, MBFunctionCall, \
-    MBHostInfo, MBSlurmInfo
+from microbench import MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo
 import numpy, pandas, time
+
 
 class MyBench(MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
     capture_versions = (numpy, pandas)
     env_vars = ('CUDA_VISIBLE_DEVICES',)
 
-benchmark = MyBench(experiment='run-1', iterations=3,
-                    duration_counter=time.monotonic)
+
+benchmark = MyBench(experiment='run-1', iterations=3, duration_counter=time.monotonic)
+
 
 @benchmark
-def myfunction(arg1, arg2):
-    ...
+def myfunction(arg1, arg2): ...
+
 
 myfunction(x, y)
 ```
@@ -153,13 +156,14 @@ object per line). Read them back with pandas:
 
 ```python
 import pandas
+
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 ```
 
 Or via `get_results()`, which works regardless of the output destination:
 
 ```python
-results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results()  # list of dicts — no extra dependencies
 results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
@@ -173,6 +177,7 @@ bench.summary()
 
 # or pass any list of result dicts:
 from microbench import summary
+
 summary(bench.get_results())
 ```
 
@@ -196,7 +201,7 @@ Use `flat=True` to flatten nested fields (e.g. `slurm`, `git`,
 into pandas or a spreadsheet:
 
 ```python
-results = bench.get_results(flat=True)          # list of flat dicts
+results = bench.get_results(flat=True)  # list of flat dicts
 results = bench.get_results(format='df', flat=True)  # flat DataFrame
 # 'call' dict becomes: call.name, call.durations, call.start_time, ...
 # 'slurm' dict becomes: slurm.job_id, slurm.cpus_on_node, ...
@@ -213,8 +218,10 @@ section of a script:
 ```python
 from microbench import MicroBench, MBHostInfo
 
+
 class MyBench(MicroBench, MBHostInfo):
     outfile = '/home/user/results.jsonl'
+
 
 bench = MyBench(experiment='run-1')
 
@@ -256,9 +263,11 @@ process exits — no restructuring of the script is required:
 ```python
 from microbench import MicroBench, MBHostInfo, MBSlurmInfo
 
+
 class MyBench(MicroBench, MBHostInfo, MBSlurmInfo):
     outfile = '/scratch/results.jsonl'
     capture_optional = True  # recommended: don't let a failed capture abort exit
+
 
 bench = MyBench(experiment='baseline')
 bench.record_on_exit('simulation')

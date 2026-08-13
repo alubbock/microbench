@@ -146,15 +146,17 @@ from microbench import MicroBench
 
 bench = MicroBench(outfile='/home/user/results.jsonl', experiment='baseline')
 
+
 @bench
 def my_function(n):
     return sum(range(n))
 
+
 my_function(1_000_000)
 
-results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results()  # list of dicts — no extra dependencies
 results = bench.get_results(format='df')  # pandas DataFrame
-bench.summary()                           # quick stats printout
+bench.summary()  # quick stats printout
 ```
 
 Each call produces one record. With `get_results(flat=True)` the record looks
@@ -183,17 +185,19 @@ like:
 from microbench import MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo
 import numpy, pandas, time
 
+
 class MyBench(MicroBench, MBFunctionCall, MBHostInfo, MBSlurmInfo):
     outfile = '/home/user/my-benchmarks.jsonl'
-    capture_versions = (numpy, pandas)   # record live module versions
-    env_vars = ('CUDA_VISIBLE_DEVICES',) # capture env vars as env.<NAME>
+    capture_versions = (numpy, pandas)  # record live module versions
+    env_vars = ('CUDA_VISIBLE_DEVICES',)  # capture env vars as env.<NAME>
 
-benchmark = MyBench(experiment='run-1', iterations=3,
-                    duration_counter=time.monotonic)
+
+benchmark = MyBench(experiment='run-1', iterations=3, duration_counter=time.monotonic)
+
 
 @benchmark
-def myfunction(arg1, arg2):
-    ...
+def myfunction(arg1, arg2): ...
+
 
 myfunction(x, y)
 ```

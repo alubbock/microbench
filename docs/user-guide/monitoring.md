@@ -72,6 +72,7 @@ launching and cleaning up the background thread automatically.
 ```python
 from microbench import MicroBench
 
+
 class MyBench(MicroBench):
     monitor_interval = 90  # seconds between samples (default: 60)
 
@@ -80,7 +81,9 @@ class MyBench(MicroBench):
         mem = process.memory_full_info()
         return {'rss': mem.rss, 'vms': mem.vms}
 
+
 bench = MyBench()
+
 
 @bench
 def my_function():
@@ -116,9 +119,7 @@ returns:
 class MyBench(MicroBench):
     @staticmethod
     def monitor(process):
-        return process.as_dict(attrs=[
-            'cpu_percent', 'memory_info', 'num_threads'
-        ])
+        return process.as_dict(attrs=['cpu_percent', 'memory_info', 'num_threads'])
 ```
 
 ### Notes

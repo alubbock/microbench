@@ -41,6 +41,7 @@ Combine any number of mixins with `MicroBench` via multiple inheritance:
 ```python
 from microbench import MicroBench, MBHostInfo
 
+
 class MyBench(MicroBench, MBHostInfo):
     pass
 ```
@@ -89,14 +90,18 @@ function as `args` (list) and `kwargs` (dict):
 ```python
 from microbench import MicroBench, MBFunctionCall
 
+
 class Bench(MicroBench, MBFunctionCall):
     pass
 
+
 bench = Bench()
+
 
 @bench
 def add(a, b):
     return a + b
+
 
 add(1, b=2)
 # record contains: {"call": {"args": [1], "kwargs": {"b": 2}}, ...}
@@ -109,14 +114,18 @@ Captures the return value of the decorated function as `return_value`:
 ```python
 from microbench import MicroBench, MBReturnValue
 
+
 class Bench(MicroBench, MBReturnValue):
     pass
 
+
 bench = Bench()
+
 
 @bench
 def compute(n):
     return sum(range(n))
+
 
 compute(100)
 # record contains: {"call": {"return_value": 4950}, ...}
@@ -136,6 +145,7 @@ is installed) CPU core counts and total RAM.
 
 ```python
 from microbench import MicroBench, MBHostInfo
+
 
 class Bench(MicroBench, MBHostInfo):
     pass
@@ -162,14 +172,18 @@ the standard library — no extra dependencies required.
 ```python
 from microbench import MicroBench, MBPeakMemory
 
+
 class Bench(MicroBench, MBPeakMemory):
     pass
 
+
 bench = Bench()
+
 
 @bench
 def process(data):
     return sorted(data)
+
 
 process(list(range(1_000_000, 0, -1)))
 # record contains: {"call": {"peak_memory_bytes": 8056968}, ...}
@@ -198,8 +212,10 @@ an empty dict.
 ```python
 from microbench import MicroBench, MBSlurmInfo
 
+
 class Bench(MicroBench, MBSlurmInfo):
     pass
+
 
 bench = Bench()
 ```
@@ -239,8 +255,10 @@ environment, `loaded_modules` is an empty dict.
 ```python
 from microbench import MicroBench, MBLoadedModules
 
+
 class Bench(MicroBench, MBLoadedModules):
     pass
+
 
 bench = Bench()
 ```
@@ -273,8 +291,10 @@ Captures the absolute path of the working directory at benchmark time into `call
 ```python
 from microbench import MicroBench, MBWorkingDir
 
+
 class Bench(MicroBench, MBWorkingDir):
     pass
+
 
 bench = Bench()
 ```
@@ -304,8 +324,10 @@ container — the number that determines your benchmark's resource budget.
 ```python
 from microbench import MicroBench, MBSlurmInfo, MBCgroupLimits
 
+
 class Bench(MicroBench, MBSlurmInfo, MBCgroupLimits):
     pass
+
 
 bench = Bench()
 ```
@@ -366,14 +388,18 @@ On platforms where the stdlib `resource` module is unavailable, the
 ```python
 from microbench import MicroBench, MBResourceUsage
 
+
 class Bench(MicroBench, MBResourceUsage):
     pass
 
+
 bench = Bench()
+
 
 @bench
 def work():
     return list(range(1_000_000))
+
 
 work()
 ```
@@ -516,6 +542,7 @@ Captures the current git repo, commit hash, branch name, and dirty flag
 ```python
 from microbench import MicroBench, MBGitInfo
 
+
 class Bench(MicroBench, MBGitInfo):
     pass
 ```
@@ -568,8 +595,10 @@ enclosed code is run.
 ```python
 from microbench import MicroBench, MBFileHash
 
+
 class Bench(MicroBench, MBFileHash):
     pass
+
 
 bench = Bench()
 ```
@@ -591,6 +620,7 @@ scripts from a scratch directory). Use absolute paths to be safe:
 import os
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 class Bench(MicroBench, MBFileHash):
     hash_files = [
@@ -620,7 +650,7 @@ algorithm from Python's [`hashlib`](https://docs.python.org/3/library/hashlib.ht
 ```python
 class Bench(MicroBench, MBFileHash):
     hash_files = ['large_model_weights.bin']
-    hash_algorithm = 'md5'   # faster for large files
+    hash_algorithm = 'md5'  # faster for large files
 ```
 
 Any algorithm name accepted by `hashlib.new()` works: `'sha256'` (default),
@@ -662,6 +692,7 @@ namespace:
 from microbench import MicroBench, MBGlobalPackages
 import numpy, pandas
 
+
 class Bench(MicroBench, MBGlobalPackages):
     pass
 ```
@@ -699,7 +730,7 @@ A single `conda` dict with three keys:
 
 ```python
 class Bench(MicroBench, MBCondaPackages):
-    include_builds = True    # include build string (default: True)
+    include_builds = True  # include build string (default: True)
     include_channels = False  # include channel name (default: False)
 ```
 
@@ -710,6 +741,7 @@ class. Results are stored in `python.loaded_packages`:
 
 ```python
 import numpy, pandas
+
 
 class Bench(MicroBench):
     capture_versions = (numpy, pandas)
@@ -737,6 +769,7 @@ attributes — power draw, temperature, utilisation, etc. — set `nvidia_attrib
 ```python
 from microbench import MicroBench, MBNvidiaSmi
 
+
 class GpuBench(MicroBench, MBNvidiaSmi):
     nvidia_attributes = ('gpu_name', 'memory.total', 'power.draw', 'temperature.gpu')
 ```
@@ -763,12 +796,12 @@ By default all installed GPUs are captured. To restrict to a subset, set
 
 ```python
 class GpuBench(MicroBench, MBNvidiaSmi):
-    nvidia_gpus = ('GPU-abc123def456',)   # single GPU by UUID
+    nvidia_gpus = ('GPU-abc123def456',)  # single GPU by UUID
 ```
 
 ```python
 class GpuBench(MicroBench, MBNvidiaSmi):
-    nvidia_gpus = (0, 1)   # first two GPUs by index
+    nvidia_gpus = (0, 1)  # first two GPUs by index
 ```
 
 Omit `nvidia_gpus` entirely to capture all GPUs.
@@ -788,10 +821,13 @@ Captures a line-by-line timing profile of the decorated function using
 ```python
 from microbench import MicroBench, MBLineProfiler
 
+
 class Bench(MicroBench, MBLineProfiler):
     pass
 
+
 bench = Bench()
+
 
 @bench
 def my_function():
@@ -799,6 +835,7 @@ def my_function():
     for i in range(1000000):
         acc += i
     return acc
+
 
 my_function()
 

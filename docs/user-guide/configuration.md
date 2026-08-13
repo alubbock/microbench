@@ -32,6 +32,7 @@ the variable is unset it is recorded as `null`:
 ```python
 from microbench import MicroBench
 
+
 class MyBench(MicroBench):
     env_vars = ('MY_VAR', 'ANOTHER_VAR')
 ```

@@ -12,6 +12,7 @@ class MBMachineType:
 
     def capture_machine_type(self, bm_data):
         import platform
+
         bm_data['machine_type'] = platform.machine()
 
 
@@ -41,6 +42,7 @@ class MBMachineType:
 
     def capture_machine_type(self, bm_data):
         import platform
+
         bm_data['machine_type'] = platform.machine()
 ```
 
@@ -50,6 +52,7 @@ To expose configurable attributes as CLI flags, add a `cli_args` list of
 
 ```python
 from microbench import CLIArg
+
 
 class MBOutputDir:
     """Record the output directory for this run."""
@@ -96,6 +99,7 @@ dictionary that will be serialised as the result record.
 ```python
 from microbench import MicroBench
 import platform
+
 
 class MyBench(MicroBench):
     def capture_machine_type(self, bm_data):

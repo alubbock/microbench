@@ -64,3 +64,8 @@ inline-quotes = "single"
 [tool.ruff.lint.per-file-ignores]
 # pandas is imported to test that its version is captured in global packages
 "tests/globals_capture.py" = ["F401"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.3",
+]
