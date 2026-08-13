@@ -120,10 +120,12 @@ contain `N` entries per named phase:
 ```python
 bench = MicroBench(iterations=3)
 
+
 @bench
 def pipeline():
     with bench.time('step'):
         ...
+
 
 pipeline()
 # call.timings → [{"name": "step", ...}, {"name": "step", ...}, {"name": "step", ...}]
@@ -159,6 +161,7 @@ analysis:
 
 ```python
 import pandas
+
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 
 # Records where the call raised
@@ -177,6 +180,7 @@ a class attribute to catch failures instead and record them in
 
 ```python
 from microbench import MicroBench, MBNvidiaSmi, MBCondaPackages
+
 
 class MyBench(MicroBench, MBNvidiaSmi, MBCondaPackages):
     capture_optional = True  # missing nvidia-smi or conda won't abort the run
@@ -217,20 +221,25 @@ To handle custom types, subclass `JSONEncoder`:
 import microbench as mb
 from igraph import Graph
 
+
 class MyEncoder(mb.JSONEncoder):
     def default(self, o):
         if isinstance(o, Graph):
             return str(o)
         return super().default(o)
 
+
 class MyBench(mb.MicroBench, mb.MBReturnValue):
     pass
 
+
 bench = MyBench(json_encoder=MyEncoder)
+
 
 @bench
 def make_graph():
     return Graph(2, ((0, 1), (0, 2)))
+
 
 make_graph()  # no warning
 ```
@@ -250,11 +259,13 @@ running in the same Python process:
 ```python
 from microbench.livestream import LiveStream
 
+
 class MyStream(LiveStream):
     def process_alert(self, data):
         if sum(data.get('call', {}).get('durations', [])) > 10.0:
             host = data.get('host', {}).get('hostname', 'unknown')
-            print(f"Slow call on {host}: {data['call']['durations']}")
+            print(f'Slow call on {host}: {data["call"]["durations"]}')
+
 
 stream = MyStream('/home/user/results.jsonl')
 # ... runs in background while your job continues ...
@@ -270,6 +281,7 @@ your benchmark job writes to the file:
 from microbench.livestream import LiveStream
 import time
 
+
 class Watcher(LiveStream):
     def filter(self, data):
         # Only show records from GPU nodes
@@ -279,7 +291,8 @@ class Watcher(LiveStream):
         name = data.get('call', {}).get('name', '?')
         host = data.get('host', {}).get('hostname', '?')
         durs = data.get('call', {}).get('durations', [])
-        print(f"{name} | {host} | {durs}")
+        print(f'{name} | {host} | {durs}')
+
 
 stream = Watcher('/home/user/results.jsonl')
 try:
@@ -314,7 +327,9 @@ import pandas
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 
 # Compare the environment of the slowest and fastest calls
-results_flat = pandas.DataFrame(FileOutput('/home/user/results.jsonl').get_results(flat=True))
+results_flat = pandas.DataFrame(
+    FileOutput('/home/user/results.jsonl').get_results(flat=True)
+)
 slowest = results_flat.loc[results_flat['call.durations'].apply(sum).idxmax()]
 fastest = results_flat.loc[results_flat['call.durations'].apply(sum).idxmin()]
 

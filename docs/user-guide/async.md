@@ -13,14 +13,20 @@ from microbench import MicroBench
 
 bench = MicroBench()
 
+
 @bench
 async def fetch_data(url):
     # e.g. await httpx.AsyncClient().get(url)
     await asyncio.sleep(0.01)
     return {'rows': 42}
 
+
 asyncio.run(fetch_data('https://example.com/api'))
-print(bench.get_results(format='df', flat=True)[['call.name', 'call.start_time', 'call.durations']])
+print(
+    bench.get_results(format='df', flat=True)[
+        ['call.name', 'call.start_time', 'call.durations']
+    ]
+)
 ```
 
 The wrapper is a true `async def`, so you can `await` it, pass it to
@@ -40,9 +46,11 @@ from microbench import MicroBench
 
 bench = MicroBench()
 
+
 async def main():
     async with bench.arecord('data_load'):
         await asyncio.sleep(0.01)
+
 
 asyncio.run(main())
 print(bench.get_results())
@@ -75,11 +83,12 @@ function raises `NotImplementedError` at decoration time:
 class Bench(MicroBench, MBLineProfiler):
     pass
 
+
 bench = Bench()
 
+
 @bench  # raises NotImplementedError immediately
-async def my_coroutine():
-    ...
+async def my_coroutine(): ...
 ```
 
 Use a synchronous wrapper function if you need line profiling, or remove

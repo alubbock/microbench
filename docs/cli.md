@@ -279,6 +279,7 @@ Read the results:
 
 ```python
 from microbench import FileOutput
+
 df = FileOutput('/scratch/user/results.jsonl').get_results(flat=True, format='df')
 df['total_duration'] = df['call.durations'].apply(sum)
 df.groupby('slurm.job_id')['total_duration'].describe()
@@ -444,6 +445,7 @@ Read results back from Redis with Python:
 
 ```python
 import redis, json
+
 client = redis.StrictRedis(host='redis.example.com')
 records = [json.loads(r) for r in client.lrange('bench:results', 0, -1)]
 ```
@@ -452,6 +454,7 @@ Or via microbench's `RedisOutput.get_results()`:
 
 ```python
 from microbench import RedisOutput
+
 results = RedisOutput('bench:results', host='redis.example.com').get_results()
 ```
 
@@ -548,15 +551,19 @@ Analyse with `get_results()`:
 
 ```python
 from microbench import FileOutput
+
 results = FileOutput('results.jsonl').get_results()
 
 # Flatten all samples for the first iteration across all records
 import pandas
-samples = pandas.DataFrame([
-    s
-    for r in results
-    for s in r['call']['monitor'][0]   # [0] = first iteration
-])
+
+samples = pandas.DataFrame(
+    [
+        s
+        for r in results
+        for s in r['call']['monitor'][0]  # [0] = first iteration
+    ]
+)
 samples['rss_mb'] = samples['rss_bytes'] / 1024 / 1024
 print(samples[['timestamp', 'cpu_percent', 'rss_mb']])
 ```

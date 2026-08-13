@@ -26,9 +26,11 @@ from microbench import MicroBench
 
 bench = MicroBench(outfile='results.jsonl')
 
+
 @bench
 def my_function(n):
     return sum(range(n))
+
 
 my_function(1_000_000)
 ```

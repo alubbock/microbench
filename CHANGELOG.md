@@ -108,9 +108,10 @@ Be sure to review the breaking changes before upgrading.
 
   bench = MicroBench()
 
+
   @bench
-  def my_function():
-      ...
+  def my_function(): ...
+
 
   for _ in range(10):
       my_function()
@@ -149,6 +150,7 @@ Be sure to review the breaking changes before upgrading.
   @bench
   async def fetch():
       await asyncio.sleep(0.01)
+
 
   asyncio.run(fetch())
 
@@ -288,10 +290,12 @@ Be sure to review the breaking changes before upgrading.
   ```python
   from microbench import MicroBench, FileOutput, RedisOutput
 
-  bench = MicroBench(outputs=[
-      FileOutput('/home/user/results.jsonl'),
-      RedisOutput('microbench:mykey', host='redis-host', port=6379),
-  ])
+  bench = MicroBench(
+      outputs=[
+          FileOutput('/home/user/results.jsonl'),
+          RedisOutput('microbench:mykey', host='redis-host', port=6379),
+      ]
+  )
   ```
 
   `get_results()` delegates to the first sink that supports reading back
@@ -395,9 +399,11 @@ Be sure to review the breaking changes before upgrading.
   ```python
   from microbench import MicroBenchRedis
 
+
   class RedisBench(MicroBenchRedis):
       redis_connection = {'host': 'localhost', 'port': 6379}
       redis_key = 'microbench:mykey'
+
 
   bench = RedisBench()
   ```
@@ -406,8 +412,9 @@ Be sure to review the breaking changes before upgrading.
   ```python
   from microbench import MicroBench, RedisOutput
 
-  bench = MicroBench(outputs=[RedisOutput('microbench:mykey',
-                                           host='localhost', port=6379)])
+  bench = MicroBench(
+      outputs=[RedisOutput('microbench:mykey', host='localhost', port=6379)]
+  )
   ```
 
 - **`LiveStream` updated for v2 record schema**: field references updated from

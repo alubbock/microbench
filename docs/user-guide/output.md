@@ -86,6 +86,7 @@ from microbench import MicroBench
 # As a constructor argument
 bench = MicroBench(outfile='/home/user/results.jsonl')
 
+
 # Or as a class attribute
 class MyBench(MicroBench):
     outfile = '/home/user/results.jsonl'
@@ -106,13 +107,15 @@ sessions or testing:
 ```python
 bench = MicroBench()
 
+
 @bench
 def my_function():
     pass
 
+
 my_function()
 
-results = bench.get_results()              # list of dicts
+results = bench.get_results()  # list of dicts
 results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
@@ -125,10 +128,12 @@ are mutually exclusive.
 ```python
 from microbench import MicroBench, FileOutput, RedisOutput
 
-bench = MicroBench(outputs=[
-    FileOutput('/home/user/results.jsonl'),
-    RedisOutput('microbench:mykey', host='redis-host', port=6379),
-])
+bench = MicroBench(
+    outputs=[
+        FileOutput('/home/user/results.jsonl'),
+        RedisOutput('microbench:mykey', host='redis-host', port=6379),
+    ]
+)
 ```
 
 `get_results()` reads from the first sink that supports it. The `format` and
@@ -143,17 +148,19 @@ available, such as on cloud or HPC clusters. Requires
 ```python
 from microbench import MicroBench, RedisOutput
 
-bench = MicroBench(outputs=[
-    RedisOutput('microbench:mykey', host='redis-host', port=6379)
-])
+bench = MicroBench(
+    outputs=[RedisOutput('microbench:mykey', host='redis-host', port=6379)]
+)
+
 
 @bench
 def my_function():
     pass
 
+
 my_function()
 
-results = bench.get_results()              # list of dicts
+results = bench.get_results()  # list of dicts
 results = bench.get_results(format='df')  # pandas DataFrame
 ```
 
@@ -175,10 +182,14 @@ bench = MicroBench(outputs=[HttpOutput('https://example.com/events')])
 Add authentication headers:
 
 ```python
-bench = MicroBench(outputs=[HttpOutput(
-    'https://api.example.com/benchmarks',
-    headers={'Authorization': 'Bearer my-secret-token'},
-)])
+bench = MicroBench(
+    outputs=[
+        HttpOutput(
+            'https://api.example.com/benchmarks',
+            headers={'Authorization': 'Bearer my-secret-token'},
+        )
+    ]
+)
 ```
 
 Override `format_payload()` to customize the body shape (e.g. for Slack):
@@ -187,10 +198,12 @@ Override `format_payload()` to customize the body shape (e.g. for Slack):
 import json
 from microbench import HttpOutput
 
+
 class SlackOutput(HttpOutput):
     def format_payload(self, record):
         name = record.get('call', {}).get('name', '?')
         return json.dumps({'text': f'Benchmark `{name}` finished.'}).encode()
+
 
 bench = MicroBench(outputs=[SlackOutput('https://hooks.slack.com/services/...')])
 ```
@@ -205,9 +218,11 @@ Subclass `Output` and implement `write` to send results anywhere:
 ```python
 from microbench import MicroBench, Output
 
+
 class MyOutput(Output):
     def write(self, bm_json_str):
         send_to_my_system(bm_json_str)
+
 
 bench = MicroBench(outputs=[MyOutput()])
 ```
@@ -217,11 +232,12 @@ bench = MicroBench(outputs=[MyOutput()])
 Read results back via `get_results()`:
 
 ```python
-results = bench.get_results()              # list of dicts — no extra dependencies
+results = bench.get_results()  # list of dicts — no extra dependencies
 results = bench.get_results(format='df')  # pandas DataFrame
 
 # or read directly with pandas:
 import pandas
+
 results = pandas.read_json('/home/user/results.jsonl', lines=True)
 ```
 
@@ -246,5 +262,6 @@ The module-level `summary()` accepts any list of result dicts:
 
 ```python
 from microbench import summary
+
 summary(bench.get_results())
 ```
